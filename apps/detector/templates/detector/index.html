@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CCTV 카메라 관리</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand mx-auto" href="#">CCTV 카메라 관리</a>
+      <div class="navbar-nav ml-auto">
+        {% if current_user.is_authenticated %}
+        <a class="nav-item nav-link" href="/register">등록</a>
+        <a class="nav-item nav-link" href="/logout">로그아웃</a>
+        {% else %}
+        <a class="nav-item nav-link" href="/register">등록</a>
+        <a class="nav-item nav-link" href="/login">로그인</a>
+        {% endif %}
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <h2>카메라 서버 관리</h2>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">카메라 서버 1</h5>
+              <p class="card-text">카메라 서버 1에 대한 설명입니다.</p>
+              <a href="#" class="btn btn-primary">관리</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">카메라 서버 2</h5>
+              <p class="card-text">카메라 서버 2에 대한 설명입니다.</p>
+              <a href="#" class="btn btn-primary">관리</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">카메라 서버 3</h5>
+              <p class="card-text">카메라 서버 3에 대한 설명입니다.</p>
+              <a href="#" class="btn btn-primary">관리</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -26,7 +26,11 @@ login_manager.login_view = "auth.login"
 login_manager.login_message = ""
 
 # SQLAlchemy 객체 생성
-db = SQLAlchemy()
+# db = SQLAlchemy()
+
+# MySQL 객체 생성
+db = pymysql()
+
 
 # CSRFProtect 객체 생성
 csrf = CSRFProtect()
