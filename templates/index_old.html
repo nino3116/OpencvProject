@@ -1,0 +1,10 @@
+{% extends "base.html" %} {% block content %}
+<!-- 본문 -->
+<main class="container mx-auto mt-10 text-center">
+  <h2 class="text-2xl font-semibold">
+    환영합니다! 스마트 CCTV 시스템에 오신 것을 환영합니다.
+  </h2>
+  <h3 class="text 2x1 font-semibold">----카메라 영상 표시----</h3>
+  <img src="http://192.168.0.124:8000/stream.mjpg" width="800" height="600" />
+</main>
+{% endblock %}
