@@ -42,10 +42,14 @@
         <a class="nav-item nav-link" href="{{ url_for('auth.signup') }}"
           >등록</a
         >
-        <a class="nav-item nav-link" href="/logout">로그아웃</a>
+        <a class="nav-item nav-link" href="{{ url_for('auth.logout')}}"
+          >로그아웃</a
+        >
         {% else %}
         <a class="nav-item nav-link" href="{{ url_for('auth.signup')}}">등록</a>
-        <a class="nav-item nav-link" href="/login">로그인</a>
+        <a class="nav-item nav-link" href="{{ url_for('auth.login')}}"
+          >로그인</a
+        >
         {% endif %}
       </div>
     </nav>

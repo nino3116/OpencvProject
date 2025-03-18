@@ -79,13 +79,13 @@ def login():
 
     # auth/login.html에서 submit 처리한 경우..(post로 전달)
     if form.validate_on_submit():
-        # 이메일 주소로 데이터베이스에 사용자 있는지 확인.
-        user = User.query.filter_by(email=form.email.data).first()
+        # 아이디로 데이터베이스에 사용자 있는지 확인.
+        user = User.query.filter_by(user_id=form.user_id.data).first()
 
         # 사용자가 존재하고, 비밀번호가 일치하면 로그인 처리
         if user is not None and user.verify_password(password=form.password.data):
             login_user(user)  # 로그인 처리(LoginManager에 등록)
-            return redirect(url_for("detector.index"))
+            return redirect(url_for("crud.users"))
 
         # 로그인 실패시 메시지를 설정
         flash("메일 주소 또는 비밀번호가 일치하지 않습니다.")

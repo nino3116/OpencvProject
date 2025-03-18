@@ -7,7 +7,7 @@ content %}
       <form action="{{ url_for('auth.login') }}" method="POST">
         {% for message in get_flashed_messages() %}
         <span class="dt-auth-flash">{{ message }}</span>
-        {% endfor %} {{ form.csrf_token }} {{ form.user_idl(class="form-control
+        {% endfor %} {{ form.csrf_token }} {{ form.user_id(class="form-control
         dt-auth-input",placeholder="아이디") }} {{
         form.password(class="form-control dt-auth-input",placeholder="비밀번호")
         }} {{ form.submit(class="btn btn-md btn-primary btn-block dt-auth-btn")
