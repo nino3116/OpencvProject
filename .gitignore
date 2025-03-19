@@ -205,3 +205,11 @@ pip-selfcheck.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv
+
+
+# jpg, jpeg, png, gif, bmp, tif, tiff, svg, eps, webp
+*.jpg
+
+# Migrations
+migrations/
+*.sqlite

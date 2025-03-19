@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Camera 관리</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body class="container mt-4">
+    <h2 class="mb-4">📷 Camera 관리 시스템</h2>
+
+    <form id="addForm" class="mb-4">
+      <div class="row">
+        <div class="col">
+          <input
+            type="text"
+            id="cam_name"
+            class="form-control"
+            placeholder="카메라 이름"
+            required
+          />
+        </div>
+        <div class="col">
+          <input
+            type="text"
+            id="cam_group"
+            class="form-control"
+            placeholder="카메라 그룹"
+          />
+        </div>
+        <div class="col">
+          <input
+            type="number"
+            id="num_person"
+            class="form-control"
+            placeholder="감지 인원 수"
+          />
+        </div>
+        <div class="col">
+          <button type="submit" class="btn btn-primary">추가</button>
+        </div>
+      </div>
+    </form>
+
+    <table class="table table-bordered">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>카메라 이름</th>
+          <th>그룹</th>
+          <th>감지 인원</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody id="cameraTable">
+        {% for cam in cams %}
+        <tr>
+          <td>{{ cam.id }}</td>
+          <td contenteditable="true" onBlur="updateCam({{ cam.id }}, this)">  
+            {{ cam.cam_name }}
+          </td>
+          <td contenteditable="true" onBlur="updateCam({{ cam.id }}, this)">
+            {{ cam.cam_group }}
+          </td>
+          <td contenteditable="true" onBlur="updateCam({{ cam.id }}, this)">
+            {{ cam.num_person }}
+          </td>
+          <td>
+            <button
+              class="btn btn-danger btn-sm"
+              onclick="deleteCam({{ cam.id }})"
+            >
+              삭제
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <script>
+      $("#addForm").submit(function (e) {
+        e.preventDefault();
+        let data = {
+          cam_name: $("#cam_name").val(),
+          cam_group: $("#cam_group").val(),
+          num_person: $("#num_person").val(),
+        };
+        $.ajax({
+          url: "/add",
+          type: "POST",
+          contentType: "application/json", // JSON 형식으로 전송
+          data: JSON.stringify(data),
+          success: function (response) {
+            location.reload();
+          },
+          error: function (xhr, status, error) {
+            console.error("추가 실패 : ", error);
+          },
+        });
+      });
+
+      function updateCam(id, element) {
+        let column = ["cam_name", "cam_group", "num_person"][
+          element.cellIndex - 1
+        ];
+        let oldValue = element.getAttribute("data-old_value");
+        let newValue = element.innerText.trim();
+
+        if (oldValue === newValue) return;
+
+        let data = { [column]: newValue };
+        element.setAttribute("data-old_value", newValue);
+
+        $.post(
+          `/update/${id}`,
+          JSON.stringify(data),
+          function() {
+            confirm("수정 완료했습니다.");
+            console.log("팝업 닫힘");
+          },
+          "json"
+        );
+      }
+
+      function deleteCam(id) {
+        if (confirm("정말 삭제하시겠습니까?")) {
+          $.post(`/delete/${id}`, function () {
+            location.reload();
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
