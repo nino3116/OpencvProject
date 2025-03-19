@@ -48,7 +48,7 @@ def signup():
             return redirect(url_for("auth.signup"))
 
         # 아이디 중복 체크 : 중복시 GET으로 singup으로 전달
-        if user.is_duplicate_id():
+        if user.is_duplicate_user_id():
             flash("지정 아이디는 이미 등록되어 있습니다.")
             return redirect(url_for("auth.signup"))
 
@@ -65,7 +65,7 @@ def signup():
         # next가 비어 있거나, "/"로 시작하지 않는 경우 -> 상대경로 접근X.
         if next_ is None or not next_.startswith("/"):
             # next의 값을 엔드포인트 crud.users로 지정
-            next_ = url_for("detector.index")
+            next_ = url_for("cam.index")
         # redirect
         return redirect(next_)
     return render_template("auth/signup.html", form=form)
@@ -85,10 +85,10 @@ def login():
         # 사용자가 존재하고, 비밀번호가 일치하면 로그인 처리
         if user is not None and user.verify_password(password=form.password.data):
             login_user(user)  # 로그인 처리(LoginManager에 등록)
-            return redirect(url_for("crud.users"))
+            return redirect(url_for("cam.index"))
 
         # 로그인 실패시 메시지를 설정
-        flash("메일 주소 또는 비밀번호가 일치하지 않습니다.")
+        flash("아이디 또는 비밀번호가 일치하지 않습니다.")
 
     return render_template("auth/login.html", form=form)
 

@@ -12,11 +12,12 @@
         {{ form.csrf_token }} {% for message in get_flashed_messages() %}
         <div class="dt-auth-flash">{{ message }}</div>
         {% endfor %} {{ form.username(size=30, class="form-control
-        dt-auth-input", placeholder="사용자명") }} {{
-        form.email(class="form-control dt-auth-input", placeholder="메일 주소")
-        }} {{ form.password(class="form-control dt-auth-input",
-        placeholder="비밀번호") }} {{ form.submit(class="btn btn-md btn-primary
-        btn-block dt-auth-btn") }}
+        dt-auth-input", placeholder="사용자명") }} {{ form.user_id(size=30,
+        class="form-control dt-auth-input", placeholder="아이디") }} {{
+        form.password(class="form-control dt-auth-input",
+        placeholder="비밀번호") }} {{ form.email(class="form-control
+        dt-auth-input", placeholder="메일 주소") }} {{ form.submit(class="btn
+        btn-md btn-primary btn-block dt-auth-btn") }}
       </form>
     </section>
   </div>

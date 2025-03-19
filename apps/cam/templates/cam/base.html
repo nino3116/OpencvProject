@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {#
+    <title>CCTV 카메라 관리</title>
+    #}
+    <title>{% block title %} {% endblock%}</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('crud.static', filename='style.css') }}"
+    />
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      function openCameraStream(url, cameraName) {
+        const popup = window.open("", cameraName, "width=640,height=480");
+        popup.document.write(`
+                <html>
+                <head>
+                    <title>카메라 스트리밍 - ${cameraName}</title>
+                </head>
+                <body>
+                    <img src="${url}" style="width: 100%; height: 100%;">
+                    <button onclick="window.close()">창 닫기</button>
+                </body>
+                </html>
+            `);
+      }
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand mx-auto" href="#">CCTV 카메라 관리</a>
+
+      <div class="navbar-nav ml-auto">
+        {% if current_user.is_authenticated %}
+        <a class="nav-item nav-link" href="{{ url_for('auth.signup') }}"
+          >등록</a
+        >
+        <a class="nav-item nav-link" href="{{ url_for('auth.logout')}}"
+          >로그아웃</a
+        >
+        {% else %}
+        <a class="nav-item nav-link" href="{{ url_for('auth.signup')}}">등록</a>
+        <a class="nav-item nav-link" href="{{ url_for('auth.login')}}"
+          >로그인</a
+        >
+        {% endif %}
+      </div>
+    </nav>
+    {% block content %}{% endblock %}
+  </body>
+</html>
