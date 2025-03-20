@@ -1,0 +1,87 @@
+{% extends "cam/base.html" %} {% block title%} 카메라 {{ camera_id}} 관리 {%
+endblock %}{% block content %}
+<div class="container mt-4">
+  <h2>카메라 스트림</h2>
+  {% if camera_id %}
+  <div class="row">
+    <div class="col-md-8">
+      <img src="/stream/{{ camera_id }}" style="width: 100%" />
+      <div class="mt-2">
+        <button
+          id="record-btn"
+          class="btn btn-danger"
+          onclick="startRecording('{{ camera_id }}')"
+        >
+          녹화
+        </button>
+        <button
+          id="stop-btn"
+          class="btn btn-warning"
+          onclick="stopRecording('{{ camera_id }}')"
+          disabled
+        >
+          중단
+        </button>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <h3>로그</h3>
+      <div
+        id="log-output"
+        style="
+          border: 1px solid #ccc;
+          padding: 10px;
+          height: 300px;
+          overflow-y: scroll;
+        "
+      ></div>
+    </div>
+  </div>
+  <a href="/" class="btn btn-secondary mt-3">돌아가기</a>
+  {% else %}
+  <p>카메라 ID가 없습니다.</p>
+  {% endif %}
+</div>
+
+<script>
+  let isRecording = false;
+
+  function startRecording(cameraId) {
+    fetch(`/start_record/${cameraId}`)
+      .then((response) => response.text())
+      .then((data) => {
+        console.log(data);
+        isRecording = true;
+        document.getElementById("record-btn").disabled = true;
+        document.getElementById("stop-btn").disabled = false;
+      });
+  }
+
+  function stopRecording(cameraId) {
+    if (isRecording) {
+      fetch(`/stop_record/${cameraId}`)
+        .then((response) => response.text())
+        .then((data) => {
+          console.log(data);
+          isRecording = false;
+          document.getElementById("record-btn").disabled = false;
+          document.getElementById("stop-btn").disabled = true;
+        });
+    }
+  }
+
+  // Real-time log updates using Server-Sent Events
+  const logOutput = document.getElementById("log-output");
+  const eventSource = new EventSource("/log_stream");
+
+  eventSource.onmessage = function (event) {
+    logOutput.innerHTML += event.data;
+    logOutput.scrollTop = logOutput.scrollHeight; // Scroll to the bottom
+  };
+
+  eventSource.onerror = function (error) {
+    console.error("SSE error:", error);
+    eventSource.close();
+  };
+</script>
+{% endblock %}

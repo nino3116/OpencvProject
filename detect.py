@@ -15,13 +15,16 @@ cap = cv.VideoCapture("http://192.168.0.124:8000/stream.mjpg")
 if not cap.isOpened():
     sys.exit("Cannot open camera")
 
+
 # 비디오 저장을 위한 변수
+
 fps = int(cap.get(cv.CAP_PROP_FPS))
 width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 output_path = "piCamDetect_v11.mp4"
 fourcc = cv.VideoWriter.fourcc(*"mp4v")
 video_writer = cv.VideoWriter(output_path, fourcc, fps, (width, height))
+
 
 # 사람별 색상 저장 딕셔너리
 person_colors = {}
@@ -82,16 +85,6 @@ while cap.isOpened():
 
                 person_count += 1
 
-    current_time = time.time()
-    this_moment = datetime.now()
-    if current_time - start_time >= 10:
-        print(f"Detected {person_count} persons at {this_moment}.")
-        file.write(
-            "Detected " + str(person_count) + " persons at " + str(this_moment) + "\n"
-        )
-        
-        start_time = current_time
-
     cv.putText(
         frame,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -103,6 +96,16 @@ while cap.isOpened():
 
     cv.imshow("Person Tracking by ByteTrack", frame)
     video_writer.write(frame)
+
+    current_time = time.time()
+    this_moment = datetime.now()
+    if current_time - start_time >= 10:
+        print(f"Detected {person_count} persons at {this_moment}.")
+        file.write(
+            "Detected " + str(person_count) + " persons at " + str(this_moment) + "\n"
+        )
+
+        start_time = current_time
 
     key = cv.waitKey(1)
     if key == ord("q"):

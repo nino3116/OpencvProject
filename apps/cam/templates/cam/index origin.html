@@ -1,0 +1,58 @@
+{% extends "cam/base.html" %}{% block content%}
+<div class="container mt-4">
+  <h2>카메라 서버 관리</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">카메라 서버 1</h5>
+          <p class="card-text">카메라 서버 1에 대한 설명입니다.</p>
+          <button
+            class="btn btn-primary"
+            onclick="openCameraStream('http://192.168.0.124:8000/stream.mjpg', 'camera1')"
+          >
+            관리
+          </button>
+          <!-- <a href="http://192.168.0.124:5000/video_feed" class="btn btn-primary"
+            >관리</a
+        > -->
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">카메라 서버 2</h5>
+          <p class="card-text">카메라 서버 2에 대한 설명입니다.</p>
+          <button
+            class="btn btn-primary"
+            onclick="openCameraStream('http://192.168.0.125:8000/stream.mjpg', 'camera2')"
+          >
+            관리
+          </button>
+          <!-- <a
+            href="http://192.168.0.125:8000/stream.mjpg"
+            class="btn btn-primary"
+            >관리</a
+        > -->
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">카메라 서버 3</h5>
+          <p class="card-text">카메라 서버 3에 대한 설명입니다.</p>
+          <button
+            class="btn btn-primary"
+            onclick="openCameraStream('http://192.168.0.130:8000/stream.mjpg', 'camera2')"
+          >
+            관리
+          </button>
+          <!--<a href="#" class="btn btn-primary">관리</a>-->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

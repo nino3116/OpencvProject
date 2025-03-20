@@ -205,3 +205,19 @@ pip-selfcheck.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv
+
+# recorded Videos
+recordedVideo/
+*.mp4
+
+# log files
+log*.txt
+
+# model (.pt)
+*.pt
+
+# css/ js
+static/
+
+# migrations
+migrations
