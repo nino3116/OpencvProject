@@ -7,6 +7,8 @@ from flask import (
     stream_with_context,
     redirect,
     url_for,
+    flash,
+    request,
 )
 import cv2 as cv
 from ultralytics import YOLO
@@ -16,7 +18,7 @@ import time
 from datetime import datetime
 from flask_login import login_required
 from apps.cam.forms import CameraAddForm
-from apps.cam.models import Cam
+from apps.cam.models import Cams
 from apps.app import db
 import os
 
@@ -199,7 +201,7 @@ def start_record(camera_id):
         camera_url = "http://192.168.0.125:8000/stream.mjpg"
         camera_name = "Camera Server 2"
     elif camera_id == "camera3":
-        camera_url = "http://192.168.0.130:8000/stream.mjpg"
+        camera_url = "http://192.168.0.124:8001/stream.mjpg"
         camera_name = "Camera Server 3"
     else:
         return "Invalid camera ID"
@@ -290,7 +292,8 @@ def log_stream():
 @cam.route("/cameras")
 @login_required
 def cameras():
-    return render_template("cam/cameraDB.html")
+    cams = Cams.query.all()
+    return render_template("cam/cameraDB.html", cams=cams)
 
 
 @cam.route("/cameras/add", methods=["GET", "POST"])
@@ -298,7 +301,7 @@ def cameras():
 def add_camera():
     form = CameraAddForm()
     if form.validate_on_submit():
-        cam = Cam(name=form.name.data, group=form.group.data, url=form.url.data)
+        cam = Cams(name=form.name.data, group=form.group.data, url=form.url.data)
         if cam.is_duplicate_url():
             flash("지정 영상 주소는 이미 등록되어 있습니다.")
             return redirect(url_for("cam.add_camera"))
@@ -312,3 +315,12 @@ def add_camera():
         # redirect
         return redirect(next_)
     return render_template("cam/addCamera.html", form=form)
+
+
+@cam.route("/cameras/{id}/delete", methods=["POST"])
+@login_required
+def delete_camera(id):
+    cam = Cams.query.filter_by(id=id).first()
+    db.session.delete(cam)
+    db.session.commit()
+    return redirect(url_for("cam.cameras"))

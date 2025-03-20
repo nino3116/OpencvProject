@@ -1,128 +1,28 @@
 {% extends "cam/base.html" %} {%block title%}Camera 관리{%endblock%} {% block
 content %}
-<body class="container mt-4">
+<div class="container mt-4">
   <h2 class="mb-4">📷 Camera 관리 시스템</h2>
-  {#
-  <form id="addForm" class="mb-4">
-    <div class="row">
-      <div class="col">
-        <input
-          type="text"
-          id="cam_name"
-          class="form-control"
-          placeholder="카메라 이름"
-          required
-        />
-      </div>
-      <div class="col">
-        <input
-          type="text"
-          id="cam_group"
-          class="form-control"
-          placeholder="카메라 그룹"
-        />
-      </div>
-      <div class="col">
-        <input
-          type="number"
-          id="num_person"
-          class="form-control"
-          placeholder="감지 인원 수"
-        />
-      </div>
-      #}
-      <div class="col">
-        <a href="{{url_for('cam.add_camera')}}" class="btn btn-primary">추가</a>
-      </div>
-    </div>
-  </form>
+  <table>
+    <tr>
+      <a href="{{url_for('cam.add_camera')}}"> 추가 </a>
+      <th>카메라 번호</th>
+      <th>카메라 이름(위치)</th>
+      <th>그룹</th>
+      <th>영상 주소</th>
+      <th>삭제</th>
+    </tr>
+    {% for cam in cams %}
+    <tr>
+      <td>{{ cam.id}}</td>
+      <td>{{ cam.name }}</td>
+      <td>{{ cam.group }}</td>
+      <td>{{ cam.url}}</td>
+      <td>
+        <a href="{{url_for('cam.delete_camera', id=cam.id)}}">삭제</a>
+      </td>
+    </tr>
 
-  <table class="table table-bordered">
-    <thead class="table-dark">
-      <tr>
-        <th>ID</th>
-        <th>카메라 이름</th>
-        <th>그룹</th>
-        <th>영상서버 주소</th>
-        <th>삭제</th>
-      </tr>
-    </thead>
-    <tbody id="cameraTable">
-      {% for camera in cam %}
-      <tr>
-        <td>{{ camera.id }}</td>
-        <td contenteditable="true" onBlur="updateCam({{ cam.id }}, this)">
-          {{ camera.name }}
-        </td>
-        <td contenteditable="true" onBlur="updateCam({{ cam.id }}, this)">
-          {{ camera.group }}
-        </td>
-        <td contenteditable="true" onBlur="updateCam({{ cam.id }}, this)">
-          {{ camera.url }}
-        </td>
-        <td>
-          <button
-            class="btn btn-danger btn-sm"
-            onclick="deleteCam({{ camera.id }})"
-          >
-            삭제
-          </button>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
+    {% endfor %}
   </table>
-
-  <script>
-    $("#addForm").submit(function (e) {
-      e.preventDefault();
-      let data = {
-        name: $("#name").val(),
-        group: $("#group").val(),
-        url: $("#url").val(),
-      };
-      $.ajax({
-        url: "/add",
-        type: "POST",
-        contentType: "application/json", // JSON 형식으로 전송
-        data: JSON.stringify(data),
-        success: function (response) {
-          location.reload();
-        },
-        error: function (xhr, status, error) {
-          console.error("추가 실패 : ", error);
-        },
-      });
-    });
-
-    function updateCam(id, element) {
-      let column = ["name", "group", "url"][element.cellIndex - 1];
-      let oldValue = element.getAttribute("data-old_value");
-      let newValue = element.innerText.trim();
-
-      if (oldValue === newValue) return;
-
-      let data = { [column]: newValue };
-      element.setAttribute("data-old_value", newValue);
-
-      $.post(
-        `/update/${id}`,
-        JSON.stringify(data),
-        function () {
-          confirm("수정 완료했습니다.");
-          console.log("팝업 닫힘");
-        },
-        "json"
-      );
-    }
-
-    function deleteCam(id) {
-      if (confirm("정말 삭제하시겠습니까?")) {
-        $.post(`/delete/${id}`, function () {
-          location.reload();
-        });
-      }
-    }
-  </script>
-  {% endblock %}
-</body>
+</div>
+{% endblock %}
