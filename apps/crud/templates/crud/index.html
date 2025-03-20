@@ -1,0 +1,25 @@
+{% extends "crud/base.html" %} {% block title %} 사용자의 일람 {% endblock %} {%
+block content %}
+<h2>사용자 일람</h2>
+
+<a href="{{ url_for('crud.create_user')}}">사용자 신규 작성</a>
+
+<table>
+  <tr>
+    <th>사용자 ID</th>
+    <th>사용자 이름</th>
+    <th>메일 주소</th>
+  </tr>
+  {% for user in users %}
+  <tr>
+    <td>
+      <a href="{{ url_for('crud.edit_user', user_id=user.id)}}">
+        {{ user.id }}
+      </a>
+    </td>
+    <td>{{ user.username }}</td>
+    <td>{{ user.email }}</td>
+  </tr>
+  {% endfor%}
+</table>
+{% endblock %}
