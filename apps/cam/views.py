@@ -268,3 +268,9 @@ def log_stream():
             time.sleep(1)  # Check for new content every 1 second
 
     return Response(stream_with_context(event_stream()), mimetype="text/event-stream")
+
+
+@cam.route("/cameras")
+@login_required
+def cameras():
+    return render_template("cam/cameraDB.html")
