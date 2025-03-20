@@ -210,6 +210,9 @@ pip-selfcheck.json
 recordedVideo/
 *.mp4
 
+# snapshots
+snapshot/
+
 # log files
 log*.txt
 

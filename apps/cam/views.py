@@ -1,5 +1,13 @@
 # 기업 연계 프로젝트 1
-from flask import Flask, Blueprint, render_template, Response, stream_with_context
+from flask import (
+    Flask,
+    Blueprint,
+    render_template,
+    Response,
+    stream_with_context,
+    redirect,
+    url_for,
+)
 import cv2 as cv
 from ultralytics import YOLO
 import sys
@@ -7,6 +15,9 @@ import random
 import time
 from datetime import datetime
 from flask_login import login_required
+from apps.cam.forms import CameraAddForm
+from apps.cam.models import Cam
+from apps.app import db
 import os
 
 cam = Blueprint(
@@ -111,11 +122,17 @@ def generate_frames(camera_url, camera_name):
 
         current_time = time.time()
         this_moment = datetime.now()
-        if current_time - start_time >= 10:
-            print(f"Detected {person_count} persons at {this_moment} on {camera_name}.")
+        if current_time - start_time >= 60:
+            # print(f"Detected {person_count} persons at {this_moment} on {camera_name}.")
             log_file.write(
                 f"Detected {person_count} persons at {this_moment} on {camera_name}.\n"
             )
+            snapshot_dir = f"./snapshot/{now_day}/"
+            snapshot_path = f"{snapshot_dir}{camera_name}_{now}.jpg"
+            os.makedirs(snapshot_dir, exist_ok=True)
+            cv.imwrite(snapshot_path, frame)
+            # print(f"snapshot saved to {snapshot_path}")
+            log_file.write(f"snapshot saved to '{snapshot_path}")
             start_time = current_time
 
         _, buffer = cv.imencode(".jpg", frame)
@@ -274,3 +291,24 @@ def log_stream():
 @login_required
 def cameras():
     return render_template("cam/cameraDB.html")
+
+
+@cam.route("/cameras/add", methods=["GET", "POST"])
+@login_required
+def add_camera():
+    form = CameraAddForm()
+    if form.validate_on_submit():
+        cam = Cam(name=form.name.data, group=form.group.data, url=form.url.data)
+        if cam.is_duplicate_url():
+            flash("지정 영상 주소는 이미 등록되어 있습니다.")
+            return redirect(url_for("cam.add_camera"))
+        db.session.add(cam)
+        db.session.commit()
+        next_ = request.args.get("next")
+        # next가 비어 있거나, "/"로 시작하지 않는 경우 -> 상대경로 접근X.
+        if next_ is None or not next_.startswith("/"):
+            # next의 값을 엔드포인트 cam.cameras로 지정
+            next_ = url_for("cam.cameras")
+        # redirect
+        return redirect(next_)
+    return render_template("cam/addCamera.html", form=form)

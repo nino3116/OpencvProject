@@ -1,7 +1,7 @@
 {% extends "cam/base.html" %} {% block title%} 카메라 {{ camera_id}} 관리 {%
 endblock %}{% block content %}
 <div class="container mt-4">
-  <h2>카메라 스트림</h2>
+  <h2>{{ camera_id}} 스트림</h2>
   {% if camera_id %}
   <div class="row">
     <div class="col-md-8">
