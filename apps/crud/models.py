@@ -19,14 +19,12 @@ class User(db.Model, UserMixin):
     # 컬럼 정의
     id = db.Column(db.Integer, primary_key=True)  # primary_key 속성 부여
     username = db.Column(db.String, index=True)  # index 색인
-    email = db.Column(db.String, index=True, unique=True)  # unique, index 설정
+    user_id = db.Column(db.String, nullable=False, unique=True)
+    # email = db.Column(db.String, index=True, unique=True)  # unique, index 설정
     password_hash = db.Column(db.String)
-    created_at = db.Column(
-        db.DateTime, default=datetime.now
-    )  # default는 기본값(현재시간)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.now, onupdate=datetime.now
-    )  # onupdate 데이터를 수정할때마다 시간이 업데이트될 수 있게
+    created_at = db.Column(db.DateTime, default=datetime.now)  # default는 기본값(현재시간)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)  
+    # onupdate는 데이터를 수정할때마다 시간이 업데이트될 수 있게
     
     # backref를 이용하여 릴레이션 정보를 설정한다.
     # user_images = db.relationship("UserImage", backref="user", order_by="desc(UserImage.id)")
@@ -45,11 +43,12 @@ class User(db.Model, UserMixin):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    # 이메일 주소 중복 체크
-    def is_duplicate_email(self):
-        return User.query.filter_by(email=self.email).first()
+    # # 이메일 주소 중복 체크
+    # def is_duplicate_email(self):
+    #     return User.query.filter_by(email=self.email).first()
 
     # 로그인하고 있는 사용자 정보를 얻는 함수를 작성
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(user_id)
+    

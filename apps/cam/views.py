@@ -6,7 +6,7 @@ from apps.app import db
 
 from apps.cam.models import Cam
 
-from flask_login import login_required
+from flask_login import login_required # type: ignore
 
 # Blueprint로 crud 앱을 생성한다.
 cam = Blueprint(

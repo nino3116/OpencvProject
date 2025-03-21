@@ -38,8 +38,9 @@ def create_user():
     if form.validate_on_submit():  # submit 클릭시 검증에 문제가 없는 경우.
         # 사용자 정보 생성
         user = User(
+            user_id=form.user_id.data,
             username=form.username.data,
-            email=form.email.data,
+            # email=form.email.data,
             password=form.password.data,
         )
 
@@ -73,7 +74,7 @@ def edit_user(user_id):
     # form으로부터 제출된 경우는 사용자를 갱신하여 사용자의 일람 화면으로 리다이렉트
     if form.validate_on_submit():  # post 메서드로 수정 정보가 들어온 경우
         user.username = form.username.data
-        user.email = form.email.data
+        # user.email = form.email.data
         user.password = form.password.data
         # DB에 적용
         db.session.add(user)  # primary key의 값이 있는 경우는 수정, 없으면 생성이다

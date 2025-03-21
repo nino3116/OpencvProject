@@ -4,10 +4,7 @@
     <meta charset="utf-8" />
     <!-- title을 상속처에서 구현한다.-->
     <title>{% block title %}{% endblock %}</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('crud.static', filename='style.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('crud.static', filename='style.css') }}"/>
   </head>
   <body>
     <div>

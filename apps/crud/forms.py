@@ -16,14 +16,23 @@ class UserForm(FlaskForm):
         ],
     )
 
-    # email 속성의 레이블과 검증 설정
-    email = StringField(
-        "메일 주소",
+     # user_id 속성의 레이블과 검증 설정
+    user_id = StringField(
+        name="아이디",
         validators=[
-            DataRequired(message="메일 주소는 필수입니다."),
-            Email(message="메일 주소의 형식으로 입력해 주세요."),
+            DataRequired(message="아이디는 필수 입니다."),
+            Length(min=4, max=15, message="최소 2글자부터 20문자 이내로 입력하세요"),
         ],
     )
+        
+    # # email 속성의 레이블과 검증 설정
+    # email = StringField(
+    #     "메일 주소",
+    #     validators=[
+    #         DataRequired(message="메일 주소는 필수입니다."),
+    #         Email(message="메일 주소의 형식으로 입력해 주세요."),
+    #     ],
+    # )
 
     # 사용자 폼의 password 속성의 레이블과 검증 설정
     password = PasswordField(

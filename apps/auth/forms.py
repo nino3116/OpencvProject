@@ -13,12 +13,12 @@ class SignUpForm(FlaskForm):
             Length(2, 30, "2글자 이상 30글자 이내로 작성해 주세요."),
         ],
     )
-
-    email = StringField(
-        "메일 주소",
+    
+    user_id = StringField(
+        "아이디",
         validators=[
-            DataRequired("메일 주소는 필수 입니다."),
-            Email("메일 주소 형식으로 입력해 주세요."),
+            DataRequired("아이디는 필수 입니다."),
+            Length(4, 15, "4글자 이상 15글자 이내로 작성해 주세요."),
         ],
     )
 
@@ -30,11 +30,10 @@ class SignUpForm(FlaskForm):
 
 # LoginForm 클래스
 class LoginForm(FlaskForm):
-    email = StringField(
-        "메일 주소",
+    user_id = StringField(
+        "아이디",
         validators=[
-            DataRequired("이메일 주소는 필수입니다."),
-            Email("이메일 주소 형식으로 입력하세요."),
+            DataRequired("아이디 필수입니다."),
         ],
     )
     password = PasswordField(

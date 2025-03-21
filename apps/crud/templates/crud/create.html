@@ -5,17 +5,19 @@
   action="{{ url_for('crud.create_user') }}"
   method="POST"
   novalidate="novalidate"
->
+  >
   {{ form.csrf_token }}
+  
+  <p>{{ form.user_id.label }} {{ form.user_id(placeholder="아이디") }}</p>
+  {% for error in form.user_id.errors %}
+  <span style="color: red">{{ error }}</span>
+  {% endfor %}
+  
   <p>{{ form.username.label }} {{ form.username(placeholder="사용자명") }}</p>
   {% for error in form.username.errors %}
   <span style="color: red">{{ error }}</span>
   {% endfor %}
 
-  <p>{{ form.email.label }} {{ form.email(placeholder="메일 주소") }}</p>
-  {% for error in form.email.errors %}
-  <span style="color: red">{{ error }}</span>
-  {% endfor %}
 
   <p>{{ form.password.label }} {{ form.password(placeholder="비밀번호") }}</p>
   {% for error in form.password.errors %}
@@ -23,5 +25,6 @@
   {% endfor %}
 
   <p>{{ form.submit() }}</p>
+
 </form>
 {% endblock %}

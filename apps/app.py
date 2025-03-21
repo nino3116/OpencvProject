@@ -21,7 +21,6 @@ db = SQLAlchemy()
 # CSRFProtect 객체 생성
 csrf = CSRFProtect()
 
-
 # LoginManager 객체 생성
 login_manager = LoginManager()
 # login_view 속성에 미 로그인시 리다이렉트하는 엔드포인트를 지정

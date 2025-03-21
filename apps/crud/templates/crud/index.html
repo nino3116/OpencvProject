@@ -6,9 +6,9 @@ block content %}
 
 <table>
   <tr>
+    <th>사용자 번호</th>
     <th>사용자 ID</th>
     <th>사용자 이름</th>
-    <th>메일 주소</th>
   </tr>
   {% for user in users %}
   <tr>
@@ -17,8 +17,8 @@ block content %}
         {{ user.id }}
       </a>
     </td>
+    <td>{{ user.user_id }}</td>
     <td>{{ user.username }}</td>
-    <td>{{ user.email }}</td>
   </tr>
   {% endfor%}
 </table>

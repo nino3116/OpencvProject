@@ -14,8 +14,8 @@
     {% for message in get_flashed_messages() %}
     <div class="dt-auth-flash">{{ message }}</div>
     {% endfor %}
+    {{ form.user_id(class="form-control dt-auth-input", placeholder="아이디") }}
     {{ form.username(size=30, class="form-control dt-auth-input", placeholder="사용자명") }}
-    {{ form.email(class="form-control dt-auth-input", placeholder="메일 주소") }}
     {{ form.password(class="form-control dt-auth-input", placeholder="비밀번호") }}
     {{ form.submit(class="btn btn-md btn-primary btn-block dt-auth-btn") }}
   </form>
