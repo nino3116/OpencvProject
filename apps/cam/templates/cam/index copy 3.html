@@ -9,22 +9,18 @@
         <div class="card-body">
           <h5 class="card-title">{{ cam.name }}</h5>
           <p class="card-text">{{ cam.group }}</p>
-          <div id="camera-{{ cam.id }}-stream" class="mt-2">
-            <img
-              src="{{ url_for('cam.camera_stream', camera_id=cam.id) }}"
-              style="width: 100%"
-            />
-          </div>
           <a
             href="{{ url_for('cam.stream_page', camera_id=cam.id) }}"
             class="btn btn-primary"
           >
             관리
           </a>
-          <a href="{{ url_for('cam.recorded_videos', camera_id=cam.id) }}" class="btn btn-info mt-2">
-            영상 목록
-        </a>
-          </a>
+          <div id="camera-{{ cam.id }}-stream" class="mt-2">
+            <img
+              src="{{ url_for('cam.camera_stream', camera_id=cam.id) }}"
+              style="width: 100%"
+            />
+          </div>
         </div>
       </div>
     </div>

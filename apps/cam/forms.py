@@ -6,7 +6,7 @@ from wtforms.validators import DataRequired, URL
 # 카메라 등록 폼 클래스
 
 
-class CameraAddForm(FlaskForm):
+class CameraForm(FlaskForm):
     name = StringField(
         "카메라 이름", validators=[DataRequired("카메라 이름은 필수 입니다.")]
     )
@@ -19,3 +19,7 @@ class CameraAddForm(FlaskForm):
         validators=[DataRequired("카메라 영상 주소는 필수 입니다.")],
     )
     submit = SubmitField("카메라 등록")
+
+
+class DeleteCameraForm(FlaskForm):
+    submit = SubmitField("삭제")

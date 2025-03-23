@@ -1,0 +1,41 @@
+{% extends "cam/base.html" %}{% block title %} 카메라 정보 편집 {% endblock
+title %} {% block content%}
+<h2>카메라 편집</h2>
+<form
+  action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
+  method="POST"
+  novalidate="novalidate"
+>
+  {{ form.csrf_token }}
+  <p>
+    {{ form.name.label }} {{ form.name(placeholder="카메라명", value=cam.name)
+    }}
+  </p>
+  {% for error in form.name.errors %}
+  <span style="color: red">{{ error }} </span>
+  {% endfor %}
+  <p>
+    {{ form.group.label }} {{ form.group(placeholder="그룹명", value=cam.group)
+    }}
+  </p>
+  {% for error in form.group.errors %}
+  <span style="color: red">{{ error }} </span>
+  {% endfor %}
+  <p>
+    {{ form.url.label }} {{ form.url(placeholder="영상 서버 주소",
+    value=cam.url) }}
+  </p>
+  {% for error in form.url.errors %}
+  <span style="color: red">{{ error }} </span>
+  {% endfor %}
+  <p>{{ form.submit(value='갱신') }}</p>
+</form>
+
+<form
+  action="{{ url_for('cam.delete_camera', camera_id=cam.id) }}"
+  method="POST"
+>
+  {{ form.csrf_token }}
+  <input type="submit" value="삭제" />
+</form>
+{% endblock %}

@@ -60,4 +60,9 @@ def create_app(config_key):
 
     app.register_blueprint(cam_views.cam)
 
+    # Register the background task initialization
+    # from apps.cam.views import initialize_background_tasks  # Import the function
+
+    # initialize_background_tasks(app)  # Pass the app instance
+
     return app

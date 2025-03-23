@@ -1,0 +1,35 @@
+{% extends "cam/base.html" %} {% block title %} 카메라 서버 관리 {% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>카메라 서버 관리</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">카메라 서버 1</h5>
+          <p class="card-text">카메라 서버 1에 대한 설명입니다.</p>
+          <a href="/stream_page/camera1" class="btn btn-primary">관리</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">카메라 서버 2</h5>
+          <p class="card-text">카메라 서버 2에 대한 설명입니다.</p>
+          <a href="/stream_page/camera2" class="btn btn-primary">관리</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">카메라 서버 3</h5>
+          <p class="card-text">카메라 서버 3에 대한 설명입니다.</p>
+          <a href="/stream_page/camera3" class="btn btn-primary">관리</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

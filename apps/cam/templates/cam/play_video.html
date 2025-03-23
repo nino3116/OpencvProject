@@ -1,0 +1,18 @@
+{% extends "cam/base.html" %} {% block title %} 영상 재생 {% endblock %} {%
+block content %}
+<div class="container mt-4">
+  <h2>영상 재생</h2>
+  <video width="80%" controls>
+    <source
+      src="{{ url_for('cam.play_video', path=video_path) }}"
+      type="video/mp4"
+    />
+    Your browser does not support the video tag.
+  </video>
+  <a
+    href="{{ url_for('cam.recorded_videos', camera_id=camera_id) }}"
+    class="btn btn-secondary mt-3"
+    >영상 목록으로 돌아가기</a
+  >
+</div>
+{% endblock %}

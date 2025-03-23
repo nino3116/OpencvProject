@@ -1,0 +1,40 @@
+{% extends "cam/base.html" %} {% block title %} {{ camera_name }} 녹화 영상 {%
+endblock %} {% block content %}
+<div class="container mt-4">
+  <h2>{{ camera_name }} 녹화 영상</h2>
+  {% if not videos %}
+  <p>저장된 영상이 없습니다.</p>
+  {% else %}
+  <ul class="list-group">
+    {% for video in videos %}
+    <li class="list-group-item">
+      {{ video.filename }} ({{ video.date }})
+      <a
+        href="{{ url_for('cam.play_video_page', camera_id=video.camera_id, path=video.path) }}"
+        class="btn btn-primary btn-sm float-right ml-1"
+        >재생</a
+      >
+      <a
+        href="{{ url_for('cam.download_video', path=video.path) }}"
+        class="btn btn-success btn-sm float-right ml-1"
+        >다운로드</a
+      >
+      <form
+        method="POST"
+        action="{{ url_for('cam.delete_recorded_video', path=video.path) }}"
+        style="display: inline"
+      >
+        {{ form.hidden_tag() }}
+        <button type="submit" class="btn btn-danger btn-sm float-right">
+          삭제
+        </button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <a href="{{ url_for('cam.index') }}" class="btn btn-secondary mt-3"
+    >메인으로 돌아가기</a
+  >
+</div>
+{% endblock %}

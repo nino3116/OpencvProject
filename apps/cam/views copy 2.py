@@ -1,4 +1,3 @@
-# 기업 연계 프로젝트 1
 from flask import (
     Flask,
     Blueprint,
@@ -124,8 +123,8 @@ def generate_frames(camera_url, camera_name):
 
         current_time = time.time()
         this_moment = datetime.now()
-        if current_time - start_time >= 60:
-            # print(f"Detected {person_count} persons at {this_moment} on {camera_name}.")
+        if current_time - start_time >= 10:
+            print(f"Detected {person_count} persons at {this_moment} on {camera_name}.")
             log_file.write(
                 f"Detected {person_count} persons at {this_moment} on {camera_name}.\n"
             )
@@ -160,30 +159,16 @@ def generate_frames(camera_url, camera_name):
 @cam.route("/")
 @login_required
 def index():
-    return render_template("cam/index.html")
+    cams = Cams.query.all()
+    return render_template("cam/index.html", cams=cams)
 
 
 @cam.route("/stream/<camera_id>")
 @login_required
 def camera_stream(camera_id):
-    camera_url = ""
-    camera_name = ""
-    if camera_id == "camera1":
-        camera_url = "http://192.168.0.124:8000/stream.mjpg"
-        camera_name = "Camera Server 1"
-    elif camera_id == "camera2":
-        camera_url = "http://192.168.0.125:8000/stream.mjpg"
-        camera_name = "Camera Server 2"
-    elif camera_id == "camera3":
-        camera_url = "http://192.168.0.124:8001/stream.mjpg"
-        camera_name = "Camera Server 3"
-    elif camera_id == "camera4":
-        camera_url = "http://192.168.0.126:8000/stream.mjpg"
-        camera_name = "Camera Server 4"
-    else:
-        return "Invalid camera ID"
+    cam_obj = Cams.query.filter_by(id=camera_id).first_or_404()
     return Response(
-        generate_frames(camera_url, camera_name),
+        generate_frames(cam_obj.url, cam_obj.name),
         mimetype="multipart/x-mixed-replace; boundary=frame",
     )
 
@@ -195,22 +180,9 @@ def stream_page(camera_id):
 
 @cam.route("/start_record/<camera_id>")
 def start_record(camera_id):
-    camera_url = ""
-    camera_name = ""
-    if camera_id == "camera1":
-        camera_url = "http://192.168.0.124:8000/stream.mjpg"
-        camera_name = "Camera Server 1"
-    elif camera_id == "camera2":
-        camera_url = "http://192.168.0.125:8000/stream.mjpg"
-        camera_name = "Camera Server 2"
-    elif camera_id == "camera3":
-        camera_url = "http://192.168.0.124:8001/stream.mjpg"
-        camera_name = "Camera Server 3"
-    elif camera_id == "camera4":
-        camera_url = "http://192.168.0.126:8000/stream.mjpg"
-        camera_name = "Camera Server 4"
-    else:
-        return "Invalid camera ID"
+    cam_obj = Cams.query.filter_by(id=camera_id).first_or_404()
+    camera_name = cam_obj.name
+    camera_url = cam_obj.url
 
     cap = camera_streams.get(camera_name)
     if cap is None or not cap.isOpened():
@@ -236,18 +208,8 @@ def start_record(camera_id):
 
 @cam.route("/stop_record/<camera_id>")
 def stop_record(camera_id):
-    camera_name = ""
-    if camera_id == "camera1":
-        camera_name = "Camera Server 1"
-    elif camera_id == "camera2":
-        camera_name = "Camera Server 2"
-    elif camera_id == "camera3":
-        camera_name = "Camera Server 3"
-    elif camera_id == "camera4":
-        camera_name = "Camera Server 4"
-    else:
-        return "Invalid camera ID"
-
+    cam_obj = Cams.query.filter_by(id=camera_id).first_or_404()
+    camera_name = cam_obj.name
     camera_name_key = camera_name.replace(" ", "_").lower()
     if camera_name_key in recording_status and recording_status[camera_name_key]:
         recording_status[camera_name_key] = False
