@@ -15,13 +15,6 @@ title %} {% block content%}
   <span style="color: red">{{ error }} </span>
   {% endfor %}
   <p>
-    {{ form.group.label }} {{ form.group(placeholder="그룹명", value=cam.group)
-    }}
-  </p>
-  {% for error in form.group.errors %}
-  <span style="color: red">{{ error }} </span>
-  {% endfor %}
-  <p>
     {{ form.url.label }} {{ form.url(placeholder="영상 서버 주소",
     value=cam.url) }}
   </p>

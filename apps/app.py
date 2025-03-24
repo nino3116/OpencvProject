@@ -26,6 +26,7 @@ login_manager.login_view = "auth.login"
 # login_message 속성 : 로그인시 표시할 메시지를 지정. 현재는 표시할 내용없어서 ""
 # login_message는 기본값으로 설정되어 있어요. 영어로 값이 이미 존재함.
 login_manager.login_message = ""
+migrate = Migrate()
 
 
 # create_app 함수 작성
@@ -40,8 +41,7 @@ def create_app(config_key):
     # SQLAlchemy와 앱 연계
     db.init_app(app)
     # Migrate와 앱 연계
-    Migrate(app, db)
-
+    migrate.init_app(app, db)
     # csrf 앱 연계
     csrf.init_app(app)
 

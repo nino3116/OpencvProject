@@ -12,11 +12,9 @@ content%}
         {{ form.csrf_token }} {% for message in get_flashed_messages() %}
         <div class="dt-auth-flash">{{ message }}</div>
         {% endfor %} {{ form.name(size=30, class="form-control dt-auth-input",
-        placeholder="카메라명(위치)") }} {{ form.group(size=30,
-        class="form-control dt-auth-input", placeholder="카메라 그룹") }} {{
-        form.url(class="form-control dt-auth-input", placeholder="영상서버
-        주소") }} {{ form.submit(class="btn btn-md btn-primary btn-block
-        dt-auth-btn") }}
+        placeholder="카메라명(위치)") }} {{ form.url(class="form-control
+        dt-auth-input", placeholder="영상서버 주소") }} {{
+        form.submit(class="btn btn-md btn-primary btn-block dt-auth-btn") }}
       </form>
     </section>
   </div>

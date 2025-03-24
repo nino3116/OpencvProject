@@ -17,7 +17,6 @@ endblock %} {% block content %}
       <tr>
         <td>{{ cam.id }}</td>
         <td>{{ cam.name }}</td>
-        <td>{{ cam.group }}</td>
         <td>{{ cam.url }}</td>
         <td>
           <a href="{{url_for('cam.edit_camera', camera_id=cam.id)}}">수정</a>

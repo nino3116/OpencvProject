@@ -66,6 +66,33 @@ endblock %}{% block content %}
           isRecording = false;
           document.getElementById("record-btn").disabled = false;
           document.getElementById("stop-btn").disabled = true;
+
+          // 녹화 중단 후 영상 정보 저장 라우트 호출
+          fetch(`/get_last_video_path/${cameraId}`)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data && data.video_path) {
+                const formData = new FormData();
+                formData.append("video_path", data.video_path);
+                fetch(`/save_video_info/${cameraId}`, {
+                  method: "POST",
+                  body: formData,
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    console.log("Video info saved:", data);
+                    // 저장 성공 후 처리 (예: 메시지 표시 등)
+                  })
+                  .catch((error) => {
+                    console.error("Error saving video info:", error);
+                  });
+              } else {
+                console.warn("Could not retrieve the last video path.");
+              }
+            })
+            .catch((error) => {
+              console.error("Error getting last video path:", error);
+            });
         });
     }
   }

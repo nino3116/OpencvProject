@@ -10,10 +10,6 @@ class CameraForm(FlaskForm):
     name = StringField(
         "카메라 이름", validators=[DataRequired("카메라 이름은 필수 입니다.")]
     )
-    group = StringField(
-        "카메라 그룹",
-        validators=[DataRequired("카메라 그룹은 필수 입니다.")],
-    )
     url = StringField(
         "카메라 영상 주소",
         validators=[DataRequired("카메라 영상 주소는 필수 입니다.")],
