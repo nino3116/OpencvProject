@@ -51,7 +51,7 @@ def create_app(config_key):
 
     # SQLAlchemy와 앱을 연계한다
     db.init_app(app)
-    
+
     # Migrate와 앱을 연계한다
     Migrate(app, db)
 
@@ -74,10 +74,10 @@ def create_app(config_key):
 
     # 이제부터 작성하는 cam 패키지로부터 views를 import한다
     from apps.cam import views as cam_views
-    
+
     # # register_blueprint를 사용해 views의 dt를 앱에 등록한다
     app.register_blueprint(cam_views.cam, url_prefix="/cam")
-    
+
     # app.register_error_handler(404, page_not_found)
     # app.register_error_handler(500, internal_server_error)
 

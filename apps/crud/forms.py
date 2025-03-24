@@ -16,7 +16,7 @@ class UserForm(FlaskForm):
         ],
     )
 
-     # user_id 속성의 레이블과 검증 설정
+    # user_id 속성의 레이블과 검증 설정
     user_id = StringField(
         name="아이디",
         validators=[
@@ -24,7 +24,7 @@ class UserForm(FlaskForm):
             Length(min=4, max=15, message="최소 2글자부터 20문자 이내로 입력하세요"),
         ],
     )
-        
+
     # # email 속성의 레이블과 검증 설정
     # email = StringField(
     #     "메일 주소",

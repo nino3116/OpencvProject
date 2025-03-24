@@ -1,12 +1,11 @@
 # 기업 연계 프로젝트 1
 
-from flask import Blueprint, redirect, render_template, url_for
-
+from flask import Blueprint, redirect, render_template, url_for, jsonify, request
 from apps.app import db
-
 from apps.cam.models import Cam
-
-from flask_login import login_required # type: ignore
+from flask_login import login_required  # type: ignore
+import datetime
+import os
 
 # Blueprint로 crud 앱을 생성한다.
 cam = Blueprint(
@@ -16,11 +15,13 @@ cam = Blueprint(
     template_folder="templates",
 )
 
+
 @cam.route('/')
 @login_required
 def index():
     cams = Cam.query.all()
     return render_template("cam/index.html", cams=cams)
+
 
 # 새로운 데이터 추가 (AJAX)
 @cam.route('/add', methods=['POST'])
@@ -28,15 +29,16 @@ def index():
 def add_cam():
     data = request.get_json(force=True)
     new_cam = Cam(
-        cam_name = data['cam_name'],
-        cam_group = data.get('cam_group'),
-        num_person = data.get('num_person', 0)
+        cam_name=data['cam_name'],
+        cam_group=data.get('cam_group'),
+        num_person=data.get('num_person', 0)
     )
     db.session.add(new_cam)
     db.session.commit()
-    
+
     save_image(new_cam.id)  # 파일 생성
     return jsonify({'message': '카메라 추가 성공!'})
+
 
 # 데이터 수정 (AJAX)
 @cam.route('/update/<int:id>', methods=['POST'])
@@ -52,9 +54,10 @@ def update_cam(id):
     cam.num_person = data.get('num_person', cam.num_person)
 
     db.session.commit()
-    
+
     save_image(cam.id)  # 파일 생성
     return jsonify({'message': '카메라 수정 성공!'})
+
 
 # 데이터 삭제 (AJAX)
 @cam.route('/delete/<int:id>', methods=['POST'])
@@ -72,6 +75,17 @@ def delete_cam(id):
 @cam.route('/live')
 def live():
     return render_template("cam/live.html")
+
+
+@cam.route('/video')
+def video():
+    return render_template("cam/videoList.html")
+
+
+IMAGE_SAVE_PATH = 'capture_images'
+if not os.path.exists(IMAGE_SAVE_PATH):
+    os.mkdir(IMAGE_SAVE_PATH)
+
 
 # 파일 저장 함수 (이미지 캡처)
 def save_image(cam_id):
