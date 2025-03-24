@@ -68,6 +68,11 @@ def delete_cam(id):
     db.session.commit()
     return jsonify({'message': '카메라 삭제 성공!'})
 
+
+@cam.route('/live')
+def live():
+    return render_template("cam/live.html")
+
 # 파일 저장 함수 (이미지 캡처)
 def save_image(cam_id):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

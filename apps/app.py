@@ -51,6 +51,7 @@ def create_app(config_key):
 
     # SQLAlchemy와 앱을 연계한다
     db.init_app(app)
+    
     # Migrate와 앱을 연계한다
     Migrate(app, db)
 
