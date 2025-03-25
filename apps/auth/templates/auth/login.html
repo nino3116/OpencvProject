@@ -1,36 +1,27 @@
 {% extends "auth/base.html" %}
 {% block title %}login{% endblock %}
 {% block content %}
-  <div class = "mx-auto dt-auth-main">
-    <div class = "card-dt-auth-login">
-      <!-- <nav class="navbar bg-dark border-bottom border-body" data-bs-theme="dark">
-      </nav> -->
-      
-          <form method="post" action="{{ url_for ('auth.login') }}">
-
-            <main class="form-signin w-100 m-auto">
-              <h1 class = "h3 mb-3 fw-normal">Please sign in</h1>
-
-            
-              <div class = "form-floating">
-                {{ form.csrf_token }}
-
-                {{ form.user_id(class ="form-control dt-auth-input", id= "floatingInput", placeholder="UserID") }}
-              <label for="floatingInput"></label>
-              </div>
-
-              <div class = "form-floating">
-              {{ form.password(class ="form-control dt-auth-input", id= "floatingPassword", placeholder="Password") }}
-              <label for="floatingPassword"></label>
-              </div>
-              <button class = "btn btn-primary w-100 py-2", type = "submit">Sign in</button>
-                <p class = "mt-5 mb-3 text-white">© 2025-03~04 이현우 안재원 김제나 project!!</p> 
-
-            {% for message in get_flashed_messages() %}
+<div class = "mx-auto dt-auth-main">
+  <div class = "card-dt-auth-login">
+      <form method="post" action="{{ url_for ('auth.login') }}">
+        <main class="form-signin w-100 m-auto">
+          <h1 class = "h3 mb-3 fw-normal">Please sign in</h1>
+          <div class = "form-floating">
+            {{ form.csrf_token }}
+            {{ form.user_id(class ="form-control dt-auth-input", id= "floatingInput", placeholder="UserID") }}
+            <label for="floatingInput"></label>
+          </div>
+          <div class = "form-floating">
+            {{ form.password(class ="form-control dt-auth-input", id= "floatingPassword", placeholder="Password") }}
+            <label for="floatingPassword"></label>
+          </div>
+          <button class = "btn btn-primary w-100 py-2", type = "submit">Sign in</button>
+            <p class = "mt-5 mb-3 text-white">© 2025-03~04 이현우 안재원 김제나 project!!</p> 
+          {% for message in get_flashed_messages() %}
             <span class = "dt-auth-falshed">{{ message }}</span>
-            {% endfor %}
-            </main>
-          </form>
-    </div>
-  </div>        
+          {% endfor %}
+        </main>
+      </form>
+  </div>
+</div>        
 {% endblock %}

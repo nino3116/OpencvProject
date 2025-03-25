@@ -78,6 +78,9 @@ def create_app(config_key):
     # # register_blueprint를 사용해 views의 dt를 앱에 등록한다
     app.register_blueprint(cam_views.cam, url_prefix="/cam")
 
+    @app.route("/")
+    def index():
+        return redirect(url_for("cam.index"))
     # app.register_error_handler(404, page_not_found)
     # app.register_error_handler(500, internal_server_error)
 

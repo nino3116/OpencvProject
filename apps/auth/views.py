@@ -17,6 +17,9 @@ from apps.auth.forms import LoginForm, SignUpForm
 # 사용자 객체 정보를 위한 정보 User import
 from apps.crud.models import User
 
+# 파이썬에서 정규 표현식 사용을 위한 re 모듈 import
+import re
+
 # Blueprint를 사용하여 auth를 생성
 auth = Blueprint(
     "auth",
@@ -37,19 +40,30 @@ def signup():
             username=form.username.data,
             password=form.password.data,
         )
-
-        # # 이메일 중복 체크 : 중복시 GET으로 signup으로 전달
-        # if user.is_duplicate_email():
-        #     flash("지정 이메일 주소는 이미 등록되어 있습니다.")
-        #     return redirect(url_for("auth.signup"))
         
         if user.is_duplicate_user_id():
-            flash("지정 아이디는 이미 등록되어 입니다.")
+            flash("지정 아이디는 이미 등록되어 있습니다.")
             return redirect(url_for("auth.signup"))
 
-        # DB등록
-        db.session.add(user)
-        db.session.commit()
+       
+        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}", password):
+                flash("비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.")
+                return redirect(url_for("auth.signup"))
+            
+        # 비밀번호 해싱 후 저장
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(user_id=user_id, username=username, password_hash=hashed_password)
+        
+        try:
+            # DB등록
+            db.session.add(new_user)
+            db.session.commit()
+            print("회원가입 성공","success")
+        except Exception as e:
+            print(f"회원가입 종 오류발생: {e}", "danger")
+            db.session.rollback()
+            return redirect(url_for("auth.signup"))
 
         # 사용자 정보를 세션에 저장
         login_user(user)
@@ -59,7 +73,7 @@ def signup():
         # next가 비어 있거나, "/"로 시작하지 않는 경우 -> 상대경로 접근X.
         if next_ is None or not next_.startswith("/"):
             # next의 값을 엔드포인트 crud.users로 지정
-            next_ = url_for("crud.users")
+            next_ = url_for("auth.login")
         # redirect
         return redirect(next_)
     return render_template("auth/signup.html", form=form)

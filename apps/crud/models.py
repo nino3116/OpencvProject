@@ -47,6 +47,9 @@ class User(db.Model, UserMixin):
     # def is_duplicate_email(self):
     #     return User.query.filter_by(email=self.email).first()
 
+    def is_duplicate_user_id(self):
+        return User.query.filter_by(user_id=self.user_id).first()
+    
     # 로그인하고 있는 사용자 정보를 얻는 함수를 작성
     @login_manager.user_loader
     def load_user(user_id):

@@ -1,15 +1,22 @@
 
 <header class="mb-auto">
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="container-fluid">
+    <div class="d-flex gab-1 justify-content-between align-items-center">
         <h3 class="float-md-start mb-0">Camera</h3>
-        <nav class="nav nav-masthead justify-content-center float-md-end">
+        <nav class="nav nav-masthead justify-content-center float-md-end" data-bs-theme="dark">
             <a class="nav-link fw-bold py-1 px-2" aria-current="page" href="{{url_for ("cam.index")}}">Home</a>
             <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("cam.live") }}">Live</a>
             <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("cam.video") }}">Video List</a>
         </nav>
-        <button type="button" class="btn btn-light">
-            <a href="{{ url_for ("auth.logout")}}" title = "로그아웃" role = "button" alt= "로그아웃 버튼">logout</a>
-        </button>
+        <div class= "col-md-5 text-end">
+            <button type="button" class="btn btn-light me-2">
+                <a href="{{ url_for ("auth.logout")}}" title = "로그아웃" role = "button" alt= "로그아웃 버튼">logout</a>
+            </button>
+            <button type="button" class="btn btn-outline-light">
+                <a href="{{ url_for ("auth.signup")}}" title = "사용자 신규 등록" role = "button" alt= "사용자 신규 등록">sign in</a>
+            </button>
+        </div>
+    </div>
     </div>
 </header>
 

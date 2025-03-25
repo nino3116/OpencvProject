@@ -1,6 +1,5 @@
 {% extends "cam/base.html" %} 
 {% block title %}Live{% endblock %} 
-
 <body class="d-flex h-100 text-center bg-dark text-white ">
 {% block content %}
 <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
@@ -8,6 +7,20 @@
 
 <main>
     <h1>Live page</h1>
+    <div class="row">
+        {% for cam in cams %}
+        <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+            <h5 class="card-title">{{ cam.cam_name }}</h5>
+            <div id="camera-{{ cam.id }}-stream" class="mt-2">
+                <img src="{{cam.cam_url}}" style="width: 100%" />
+            </div>
+            </div>
+        </div>
+        </div>
+        {% endfor %}
+    </div>
 </main>
 
 {% include "cam/footer.html" %}
