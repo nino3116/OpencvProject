@@ -1,11 +1,14 @@
 # 기업 연계 프로젝트 1
 
-from flask import Blueprint, redirect, render_template, url_for, jsonify, request
+from flask import Blueprint, redirect, render_template, url_for, jsonify, request, flash
+from flask_wtf.csrf import generate_csrf
 from apps.app import db
 from apps.cam.models import Cam
+from apps.cam.forms import CameraForm, DeleteCameraForm
 from flask_login import login_required  # type: ignore
 import datetime
 import os
+
 
 # Blueprint로 crud 앱을 생성한다.
 cam = Blueprint(
@@ -16,7 +19,7 @@ cam = Blueprint(
 )
 
 
-@cam.route('/')
+@cam.route("/")
 @login_required
 def index():
     cams = Cam.query.all()
@@ -24,65 +27,75 @@ def index():
 
 
 # 새로운 데이터 추가 (AJAX)
-@cam.route('/add', methods=['POST'])
+@cam.route("/add", methods=["GET", "POST"])
 @login_required
-def add_cam():
-    data = request.get_json(force=True)
-    new_cam = Cam(
-        cam_name=data['cam_name'],
-        cam_group=data.get('cam_group'),
-        num_person=data.get('num_person', 0)
-    )
-    db.session.add(new_cam)
-    db.session.commit()
+def add_camera():
+    form = CameraForm()
+    if form.validate_on_submit():
+        cam = Cam(cam_name=form.cam_name.data, cam_url=form.cam_url.data)
+        if cam.is_duplicate_url():
+            flash("지정 영상 주소는 이미 등록되어 있습니다.")
+            return redirect(url_for("cam.add_camera"))
+        db.session.add(cam)
+        db.session.commit()
+        next_ = request.args.get("next")
+        # next가 비어 있거나, "/"로 시작하지 않는 경우 -> 상대경로 접근X.
+        if next_ is None or not next_.startswith("/"):
+            # next의 값을 엔드포인트 cam.cameras로 지정
+            next_ = url_for("cam.cameras")
+        # redirect
+        return redirect(next_)
+    return render_template("cam/addCamera.html", form=form)
 
-    save_image(new_cam.id)  # 파일 생성
-    return jsonify({'message': '카메라 추가 성공!'})
 
-
-# 데이터 수정 (AJAX)
-@cam.route('/update/<int:id>', methods=['POST'])
+@cam.route("/<camera_id>/edit", methods=["GET", "POST"])
 @login_required
-def update_cam(id):
-    cam = Cam.query.get(id)
-    if not cam:
-        return jsonify({'message': '카메라 없음'}), 404
+def edit_camera(camera_id):
+    form = CameraForm()
+    cam = Cam.query.filter_by(id=camera_id).first()
 
-    data = request.get_json(force=True)
-    cam.cam_name = data.get('cam_name', cam.cam_name)
-    cam.cam_group = data.get('cam_group', cam.cam_group)
-    cam.num_person = data.get('num_person', cam.num_person)
+    # form 으로 부터 제출된경우는 사용자를 갱시낳여 사용자의 일람 화면으로 리다이렉트
+    if form.validate_on_submit():
+        cam.cam_name = form.cam_name.data
+        cam.cam_url = form.cam_url.data
+        db.session.add(cam)
+        db.session.commit()
+        return redirect(url_for("cam.cameras"))
 
-    db.session.commit()
-
-    save_image(cam.id)  # 파일 생성
-    return jsonify({'message': '카메라 수정 성공!'})
+    # GET의 경우에는 HTML 반환
+    return render_template("cam/editCamera.html", cam=cam, form=form)
 
 
-# 데이터 삭제 (AJAX)
-@cam.route('/delete/<int:id>', methods=['POST'])
+@cam.route("/<camera_id>/delete", methods=["POST"])
 @login_required
-def delete_cam(id):
-    cam = Cam.query.get(id)
-    if not cam:
-        return jsonify({'message': '카메라 없음'}), 404
-
+def delete_camera(camera_id):
+    cam = Cam.query.filter_by(id=camera_id).first()
     db.session.delete(cam)
     db.session.commit()
-    return jsonify({'message': '카메라 삭제 성공!'})
+    return redirect(url_for("cam.cameras"))
 
 
-@cam.route('/live')
+@cam.route("/cameras")
+@login_required
+def cameras():
+    cams = Cam.query.all()
+    csrf_token = generate_csrf()
+    form = DeleteCameraForm()  # Instantiate the form
+    return render_template("cam/cameraDB.html", cams=cams, csrf_token=csrf_token)
+
+
+@cam.route("/live")
 def live():
-    return render_template("cam/live.html")
+    cams = Cam.query.all()
+    return render_template("cam/live.html", cams=cams)
 
 
-@cam.route('/video')
+@cam.route("/video")
 def video():
     return render_template("cam/videoList.html")
 
 
-IMAGE_SAVE_PATH = 'capture_images'
+IMAGE_SAVE_PATH = "capture_images"
 if not os.path.exists(IMAGE_SAVE_PATH):
     os.mkdir(IMAGE_SAVE_PATH)
 

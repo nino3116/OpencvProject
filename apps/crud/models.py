@@ -22,8 +22,10 @@ class User(db.Model, UserMixin):
     user_id = db.Column(db.String, nullable=False, unique=True)
     # email = db.Column(db.String, index=True, unique=True)  # unique, index 설정
     password_hash = db.Column(db.String)
-    created_at = db.Column(db.DateTime, default=datetime.now)  # default는 기본값(현재시간)
-    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)  
+    created_at = db.Column(
+        db.DateTime, default=datetime.now
+    )  # default는 기본값(현재시간)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     # onupdate는 데이터를 수정할때마다 시간이 업데이트될 수 있게
 
     # backref를 이용하여 릴레이션 정보를 설정한다.
@@ -46,6 +48,8 @@ class User(db.Model, UserMixin):
     # # 이메일 주소 중복 체크
     # def is_duplicate_email(self):
     #     return User.query.filter_by(email=self.email).first()
+    def is_duplicate_user_id(self):
+        return User.query.filter_by(user_id=self.user_id).first()
 
     # 로그인하고 있는 사용자 정보를 얻는 함수를 작성
     @login_manager.user_loader
