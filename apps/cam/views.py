@@ -320,6 +320,7 @@ def update_videos():
                             and video_file.suffix == ".mp4"
                             and video_file.stem.startswith(camera_name_safe + "_")
                         ):
+                            print(f"Processing file: {video_file.stem}")  # 추가
                             relative_path = (
                                 Path(date_dir.name) / camera_name_safe / video_file.name
                             )
@@ -329,6 +330,7 @@ def update_videos():
                                 try:
                                     # Extract timestamp from filename if needed
                                     parts = video_file.stem.split("_")
+                                    print(f"Parts: {parts}")  # 추가
                                     recorded_time_str = None
                                     if len(parts) > 1:
                                         try:
@@ -341,7 +343,13 @@ def update_videos():
                                                 )
                                             )
                                         except ValueError:
+                                            print(
+                                                f"ValueError: {e} for file: {video_file.stem}"
+                                            )  # 추가
                                             pass
+                                    print(
+                                        f"Recorded Time String: {recorded_time_str}"
+                                    )  # 추가
 
                                     cam = Cams.query.filter_by(id=cam_id).first()
                                     camera_name = cam.name if cam else "Unknown Camera"
@@ -600,7 +608,6 @@ def edit_camera(camera_id):
     # form 으로 부터 제출된경우는 사용자를 갱시낳여 사용자의 일람 화면으로 리다이렉트
     if form.validate_on_submit():
         cam.name = form.name.data
-        cam.group = form.group.data
         cam.url = form.url.data
         db.session.add(cam)
         db.session.commit()

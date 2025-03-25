@@ -1,57 +1,56 @@
 {% extends "cam/base.html" %} {% block title %} 카메라 관리 데이터베이스 {%
 endblock %} {% block content %}
 <div class="container mt-4">
-  <h2>카메라 목록</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>이름</th>
-        <th>그룹</th>
-        <th>URL</th>
-        <th>작업</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for cam in cams %}
-      <tr>
-        <td>{{ cam.id }}</td>
-        <td>{{ cam.name }}</td>
-        <td>{{ cam.url }}</td>
-        <td>
-          <a href="{{url_for('cam.edit_camera', camera_id=cam.id)}}">수정</a>
-          <button
-            class="btn btn-danger btn-sm"
-            onclick="deleteCamera('{{ cam.id }}', '{{ csrf_token }}')"
-          >
-            삭제
-          </button>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <a href="{{ url_for('cam.add_camera') }}" class="btn btn-primary"
-    >카메라 추가</a
-  >
+	<h2>카메라 목록</h2>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>이름</th>
+				<th>URL</th>
+				<th>작업</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cam in cams %}
+			<tr>
+				<td>{{ cam.id }}</td>
+				<td>{{ cam.name }}</td>
+				<td>{{ cam.url }}</td>
+				<td>
+					<a href="{{url_for('cam.edit_camera', camera_id=cam.id)}}">수정</a>
+					<button
+						class="btn btn-danger btn-sm"
+						onclick="deleteCamera('{{ cam.id }}', '{{ csrf_token }}')"
+					>
+						삭제
+					</button>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<a href="{{ url_for('cam.add_camera') }}" class="btn btn-primary"
+		>카메라 추가</a
+	>
 </div>
 
 <script>
-  function deleteCamera(cameraId, csrfToken) {
-    if (confirm("정말로 삭제하시겠습니까?")) {
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = `/cameras/${cameraId}/delete`;
+	function deleteCamera(cameraId, csrfToken) {
+		if (confirm("정말로 삭제하시겠습니까?")) {
+			const form = document.createElement("form");
+			form.method = "POST";
+			form.action = `/cameras/${cameraId}/delete`;
 
-      const csrfInput = document.createElement("input");
-      csrfInput.type = "hidden";
-      csrfInput.name = "csrf_token";
-      csrfInput.value = csrfToken;
+			const csrfInput = document.createElement("input");
+			csrfInput.type = "hidden";
+			csrfInput.name = "csrf_token";
+			csrfInput.value = csrfToken;
 
-      form.appendChild(csrfInput);
-      document.body.appendChild(form);
-      form.submit();
-    }
-  }
+			form.appendChild(csrfInput);
+			document.body.appendChild(form);
+			form.submit();
+		}
+	}
 </script>
 {% endblock %}
