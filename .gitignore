@@ -207,4 +207,6 @@ pip-selfcheck.json
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv
 
 
-*/log.txt
+Process/log.txt
+Process/yolo11n.pt
+Process/dbconfig.py

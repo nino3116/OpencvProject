@@ -6,10 +6,14 @@ import random
 import time
 from datetime import datetime
 
-# CAMERA LIST
-camera_list=["http://192.168.0.124:8000/stream.mjpg","http://192.168.0.125:8000/stream.mjpg","http://192.168.0.124:8001/stream.mjpg"]
+import pymysql
+from dbconfig import dbconnect
 
-def ProcessVideo(camera_url,camera_idx):
+def ProcessVideo(camera_url,camera_idx,q):
+    # for db
+    conn = dbconnect()
+    cur = conn.cursor()
+    
     # YOLO 모델 불러오기
     model = YOLO("yolo11n.pt")
     # 비디오 영상 불러오기
@@ -17,6 +21,15 @@ def ProcessVideo(camera_url,camera_idx):
 
     if not cap.isOpened():
         sys.exit("Cannot open camera")
+    
+    # 비디오 저장을 위한 변수
+    # fps = int(cap.get(cv.CAP_PROP_FPS))
+    # width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    # height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    # output_path = f"piCamDetect_v11_{camera_idx}.mts"
+    # fourcc = cv.VideoWriter.fourcc(*"m2ts")
+    # video_writer = cv.VideoWriter(output_path, fourcc, fps, (width, height))
+
 
     # 사람별 색상 저장 딕셔너리
     person_colors = {}
@@ -87,7 +100,16 @@ def ProcessVideo(camera_url,camera_idx):
         )
 
         cv.imshow("Person Tracking by ByteTrack", frame)
-
+        # video_writer.write(frame)
+        
+        _, buffer = cv.imencode(".jpg", frame)
+        frame_bytes = buffer.tobytes()
+        try: 
+            fbin = open(str(camera_idx)+".bin", "wb")
+            fbin.write(frame_bytes)
+        finally:
+            fbin.close()
+        
         current_time = time.time()
         this_moment = datetime.now()
         if current_time - start_time >= 10:
@@ -95,15 +117,21 @@ def ProcessVideo(camera_url,camera_idx):
             file.write(
                 f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.\n"
             )
+            sql = "insert into Camera_Logs (camera_idx, dp_cnt, detected_time) values("+str(camera_idx)+","+str(person_count)+",'"+str(this_moment)+"')"
+            cur.execute(sql)
+            conn.commit()
+            
+            q.put([camera_idx,person_count,this_moment])
 
             start_time = current_time
-            
+    
         key = cv.waitKey(1)
         if key == ord("q"):
             break
-
+        
     file.write("========Stopped Logging========\n")
     file.close()
+    conn.close()
     cap.release()
     cv.destroyAllWindows()
 
@@ -111,15 +139,50 @@ def ProcessVideo(camera_url,camera_idx):
 if __name__ == '__main__':
     import multiprocessing
     # freeze_support()
+    
+    # Load Camera List from Database
+    conn = dbconnect()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
+    cur.execute("select * from camera_list")
+    camera_list = cur.fetchall()
+    print(camera_list)
+    
+    parent_conn, child_conn = multiprocessing.Pipe()
+    
     ProcessArr = []
+    q = multiprocessing.Queue()
 
-    for idx in range(len(camera_list)):
-        ProcessArr.append(multiprocessing.Process(target=ProcessVideo, args = (camera_list[idx],idx)))
+    for row in camera_list:
+        ProcessArr.append(multiprocessing.Process(target=ProcessVideo, args = (row['camera_url'], int(row['idx']),q)))
 
     print(ProcessArr)
 
     for p in ProcessArr:
-        p.start()
+        p.start() 
     
+    while True:
+        try:
+            pd = q.get(block=False)
+            print(pd)
+        except:
+            for p in ProcessArr:
+                if p.is_alive() == True:
+                    flag = True
+                    break
+                else:
+                    flag = False
+            if flag == False:
+                break
+
     for p in ProcessArr:
         p.join()
+        
+    q.put("finish")
+    
+    print("queue")
+    while True:
+        tmp = q.get()
+        if tmp == "finish":
+            break
+        else:
+            print(tmp)
