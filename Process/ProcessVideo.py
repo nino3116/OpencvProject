@@ -102,14 +102,6 @@ def ProcessVideo(camera_url,camera_idx,q):
         cv.imshow("Person Tracking by ByteTrack", frame)
         # video_writer.write(frame)
         
-        _, buffer = cv.imencode(".jpg", frame)
-        frame_bytes = buffer.tobytes()
-        try: 
-            fbin = open(str(camera_idx)+".bin", "wb")
-            fbin.write(frame_bytes)
-        finally:
-            fbin.close()
-        
         current_time = time.time()
         this_moment = datetime.now()
         if current_time - start_time >= 10:
