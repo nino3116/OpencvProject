@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-100" data-bs-theme="auto">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="" />
+		<title>cam</title>
+		<link
+			rel="stylesheet"
+			href="{{ url_for ('static', filename='css/bootstrap.min.css') }}"
+		/>
+		<link
+			rel="stylesheet"
+			href="{{ url_for ('cam.static', filename='style.css') }}"
+		/>
+		<title>{% block title %}{% endblock %}</title>
+	</head>
+	<body class="d-flex h-100 text-center bg-dark text-white">
+		{% block content %}{% endblock %}
+	</body>
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+	<script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
+</html>

@@ -1,0 +1,20 @@
+{% extends "cam/base.html" %} 
+{% block title %}Video List{% endblock %} 
+
+<body class="d-flex h-100 text-center bg-dark text-white ">
+{% block content %}
+<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+{% include "cam/header.html" %}
+
+<main>
+    <h1>Video List page</h1>
+</main>
+
+{% include "cam/footer.html" %}
+{% endblock %}
+</div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+<script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
