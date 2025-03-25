@@ -17,6 +17,7 @@ class Cams(db.Model):
 class Videos(db.Model):
     __tablename__ = "videos"
     id = db.Column(db.Integer, primary_key=True)
+    # camera_id = db.Column(db.Integer, db.ForeignKey(Cams.id))
     camera_name = db.Column(db.String, db.ForeignKey(Cams.name))
     recorded_time = db.Column(db.DateTime)
     video_path = db.Column(db.String)

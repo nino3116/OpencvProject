@@ -8,27 +8,26 @@ endblock %} {% block content %}
   <ul class="list-group">
     {% for video in videos %}
     <li class="list-group-item">
-      {% set parts = video['path'].split('/') %}{% set filename = parts[-1] if
+      {% set parts = video['path'].split('/') %} {% set filename = parts[-1] if
       parts else video['path'] %} {% if video.get('recorded_time') %} {{
       filename }} ({{ video['recorded_time'].split(' ')[0] }}) {% else %} {{
-      filename }} (날짜 정보 없음){% endif %}
+      filename }} (날짜 정보 없음) {% endif %}
       <a
-        href="{{ url_for('cam.play_video', path=video['path']) }}"
+        href="{{ url_for('cam.play_video', video_id=video['id']) }}"
         class="btn btn-primary btn-sm float-right ml-1"
         >재생</a
       >
 
       <a
-        href="{{ url_for('cam.download_video', path=video['path']) }}"
+        href="{{ url_for('cam.download_video', video_id=video['id']) }}"
         class="btn btn-success btn-sm float-right ml-1"
         >다운로드</a
       >
 
       <form
         method="POST"
-        action="{{ url_for('cam.delete_recorded_video', path=video['path'], camera_id=video['camera_id']) }}"
-        style="display: inline"
-      >
+        action="{{ url_for('cam.delete_recorded_video', video_id=video['id']) }}"
+        style="display: inline">
         {{ form.hidden_tag() }}
         <button type="submit" class="btn btn-danger btn-sm float-right">
           삭제

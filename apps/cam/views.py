@@ -19,10 +19,10 @@ import random
 import time
 from datetime import datetime
 from flask_login import login_required
-from apps.cam.forms import CameraForm, DeleteCameraForm
+from apps.cam.forms import CameraForm, DeleteCameraForm, DeleteVideoForm
 from flask_wtf.csrf import generate_csrf
 from apps.cam.models import Cams, Videos
-from apps.app import db
+from apps.app import db, app
 import os
 import multiprocessing
 import queue
@@ -91,8 +91,15 @@ def frame_producer(camera_url, camera_name, output_queue, record_command_queue):
                     fps = int(cap.get(cv.CAP_PROP_FPS))
                     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
                     height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-                    output_dir = f"./apps/recordedVideo/{now_day}/{camera_name.replace(' ', '_').lower()}/"
-                    output_path = f"{output_dir}{camera_name.replace(' ', '_').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
+                    output_dir = (
+                        current_app.config["VIDEO_FOLDER"]
+                        / now_day
+                        / camera_name.replace(" ", "_").lower()
+                    )
+                    output_path = (
+                        output_dir
+                        / f"{camera_name.replace(' ', '_').lower()}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.mp4"
+                    )
                     fourcc = cv.VideoWriter.fourcc(*"mp4v")
                     os.makedirs(output_dir, exist_ok=True, mode=0o777)
                     try:
@@ -173,8 +180,8 @@ def frame_producer(camera_url, camera_name, output_queue, record_command_queue):
             log_file.write(
                 f"Detected {person_count} persons at {this_moment} on {camera_name}.\n"
             )
-            snapshot_dir = f"./apps/snapshot/{now_day}/{camera_name}/"
-            snapshot_path = f"{snapshot_dir}{camera_name}_{now}.jpg"
+            snapshot_dir = current_app.config["SNAPSHOT_FOLDER"] / now_day / camera_name
+            snapshot_path = snapshot_dir / f"{camera_name}_{now}.jpg"
             os.makedirs(snapshot_dir, exist_ok=True, mode=0o777)
             cv.imwrite(snapshot_path, frame)
             log_file.write(f"snapshot saved to '{snapshot_path}'\n")
@@ -299,16 +306,22 @@ def stop_record(camera_id):
 @cam.route("/admin/update_videos")
 @login_required  # Consider adding more specific permission check
 def update_videos():
-    video_base_dir = Path("./apps/recordedVideo/")
+    video_base_dir = current_app.config[
+        "VIDEO_FOLDER"
+    ]  # 설정에서 비디오 폴더 경로 가져오기
     if not video_base_dir.exists():
-        flash("Recorded video directory not found.", "error")
+        flash(f"Recorded video directory not found at: {video_base_dir}", "error")
         return redirect(url_for("cam.cameras"))
 
     cameras = Cams.query.all()
     camera_names_safe = {cam.id: cam.name.replace(" ", "_").lower() for cam in cameras}
-    existing_video_paths = {video.video_path for video in Videos.query.all()}
+    existing_video_paths = {
+        video.video_path: video for video in Videos.query.all()
+    }  # video_path를 키로 하는 딕셔너리 생성
     new_videos_count = 0
+    updated_videos_count = 0
 
+    # 기존의 "./apps/recordedVideo" 대신 설정된 video_base_dir 사용
     for date_dir in video_base_dir.iterdir():
         if date_dir.is_dir():
             for cam_id, camera_name_safe in camera_names_safe.items():
@@ -326,51 +339,82 @@ def update_videos():
                             )
                             video_path_str = relative_path.as_posix()
 
-                            if video_path_str not in existing_video_paths:
-                                try:
-                                    # Extract timestamp from filename if needed
-                                    parts = video_file.stem.split("_")
-                                    print(f"Parts: {parts}")  # 추가
-                                    recorded_time_str = None
-                                    if len(parts) > 1:
-                                        try:
-                                            recorded_datetime = datetime.strptime(
-                                                parts[-1], "%Y-%m-%d_%H-%M-%S"
-                                            )
-                                            recorded_time_str = (
-                                                recorded_datetime.strftime(
-                                                    "%Y-%m-%d %H:%M:%S"
-                                                )
-                                            )
-                                        except ValueError:
-                                            print(
-                                                f"ValueError: {e} for file: {video_file.stem}"
-                                            )  # 추가
-                                            pass
-                                    print(
-                                        f"Recorded Time String: {recorded_time_str}"
-                                    )  # 추가
+                            try:
+                                # Extract timestamp from filename if needed
+                                parts = video_file.stem.split("_")
+                                print(f"Parts: {parts}")  # 추가
+                                recorded_time_str = None
+                                if len(parts) > 1:
+                                    try:
+                                        recorded_datetime = datetime.strptime(
+                                            parts[-1], "%Y-%m-%d_%H-%M-%S"
+                                        )
+                                        recorded_time_str = recorded_datetime.strftime(
+                                            "%Y-%m-%d %H:%M:%S"
+                                        )
+                                    except ValueError as e:
+                                        print(
+                                            f"ValueError: {e} for file: {video_file.stem}"
+                                        )  # 추가
+                                        pass
+                                print(
+                                    f"Recorded Time String: {recorded_time_str}"
+                                )  # 추가
 
-                                    cam = Cams.query.filter_by(id=cam_id).first()
-                                    camera_name = cam.name if cam else "Unknown Camera"
+                                cam = Cams.query.filter_by(id=cam_id).first()
+                                camera_name = cam.name if cam else "Unknown Camera"
 
+                                if video_path_str in existing_video_paths:
+                                    existing_video = existing_video_paths[
+                                        video_path_str
+                                    ]
+                                    updated = False
+                                    if existing_video.camera_name != camera_name:
+                                        existing_video.camera_name = camera_name
+                                        updated = True
+                                    if (
+                                        (
+                                            existing_video.recorded_time
+                                            and recorded_time_str
+                                            and existing_video.recorded_time.strftime(
+                                                "%Y-%m-%d %H:%M:%S"
+                                            )
+                                            != recorded_time_str
+                                        )
+                                        or (
+                                            existing_video.recorded_time is None
+                                            and recorded_time_str is not None
+                                        )
+                                        or (
+                                            existing_video.recorded_time is not None
+                                            and recorded_time_str is None
+                                        )
+                                    ):
+                                        existing_video.recorded_time = recorded_time_str
+                                        updated = True
+                                    if updated:
+                                        updated_videos_count += 1
+                                else:
                                     new_video = Videos(
                                         camera_name=camera_name,
                                         recorded_time=recorded_time_str,
                                         video_path=video_path_str,
+                                        camera_id=cam_id,  # camera_id도 저장
                                     )
                                     db.session.add(new_video)
                                     new_videos_count += 1
-                                except Exception as e:
-                                    flash(
-                                        f"Error processing {video_path_str}: {e}",
-                                        "error",
-                                    )
+
+                            except Exception as e:
+                                flash(
+                                    f"Error processing {video_path_str}: {e}",
+                                    "error",
+                                )
 
     try:
         db.session.commit()
         flash(
-            f"{new_videos_count} new videos found and added to the database.", "success"
+            f"{new_videos_count} new videos found and added, {updated_videos_count} videos updated.",
+            "success",
         )
     except Exception as e:
         db.session.rollback()
@@ -414,92 +458,92 @@ def video_list():
     sorted_videos_by_date = dict(
         sorted(videos_by_date.items(), key=lambda item: item[0], reverse=True)
     )
-
+    form = DeleteVideoForm()  # 폼 인스턴스 생성
     return render_template(
         "cam/video_list.html",
         videos_by_date=sorted_videos_by_date,
+        videos=videos,
+        form=form,
     )
 
 
 @cam.route("/recorded_videos/<int:camera_id>")
 @login_required
 def recorded_videos(camera_id):
-    cam_obj = Cams.query.filter_by(id=camera_id).first_or_404()
-    camera_name = cam_obj.name
-    camera_name_safe = camera_name.replace(" ", "_").lower()
-
-    # 해당 카메라의 비디오 정보를 데이터베이스에서 가져옵니다.
-    videos = Videos.query.filter_by(camera_name=camera_name).all()
-
-    video_list = []  # 빈 리스트로 초기화
+    cam = Cams.query.get_or_404(camera_id)
+    videos = Videos.query.filter_by(camera_name=cam.name).all()
+    video_list = []
     for video in videos:
-        try:
-            parts = video.video_path.split("/")
-            if len(parts) >= 3:  # 수정: date_dir이 parts[0]에 있을 가능성 고려
-                date_dir = parts[0]  # 수정: video_path 구조에 따라 인덱스 조정
-                filename = parts[-1]
-                video_list.append(
-                    {
-                        "filename": filename,
-                        "path": video.video_path,
-                        "camera_name": camera_name,
-                        "camera_id": camera_id,
-                        "date": date_dir,
-                    }
-                )
-        except Exception as e:
-            print(f"Error processing video path: {video.video_path} - {e}")
+        video_list.append(
+            {
+                "id": video.id,
+                "path": video.video_path,
+                "recorded_time": (
+                    video.recorded_time.strftime("%Y-%m-%d %H:%M:%S")
+                    if video.recorded_time
+                    else None
+                ),
+                "camera_name": cam.name,
+            }
+        )
 
-    form = DeleteCameraForm()
+    form = DeleteVideoForm()
     return render_template(
-        "cam/recorded_videos.html",
-        camera_name=camera_name,
-        videos=video_list,
-        form=form,
+        "cam/recorded_videos.html", camera_name=cam.name, videos=video_list, form=form
     )
 
 
-@cam.route("/play_video_page/<int:camera_id>/<path:path>")
+# @cam.route("/play_video_page/<int:camera_id>/<int:video_id>")
+# @login_required
+# def play_video_page(camera_id, video_id):
+#     video = Videos.query.get_or_404(video_id)
+#     return render_template(
+#         "cam/play_video_page.html", camera_id=camera_id, video_id=video_id, video=video
+#     )
+
+
+@cam.route("/play_video/<int:video_id>")
 @login_required
-def play_video_page(camera_id, path):
-    return render_template(
-        "cam/play_video_page.html", camera_id=camera_id, video_path=path
+def play_video(video_id):
+    video = Videos.query.get_or_404(video_id)
+    current_app.logger.info(
+        f"Attempting to play video with id: {video_id}, path: {video.video_path}"
     )
-
-
-@cam.route("/play_video/<path:path>")
-@login_required
-def play_video(path):
-    current_app.logger.info(f"Attempting to play video with path: {path}")
-    recorded_video_base_dir = Path("./apps/recordedVideo")
+    recorded_video_base_dir = current_app.config["VIDEO_FOLDER"]
     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
 
-    path_obj = Path(path)
+    path_obj = Path(video.video_path)
     full_path = recorded_video_base_dir / path_obj
-    current_app.logger.info(f"Full path for playback: {full_path}")
+    print(full_path)
 
     if full_path.exists():
-        return send_from_directory(recorded_video_base_dir.as_posix(), path)
+        return render_template(
+            "cam/play_video_page.html",
+            video_path=full_path,
+        )  # 템플릿에 video_id 전달
     else:
         current_app.logger.warning(f"File not found: {full_path}")
         abort(404)
 
 
-@cam.route("/download_video/<path:path>")
+@cam.route("/download_video/<int:video_id>")
 @login_required
-def download_video(path):
-    current_app.logger.info(f"Attempting to download video with path: {path}")
-    recorded_video_base_dir = Path("./apps/recordedVideo")
+def download_video(video_id):
+    video = Videos.query.get_or_404(video_id)
+    current_app.logger.info(
+        f"Attempting to download video with id: {video_id}, path: {video.video_path}"
+    )
+    recorded_video_base_dir = current_app.config["VIDEO_FOLDER"]
     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
 
-    path_obj = Path(path)
+    path_obj = Path(video.video_path)
     full_path = recorded_video_base_dir / path_obj
     current_app.logger.info(f"Full path for download: {full_path}")
 
     if full_path.exists():
         return send_from_directory(
-            recorded_video_base_dir.as_posix(),
-            path,
+            current_app.config["VIDEO_FOLDER"],
+            video.video_path,
             as_attachment=True,
         )
     else:
@@ -507,23 +551,19 @@ def download_video(path):
         abort(404)
 
 
-@cam.route("/delete_recorded_video/<path:path>", methods=["POST"])
+@cam.route("/delete_recorded_video/<int:video_id>", methods=["POST"])
 @login_required
-def delete_recorded_video(path):
+def delete_recorded_video(video_id):
     recorded_video_base_dir = Path("./apps/recordedVideo")
     try:
-        path_obj = Path(path)
+        video_record = Videos.query.get_or_404(video_id)
+        path_obj = Path(video_record.video_path)
         file_path = recorded_video_base_dir / path_obj
         if file_path.exists():
             file_path.unlink()
-            # Find and delete the database record
-            video_record = Videos.query.filter_by(video_path=path).first()
-            if video_record:
-                db.session.delete(video_record)
-                db.session.commit()
-                flash(f"'{file_path.name}' 영상이 삭제되었습니다.", "success")
-            else:
-                flash("데이터베이스에서 해당 영상 정보를 찾을 수 없습니다.", "warning")
+            db.session.delete(video_record)
+            db.session.commit()
+            flash(f"'{file_path.name}' 영상이 삭제되었습니다.", "success")
         else:
             flash("삭제하려는 영상을 찾을 수 없습니다.", "error")
     except Exception as e:
@@ -533,7 +573,7 @@ def delete_recorded_video(path):
     if camera_id:
         return redirect(url_for("cam.recorded_videos", camera_id=camera_id))
     else:
-        return redirect(url_for("cam.cameras"))
+        return redirect(url_for("cam.video_list"))
 
 
 # @cam.route("/get_log")

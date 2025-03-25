@@ -3,14 +3,21 @@ block content %}
 <div class="container mt-4">
   <h2>영상 재생</h2>
   <video width="80%" controls>
-    <source
-      src="{{ url_for('cam.play_video', path=video_path) }}"
-      type="video/mp4"
-    />
+    <source src="{{ video_path }}" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
   <a
-    href="{{ url_for('cam.recorded_videos', camera_id=camera_id) }}"
+    href="{{ url_for('cam.video_list') }}"
+    {#
+    수정:
+    특정
+    카메라가
+    아닌
+    전체
+    영상
+    목록으로
+    돌아감
+    #}
     class="btn btn-secondary mt-3"
     >영상 목록으로 돌아가기</a
   >

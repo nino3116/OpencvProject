@@ -7,6 +7,8 @@ baseDir = Path(__file__).parent.parent
 class BaseConfig:
     SECRET_KEY = "VXNA6hHwn5sIuPQpZLxK"
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
+    VIDEO_FOLDER = str(Path(baseDir, "static", "videos"))
+    SNAPSHOT_FOLDER = str(Path(baseDir, "static", "snapshots"))
 
 
 # 상황에 따른 환경 설정 작업(BaseConfig 클래스 각 상황별로 상속하여 처리)

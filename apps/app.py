@@ -28,6 +28,8 @@ login_manager.login_view = "auth.login"
 login_manager.login_message = ""
 migrate = Migrate()
 
+app = Flask(__name__)
+
 
 # create_app 함수 작성
 def create_app(config_key):

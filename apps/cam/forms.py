@@ -19,3 +19,7 @@ class CameraForm(FlaskForm):
 
 class DeleteCameraForm(FlaskForm):
     submit = SubmitField("삭제")
+
+
+class DeleteVideoForm(FlaskForm):
+    submit = SubmitField("삭제")
