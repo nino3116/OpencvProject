@@ -2,24 +2,31 @@
 block content %}
 <div class="container mt-4">
   <h2>영상 재생</h2>
-  <video width="80%" controls>
-    <source src="{{ video_path }}" type="video/mp4" />
+  <video width="80%" controls autoplay crossorigin loop>
+    <source src="{{ video_path }}" type="video/webm" />
     Your browser does not support the video tag.
   </video>
-  <a
-    href="{{ url_for('cam.video_list') }}"
-    {#
-    수정:
-    특정
-    카메라가
-    아닌
-    전체
-    영상
-    목록으로
-    돌아감
-    #}
-    class="btn btn-secondary mt-3"
-    >영상 목록으로 돌아가기</a
-  >
+  <div>
+    <a
+      href="{{ url_for('cam.download_video',video_id=video_id)}}"
+      class="btn btn-secondary mt-3">
+      영상 다운로드</a
+    >
+    <a
+      href="{{ url_for('cam.video_list') }}"
+      {#
+      수정:
+      특정
+      카메라가
+      아닌
+      전체
+      영상
+      목록으로
+      돌아감
+      #}
+      class="btn btn-secondary mt-3"
+      >영상 목록으로 돌아가기</a
+    >
+  </div>
 </div>
 {% endblock %}

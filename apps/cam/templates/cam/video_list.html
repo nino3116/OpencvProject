@@ -43,5 +43,18 @@ block content %}
       {% endfor %}
     </tbody>
   </table>
+  <div class="nav-item">
+    <button class="nav-link btn btn-primary" onclick="confirmUpdate()">
+      전체 영상 목록 갱신
+    </button>
+  </div>
+
+  <script>
+    function confirmUpdate() {
+      if (confirm("목록을 갱신하시겠습니까?")) {
+        window.location.href = "{{ url_for('cam.update_videos')}}";
+      }
+    }
+  </script>
 </div>
 {% endblock %}

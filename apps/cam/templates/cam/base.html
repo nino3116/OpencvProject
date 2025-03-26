@@ -21,6 +21,7 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
+          {% if current_user.is_authenticated %}
           <li class="nav-item active">
             <a class="nav-link" href="{{ url_for('cam.cameras') }}"
               >카메라 목록 <span class="sr-only">(current)</span></a
@@ -28,11 +29,12 @@
           </li>
           <li class="nav-item active">
             <a class="nav-link" href="{{ url_for('cam.video_list') }}">
-              날짜별 영상목록 <span class="sr-only">(current)</span></a
+              녹화 영상목록 <span class="sr-only">(current)</span></a
             >
 
             <!-- Add other navigation links here -->
           </li>
+          {% endif %}
         </ul>
 
         <ul class="navbar-nav ml-auto">
@@ -40,13 +42,7 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('auth.logout') }}">로그아웃</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('cam.update_videos')}}"
-              >전체 영상 목록 갱신</a
-            >
-            {% else %}
-          </li>
-
+          {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('auth.login') }}">로그인</a>
           </li>

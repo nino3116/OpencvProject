@@ -129,7 +129,7 @@ def generate_frames(camera_url, camera_name):
             log_file.write(
                 f"Detected {person_count} persons at {this_moment} on {camera_name}.\n"
             )
-            snapshot_dir = f"./snapshot/{now_day}/"
+            snapshot_dir = f"./apps/static/snapshots/{now_day}/"
             snapshot_path = f"{snapshot_dir}{camera_name}_{now}.jpg"
             os.makedirs(snapshot_dir, exist_ok=True)
             cv.imwrite(snapshot_path, frame)
