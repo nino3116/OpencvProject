@@ -3,7 +3,7 @@
 # db를 import
 from flask import Blueprint, redirect, render_template, url_for
 
-from apps.app import db
+from apps import db
 
 # 만들둔 Form 클래스를 import
 from apps.crud.forms import UserForm
