@@ -9,7 +9,7 @@ from flask_login import UserMixin  # type: ignore
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # apps.app 모듈에서 db import, 추가 import login_manager
-from apps.app import db, login_manager
+from apps import db, login_manager
 
 
 # db.model을 상속한 User 클래스 상속, 더하여 UserMixin 상속

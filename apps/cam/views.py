@@ -2,8 +2,16 @@
 
 from flask import Blueprint, redirect, render_template, url_for, jsonify, request, flash
 from flask_wtf.csrf import generate_csrf
-from apps.app import db
-from apps.cam.models import Cam
+from apps import db
+from apps.app import (
+    start_recording_all,
+    record_camera,
+    stop_recording,
+    stop_recording_all,
+    recording_status,
+    camera_streams,
+)
+from apps.cam.models import Cams
 from apps.cam.forms import CameraForm, DeleteCameraForm
 from flask_login import login_required  # type: ignore
 import datetime
@@ -22,7 +30,7 @@ cam = Blueprint(
 @cam.route("/")
 @login_required
 def index():
-    cams = Cam.query.all()
+    cams = Cams.query.all()
     return render_template("cam/index.html", cams=cams)
 
 
@@ -32,7 +40,7 @@ def index():
 def add_camera():
     form = CameraForm()
     if form.validate_on_submit():
-        cam = Cam(cam_name=form.cam_name.data, cam_url=form.cam_url.data)
+        cam = Cams(cam_name=form.cam_name.data, cam_url=form.cam_url.data)
         if cam.is_duplicate_url():
             flash("지정 영상 주소는 이미 등록되어 있습니다.")
             return redirect(url_for("cam.add_camera"))
@@ -52,7 +60,7 @@ def add_camera():
 @login_required
 def edit_camera(camera_id):
     form = CameraForm()
-    cam = Cam.query.filter_by(id=camera_id).first()
+    cam = Cams.query.filter_by(id=camera_id).first()
 
     # form 으로 부터 제출된경우는 사용자를 갱시낳여 사용자의 일람 화면으로 리다이렉트
     if form.validate_on_submit():
@@ -69,7 +77,7 @@ def edit_camera(camera_id):
 @cam.route("/<camera_id>/delete", methods=["POST"])
 @login_required
 def delete_camera(camera_id):
-    cam = Cam.query.filter_by(id=camera_id).first()
+    cam = Cams.query.filter_by(id=camera_id).first()
     db.session.delete(cam)
     db.session.commit()
     return redirect(url_for("cam.cameras"))
@@ -78,7 +86,7 @@ def delete_camera(camera_id):
 @cam.route("/cameras")
 @login_required
 def cameras():
-    cams = Cam.query.all()
+    cams = Cams.query.all()
     csrf_token = generate_csrf()
     form = DeleteCameraForm()  # Instantiate the form
     return render_template("cam/cameraDB.html", cams=cams, csrf_token=csrf_token)
@@ -86,8 +94,18 @@ def cameras():
 
 @cam.route("/live")
 def live():
-    cams = Cam.query.all()
-    return render_template("cam/live.html", cams=cams)
+    cams = Cams.query.all()
+    return render_template(
+        "cam/live.html", cams=cams, recording_status=recording_status
+    )
+
+
+@cam.route("/status")
+def cam_status():
+    cams = Cams.query.all()
+    return render_template(
+        "cam/cam_status.html", cams=cams, recording_status=recording_status
+    )
 
 
 @cam.route("/video")
@@ -111,3 +129,29 @@ def save_image(cam_id):
         f.write(os.urandom(1024))  # 임의의 데이터를 넣어 더미 이미지 생성
 
     print(f"이미지 저장됨: {filepath}")
+
+
+@cam.route("/start_record/<camera_name>")
+def start_record(camera_name):
+    cam_info = Cams.query.filter_by(cam_name=camera_name).first()
+    if cam_info:
+        record_camera(cam_info.cam_url, cam_info.cam_name)
+    return redirect(url_for("cam.cam_status"))
+
+
+@cam.route("/stop_record/<camera_name>")
+def stop_record_route(camera_name):
+    stop_recording(camera_name)
+    return redirect(url_for("cam.cam_status"))
+
+
+@cam.route("/stop_all_records")
+def stop_all_records():
+    stop_recording_all()
+    return redirect(url_for("cam.cam_status"))
+
+
+@cam.route("/start_all_records")
+def start_all_records():
+    start_recording_all()
+    return redirect(url_for("cam.cam_status"))
