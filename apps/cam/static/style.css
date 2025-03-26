@@ -23,9 +23,6 @@ body {
   max-width: 42em;
 }
 
-.card-title {
-  color: #000;
-}
 /*
  * Header
  */
@@ -47,4 +44,13 @@ body {
 .nav-masthead .active {
   color: #fff;
   border-bottom-color: #fff;
+}
+
+.card-title {
+  color: #000;
+}
+
+.cam-recording-status {
+  color: black;
+  font-weight: bold;
 }
