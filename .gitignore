@@ -207,6 +207,11 @@ pip-selfcheck.json
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv
 
 
+
+Process/log.txt
+Process/yolo11n.pt
+Process/dbconfig.py
+
 # jpg, jpeg, png, gif, bmp, tif, tiff, svg, eps, webp
 *.jpg
 
@@ -220,3 +225,4 @@ migrations/
 
 # yolo model
 *.pt
+
