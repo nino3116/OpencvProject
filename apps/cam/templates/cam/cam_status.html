@@ -1,0 +1,55 @@
+{% extends "cam/base.html" %} {%block title%}카메라 관리 {%endblock%} 
+<body class="d-flex h-100 text-center bg-dark text-white">
+  {% block content%}
+  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    {% include "cam/header.html" %}
+    <main>
+      <h1>카메라 목록</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>이름</th>
+            <th>URL</th>
+            <th>상태</th>
+            <th>액션</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cam in cams %}
+          <tr>
+            <td>{{ cam.cam_name }}</td>
+            <td>{{ cam.cam_url }}</td>
+            <td>
+              {% if cam.cam_name in recording_status and
+              recording_status[cam.cam_name] %} 녹화 중 {% else %} 대기 중 {%
+              endif %}
+            </td>
+            <td>
+              {% if cam.cam_name not in recording_status or not
+              recording_status[cam.cam_name] %}
+              <a
+                href="{{ url_for('cam.start_record', camera_name=cam.cam_name) }}"
+                >녹화 시작</a
+              >
+              {% else %}
+              <a
+                href="{{ url_for('cam.stop_record_route', camera_name=cam.cam_name) }}"
+                >녹화 중지</a
+              >
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <br />
+
+      <a href="{{ url_for('cam.start_all_records')}}"> 모든 녹화 시작</a>
+      <br />
+      <a href="{{ url_for('cam.stop_all_records') }}">모든 녹화 중지</a>
+      <br />
+      <a href="{{ url_for('cam.live') }}">라이브 화면 으로</a>
+    </main>
+    {% include "cam/footer.html" %} {% endblock%}
+  </div>
+</body>

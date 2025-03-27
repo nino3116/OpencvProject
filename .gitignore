@@ -213,3 +213,10 @@ pip-selfcheck.json
 # Migrations
 migrations/
 *.sqlite
+
+# videos
+*.mp4
+*.webm
+
+# yolo model
+*.pt

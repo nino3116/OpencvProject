@@ -3,27 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="">
+    <meta name="description" content="" />
     <title>Camera 관리</title>
-    <link rel="stylesheet" href="{{ url_for ('static', filename='css/bootstrap.min.css') }}"/>
-    <link rel="stylesheet" href="{{ url_for ('cam.static', filename='style.css') }}"/>
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"> -->
-  </head> 
+    <link
+      rel="stylesheet"
+      href="{{ url_for ('static', filename='css/bootstrap.min.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for ('cam.static', filename='style.css') }}" />
+  </head>
 
-  <body class="d-flex h-100 text-center bg-dark text-white ">
-    
+  <body class="d-flex h-100 text-center bg-dark text-white">
     <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
       {% include "cam/header.html" %}
-    
+
       <main class="px-3">
-        <h1>스마트 CCTV 관리 </h1>
-        <p class="lead">이 페이지는 실시간 물체 감지 기능을 갖춘 CCTV 관리 시스템입니다. 
-          간편한 설정으로 보안 환경을 강화하고, 감지된 영상을 효율적으로 관리하세요.</p>
+        <h1>스마트 CCTV 관리</h1>
         <p class="lead">
-          <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white">Learn more</a>
+          이 페이지는 실시간 물체 감지 기능을 갖춘 CCTV 관리 시스템입니다.
+          간편한 설정으로 보안 환경을 강화하고, 감지된 영상을 효율적으로
+          관리하세요.
+        </p>
+        <p class="lead">
+          <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white"
+            >Learn more</a
+          >
         </p>
       </main>
-    
+
       {% include "cam/footer.html" %}
     </div>
   </body>

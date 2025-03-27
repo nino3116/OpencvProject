@@ -8,7 +8,10 @@ baseDir = Path(__file__).parent.parent
 class BaseConfig:
     SECRET_KEY = "DM5Fq1G9XtMzWAeqYWNR"
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
-   
+    VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
+    SNAPSHOT_FOLDER = baseDir / "apps" / "static" / "snapshots"
+    LOG_FOLDER = baseDir / "apps" / "static" / "logs"
+
 
 # 상황데  따른 환경 설정 작업 (BaseConfig 클래스 각 상황별로 상속하여 처리)
 # LocalTest 상황
@@ -23,7 +26,6 @@ class TestingConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{baseDir / 'testing.sqlite'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = False
-    
 
 
 # 실제 상황
@@ -34,7 +36,3 @@ class DeployConfig(BaseConfig):
 
 # config 사전 매핑 작업
 config = {"testing": TestingConfig, "local": LocalConfig, "deploy": DeployConfig}
-
-
-
-    

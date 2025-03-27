@@ -9,7 +9,7 @@ from flask_login import login_user  # type: ignore
 from flask_login import logout_user
 
 # db작업을 위한 db 객체 import
-from apps.app import db
+from apps import db
 
 # 폼 클래스 import
 from apps.auth.forms import LoginForm, SignUpForm
@@ -93,7 +93,7 @@ def login():
         # 사용자가 존재하고, 비밀번호가 일치하면 로그인 처리
         if user is not None and user.verify_password(password=form.password.data):
             login_user(user)  # 로그인 처리(LoginManager에 등록)
-            return redirect(url_for("cam.index")) 
+            return redirect(url_for("cam.index"))
 
         # 로그인 실패시 메시지를 설정
         flash("아이디 또는 비밀번호가 일치하지 않습니다.")
@@ -103,5 +103,5 @@ def login():
 # 로그아웃 엔드포인트
 @auth.route("/logout")
 def logout():
-    logout_user() # 로그아웃
+    logout_user()  # 로그아웃
     return redirect(url_for("auth.login"))
