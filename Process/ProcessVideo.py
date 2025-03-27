@@ -166,7 +166,8 @@ if __name__ == '__main__':
                     cflag = True
                     start_time = pd[2]
                     current.append(pd)
-                elif (pd[2] - start_time).seconds < 3:
+                elif (pd[2] - start_time).seconds < 3: 
+                    # 시작 시점 기준으로 3초 이내의 데이터 함께 처리
                     current.append(pd)
                 else:
                     tmp = []
@@ -187,6 +188,7 @@ if __name__ == '__main__':
                             sql = "insert into Camera_Logs (camera_idx, dp_cnt, detected_time, plog_idx) values("+str(obj[0])+","+str(obj[1])+",'"+str(obj[2])+"',"+str(idx)+")"
                             cur.execute(sql)
                             conn.commit()
+                    # 처리한 뒤 초기화: 이후 데이터는 새로운 row로 처리
                     current = []
                     start_time = pd[2]
                     current.append(pd)
