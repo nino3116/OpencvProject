@@ -1,0 +1,16 @@
+.crud {
+  font-style: italic;
+  color: red;
+}
+
+table {
+  border-collapse: collapse; /* 인접하는 border를 겹쳐서 1개로 해서 표시한다. */
+}
+
+table,
+th,
+td {
+  /* 1px의 실선으로 해서 색을 조절한다 */
+  border: 1px solid #c0c0c0;
+  padding: 5px;
+}

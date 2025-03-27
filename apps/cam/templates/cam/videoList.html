@@ -1,0 +1,50 @@
+{% extends "cam/base.html" %} {% block title %}Video List{% endblock %}
+
+<body class="d-flex h-100 text-center bg-dark text-white">
+  {% block content %}
+  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    {% include "cam/header.html" %}
+    <h1>비디오 목록</h1>
+    <p>
+      <a href="{{ url_for('cam.update_videos') }}" class="btn btn-primary"
+        >갱신</a
+      >
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>카메라 이름</th>
+          <th>녹화 날짜</th>
+          <th>녹화 시간</th>
+          <th>비디오 경로</th>
+          <th>액션</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for video in videos %}
+        <tr>
+          <td>{{ video.id }}</td>
+          <td>{{ video.camera_name }}</td>
+          <td>{{ video.recorded_date.strftime('%Y-%m-%d') }}</td>
+          <td>{{ video.recorded_time.strftime('%H:%M:%S') }}</td>
+          <td>{{ video.video_path }}</td>
+          <td>
+            <a
+              href="{{ url_for('static', filename=video.video_path.replace(config.get('VIDEO_FOLDER') + '\\', '').replace(config.get('VIDEO_FOLDER') + '/', '')) }}"
+              target="_blank"
+              >보기</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% include "cam/footer.html" %} {% endblock %}
+  </div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+<script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>

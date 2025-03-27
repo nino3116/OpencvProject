@@ -15,7 +15,7 @@ import random
 camera_streams = {}
 video_writers = {}
 recording_status = {}
-# now_day = datetime.now().strftime("%Y-%m-%d")  <- 전역 변수는 함수 내에서 혼란을 야기할 수 있으므로 제거
+now_day = datetime.now().strftime("%Y-%m-%d")
 
 
 def record_camera(camera_url, camera_name):
@@ -33,7 +33,6 @@ def record_camera(camera_url, camera_name):
     cap = cv.VideoCapture(camera_url)
     if not cap.isOpened():
         print(f"카메라 {camera_name} ({camera_url})를 열 수 없습니다.")
-        # 카메라를 열지 못했을 경우, 딕셔너리에 추가하지 않고 종료
         return
 
     try:
@@ -51,14 +50,14 @@ def record_camera(camera_url, camera_name):
         frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
         record_start_time = time.time()
-        fourcc = cv.VideoWriter_fourcc(*"H264")
+        fourcc = cv.VideoWriter_fourcc(*"mp4v")
         out = None
         current_record_filename = None
 
-        camera_streams[camera_name] = cap  # 스트림 시작 시 딕셔너리에 추가
-        recording_status[camera_name] = True  # 녹화 상태 시작으로 설정
+        while True:
+            if not recording_status.get(camera_name, True):  # 녹화 중단 요청 확인
+                break
 
-        while recording_status.get(camera_name, False) and cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 print(
@@ -73,53 +72,41 @@ def record_camera(camera_url, camera_name):
                 record_start_time = time.time()  # 재연결 후 녹화 시작 시간 갱신
                 continue
 
-            results = model.track(
-                frame, persist=True, verbose=False, conf=0.2
-            )  # 객체 추적
+            results = model.track(frame, persist=True)  # 객체 추적
 
-            person_count = 0
             if results and results[0].boxes:
-                boxes = results[0].boxes.xyxy.cpu().numpy().astype(int)
-                track_ids = (
-                    results[0].boxes.id.cpu().numpy().astype(int)
-                    if results[0].boxes.id is not None
-                    else []
-                )
-                classes = results[0].boxes.cls.cpu().numpy().astype(int)
-
-                for i, (x1, y1, x2, y2) in enumerate(boxes):
-                    if classes[i] == person_class_id:
-                        track_id = track_ids[i] if len(track_ids) > 0 else "N/A"
-                        if track_id not in person_colors:
-                            person_colors[track_id] = (
+                tracked_objects = results[0].boxes.data.tolist()
+                for box in tracked_objects:
+                    x1, y1, x2, y2, track_id, class_id = map(int, box)
+                    if class_id == person_class_id:  # 감지된 객체가 사람인 경우
+                        color = person_colors.get(track_id)
+                        if color is None:
+                            color = (
                                 random.randint(0, 255),
                                 random.randint(0, 255),
                                 random.randint(0, 255),
                             )
-                        color = person_colors[track_id]
+                            person_colors[track_id] = color
                         cv.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                        label = f"ID: {track_id}"
                         cv.putText(
                             frame,
-                            label,
+                            f"Person {track_id}",
                             (x1, y1 - 10),
                             cv.FONT_HERSHEY_SIMPLEX,
                             0.5,
                             color,
                             2,
                         )
-                        person_count += 1
 
                         # 스냅샷 저장 (각 사람별 최초 감지 시 또는 일정 간격으로)
-                        now = datetime.now()
-                        now_day_local = now.strftime("%Y-%m-%d")
-                        snapshot_dir = snapshot_base_dir / now_day_local / camera_name
-                        if not snapshot_dir.exists():
-                            os.makedirs(snapshot_dir)
                         snapshot_filename = (
-                            snapshot_dir
-                            / f"{camera_name}_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
+                            snapshot_base_dir
+                            / now_day
+                            / camera_name
+                            / f"person_{track_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
                         )
+                        if not snapshot_filename.parent.exists():
+                            os.makedirs(snapshot_filename.parent)
                         cv.imwrite(str(snapshot_filename), frame)
 
             current_time = time.time()
@@ -132,8 +119,8 @@ def record_camera(camera_url, camera_name):
                     print(f"{current_record_filename} 저장 완료")
                 now = datetime.now()
                 timestamp = now.strftime("%Y%m%d_%H%M%S")
-                now_day_local = now.strftime("%Y-%m-%d")
-                video_dir = video_base_dir / now_day_local / camera_name
+                now_day = now.strftime("%Y-%m-%d")
+                video_dir = video_base_dir / now_day / camera_name
                 if not video_dir.exists():
                     os.makedirs(video_dir)
                 current_record_filename = str(
@@ -158,54 +145,40 @@ def record_camera(camera_url, camera_name):
     except Exception as e:
         print(f"카메라 {camera_name} ({camera_url}) 녹화 중 오류 발생: {e}")
     finally:
-        if camera_name in camera_streams:
-            if isinstance(camera_streams[camera_name], cv.VideoCapture):
-                camera_streams[camera_name].release()
-            del camera_streams[camera_name]
-        if camera_name in recording_status:
-            del recording_status[camera_name]
         if out is not None:
             out.release()
             print(f"{current_record_filename} 저장 완료 (종료)")
-        if cap.isOpened():
-            cap.release()
+        cap.release()
         cv.destroyAllWindows()
+        del camera_streams[camera_name]  # 스트림 딕셔너리에서 제거
+        if camera_name in recording_status:
+            del recording_status[camera_name]
 
 
 def start_recording_all():
     """
     데이터베이스에서 카메라 정보를 읽어와 모든 카메라 녹화를 시작하는 함수
     """
-    print("start_recording_all() 함수 시작")
     with current_app.app_context():
         cameras = Cams.query.all()
-        print(f"데이터베이스에서 가져온 카메라 수: {len(cameras)}")
         for camera in cameras:
-            print(f"카메라 이름: {camera.cam_name}, 활성 상태: {camera.is_active}")
             if camera.is_active:
                 if camera.cam_name not in camera_streams:
-                    # 현재 애플리케이션 인스턴스를 스레드에 전달
-                    app = current_app._get_current_object()
+                    recording_status[camera.cam_name] = (
+                        True  # 녹화 상태를 True로 초기화
+                    )
                     thread = Thread(
-                        target=record_camera_with_context,  # 새로운 래퍼 함수 사용
-                        args=(app, camera.cam_url, camera.cam_name),
+                        target=record_camera,
+                        args=(camera.cam_url, camera.cam_name),
                         daemon=True,
                     )
+                    camera_streams[camera.cam_name] = thread
                     thread.start()
                     print(
-                        f"카메라 '{camera.cam_name}' 녹화 시작 시도 (URL: {camera.cam_url})"
+                        f"카메라 '{camera.cam_name}' 녹화 시작 (URL: {camera.cam_url})"
                     )
                 else:
                     print(f"카메라 '{camera.cam_name}'는 이미 녹화 중입니다.")
-    print("start_recording_all() 함수 종료")
-
-
-def record_camera_with_context(app, camera_url, camera_name):
-    """
-    애플리케이션 컨텍스트를 설정하고 record_camera를 실행하는 래퍼 함수
-    """
-    with app.app_context():
-        record_camera(camera_url, camera_name)
 
 
 def stop_recording(camera_name):

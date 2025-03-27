@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name = "viewprot" content = "width=device-width, initial-scale=1">
+    <meta name = "description" content = "사용자 인증">
+    <link rel="stylesheet"href="{{ url_for ('auth.static', filename='style.css') }}"/>
+    <link rel="stylesheet"href="{{ url_for ('static', filename='css/bootstrap.min.css') }}"/>
+    <!-- title을 상속처에서 구현한다.-->
+    <title>{% block title %}{% endblock %}</title>
+  </head>
+  
+  <body class="d-flex align-items-center p-5 bg-dark text-white">
+
+    <!-- content를 상속처에서 구현한다 -->
+    {% block content %}{% endblock %}
+  </body>
+  <script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
+</html>

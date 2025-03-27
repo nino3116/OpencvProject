@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <!-- title을 상속처에서 구현한다.-->
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('crud.static', filename='style.css') }}"/>
+  </head>
+  <body>
+    <div>
+      {% if current_user.is_authenticated %}
+      <p>
+        <spen>{{ current_user.username }}</span>
+        <spen><a href= "{{ url_for ('auth.logout') }}">로그아웃</a></span>
+      </p>
+      {% endif %}
+    </div>
+    <!-- content를 상속처에서 구현한다 -->
+    {% block content %}{% endblock %}
+  </body>
+</html>

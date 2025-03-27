@@ -1,0 +1,26 @@
+{% extends "cam/base.html" %}{% block title%} 카메라 등록 {%endblock%} {% block
+content%}
+<body class="d-flex h-100 text-center bg-dark text-white">
+  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    <div class="mx-auto cam-auth-main">
+      <div class="card cam-auth-signup">
+        {% include "cam/header.html"%}
+        <section>
+          <form
+            action="{{ url_for('cam.add_camera', next=request.args.get('next')) }}"
+            method="POST"
+            class="form-camera-add">
+            {{ form.csrf_token }} {% for message in get_flashed_messages() %}
+            <div class="dt-auth-flash">{{ message }}</div>
+            {% endfor %} {{ form.cam_name(size=30, class="form-control
+            dt-auth-input", placeholder="카메라명(위치)") }} {{
+            form.cam_url(class="form-control dt-auth-input",
+            placeholder="영상서버 주소") }} {{ form.submit(class="btn btn-md
+            btn-primary btn-block dt-auth-btn") }}
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+  {% include "cam/footer.html" %} {% endblock %}
+</body>

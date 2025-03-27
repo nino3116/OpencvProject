@@ -1,0 +1,17 @@
+
+<header class="mb-auto">
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 class="float-md-start mb-0">Camera</h3>
+        <nav class="nav nav-masthead justify-content-center float-md-end">
+            <a class="nav-link fw-bold py-1 px-2" aria-current="page" href="{{url_for ("cam.index")}}">Home</a>
+            <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("cam.live") }}">Live</a>
+            <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("cam.list_videos") }}">Video List</a>
+            <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("cam.cam_status") }}">Cam Status</a>
+            
+        </nav>
+        <button type="button" class="btn btn-light">
+            <a href="{{ url_for ("auth.logout")}}" title = "로그아웃" role = "button" alt= "로그아웃 버튼">logout</a>
+        </button>
+    </div>
+</header>
+
