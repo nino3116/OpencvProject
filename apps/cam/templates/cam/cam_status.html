@@ -43,9 +43,12 @@
         </tbody>
       </table>
       <br />
+
       <a href="{{ url_for('cam.start_all_records')}}"> 모든 녹화 시작</a>
       <br />
       <a href="{{ url_for('cam.stop_all_records') }}">모든 녹화 중지</a>
+      <br />
+      <a href="{{ url_for('cam.live') }}">라이브 화면 으로</a>
     </main>
     {% include "cam/footer.html" %} {% endblock%}
   </div>

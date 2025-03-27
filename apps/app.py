@@ -182,7 +182,7 @@ def start_recording_all():
         print(f"데이터베이스에서 가져온 카메라 수: {len(cameras)}")
         for camera in cameras:
             print(f"카메라 이름: {camera.cam_name}, 활성 상태: {camera.is_active}")
-            if camera.is_active is None:
+            if camera.is_active:
                 if camera.cam_name not in camera_streams:
                     # 현재 애플리케이션 인스턴스를 스레드에 전달
                     app = current_app._get_current_object()

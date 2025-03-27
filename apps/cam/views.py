@@ -1,6 +1,15 @@
 # 기업 연계 프로젝트 1
 
-from flask import Blueprint, redirect, render_template, url_for, jsonify, request, flash
+from flask import (
+    Blueprint,
+    redirect,
+    render_template,
+    url_for,
+    jsonify,
+    request,
+    flash,
+    current_app,
+)
 from flask_wtf.csrf import generate_csrf
 from apps import db
 from apps.app import (
@@ -11,7 +20,7 @@ from apps.app import (
     recording_status,
     camera_streams,
 )
-from apps.cam.models import Cams
+from apps.cam.models import Cams, Videos
 from apps.cam.forms import CameraForm, DeleteCameraForm
 from flask_login import login_required  # type: ignore
 import datetime
@@ -108,11 +117,6 @@ def cam_status():
     )
 
 
-@cam.route("/video")
-def video():
-    return render_template("cam/videoList.html")
-
-
 IMAGE_SAVE_PATH = "capture_images"
 if not os.path.exists(IMAGE_SAVE_PATH):
     os.mkdir(IMAGE_SAVE_PATH)
@@ -155,3 +159,62 @@ def stop_all_records():
 def start_all_records():
     start_recording_all()
     return redirect(url_for("cam.cam_status"))
+
+
+@cam.route("/videos")
+def list_videos():
+    """저장된 비디오 목록을 보여주는 페이지"""
+    videos = Videos.query.all()
+    return render_template("cam/videoList.html", videos=videos)
+
+
+@cam.route("/update_videos")
+def update_videos():
+    video_folder = current_app.config["VIDEO_FOLDER"]
+    updated_count = 0
+    added_count = 0
+
+    for root, _, files in os.walk(video_folder):
+        for filename in files:
+            if filename.endswith(".mp4"):
+                file_path = os.path.join(root, filename)
+                parts = filename.replace(".mp4", "").split("_")
+                if len(parts) == 2:
+                    camera_name = parts[0]
+                    timestamp_str = parts[1]
+                    try:
+                        recorded_datetime = datetime.strptime(
+                            timestamp_str, "%Y%m%d_%H%M%S"
+                        )
+                        recorded_date = recorded_datetime.date()
+                        recorded_time = recorded_datetime.time()
+
+                        cam = Cams.query.filter_by(cam_name=camera_name).first()
+                        if cam:
+                            existing_video = Videos.query.filter_by(
+                                video_path=file_path
+                            ).first()
+                            if existing_video:
+                                # 정보 갱신 (필요하다면)
+                                existing_video.camera_id = cam.id
+                                existing_video.camera_name = camera_name
+                                existing_video.recorded_date = recorded_date
+                                existing_video.recorded_time = recorded_time
+                                db.session.commit()
+                                updated_count += 1
+                            else:
+                                new_video = Videos(
+                                    camera_id=cam.id,
+                                    camera_name=camera_name,
+                                    recorded_date=recorded_date,
+                                    recorded_time=recorded_time,
+                                    video_path=file_path,
+                                )
+                                db.session.add(new_video)
+                                db.session.commit()
+                                added_count += 1
+                    except ValueError as e:
+                        print(f"Error parsing filename: {filename} - {e}")
+
+    print(f"비디오 스캔 완료: {added_count}개 추가됨, {updated_count}개 업데이트됨.")
+    return redirect(url_for("cam.list_videos"))

@@ -15,6 +15,9 @@
               <h5 class="card-title">{{ cam.cam_name }}</h5>
               <div id="camera-{{ cam.id }}-stream" class="mt-2">
                 <img src="{{cam.cam_url}}" style="width: 100%" />
+                <p class="cam-recording-status">
+                  <a href="{{url_for("cam.cam_status")}}"> {{cam.is_active}}</a>
+                </p>
               </div>
             </div>
           </div>
