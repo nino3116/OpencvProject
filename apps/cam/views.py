@@ -163,7 +163,7 @@ def start_all_records():
 
 @cam.route("/videos")
 def list_videos():
-    """저장된 비디오 목록을 보여주는 페이지"""
+    """저장된 비디오 목록을 보여주는 페이지"""  
     videos = Videos.query.all()
     return render_template("cam/videoList.html", videos=videos)
 

@@ -32,12 +32,6 @@ class SignUpForm(FlaskForm):
                 message="비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다."),
         ],
     )
-    confirm_password = PasswordField(
-        "비밀번호 확인", validators=[
-        DataRequired(),
-        EqualTo("password", message="비밀번호가 일치하지 않습니다.")
-        ]
-    )
     submit = SubmitField("신규 등록")
 
 

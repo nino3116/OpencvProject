@@ -46,18 +46,13 @@ def signup():
             return redirect(url_for("auth.signup"))
 
        
-        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}", password):
+        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}", form.password.data):
                 flash("비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.")
                 return redirect(url_for("auth.signup"))
             
-        # 비밀번호 해싱 후 저장
-        hashed_password = generate_password_hash(password)
-
-        new_user = User(user_id=user_id, username=username, password_hash=hashed_password)
-        
         try:
             # DB등록
-            db.session.add(new_user)
+            db.session.add(user)
             db.session.commit()
             print("회원가입 성공","success")
         except Exception as e:

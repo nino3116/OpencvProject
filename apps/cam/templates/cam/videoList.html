@@ -3,15 +3,32 @@
 <body class="d-flex h-100 text-center bg-dark text-white">
   {% block content %}
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    <style>
+      .table {
+        height: 500px;
+        overflow: auto;
+        border: 5px solid white;
+      }
+      .topButton {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px;
+        background-color:rgb(255, 255, 255);
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    </style>
     {% include "cam/header.html" %}
     <h1>비디오 목록</h1>
     <p>
-      <a href="{{ url_for('cam.update_videos') }}" class="btn btn-primary"
-        >갱신</a
-      >
+      <a href="{{ url_for('cam.update_videos') }}" class="btn btn-primary">갱신</a>
     </p>
-    <table>
-      <thead>
+    
+    <table class = "table">
+      <thead class = "table-dark">
         <tr>
           <th>ID</th>
           <th>카메라 이름</th>
@@ -22,6 +39,18 @@
         </tr>
       </thead>
       <tbody>
+        {% for i in range(200) %}
+        <tr>
+          <td>테스트</td>
+          <td>카메라1</td>
+          <td>1111-22-33</td>
+          <td>00:00:00</td>
+          <td>주소주소.mp4</td>
+          <td>
+            보기
+          </td>
+        </tr>
+        {% endfor %}
         {% for video in videos %}
         <tr>
           <td>{{ video.id }}</td>
@@ -39,12 +68,15 @@
         </tr>
         {% endfor %}
       </tbody>
+      <div class="additionalContent"></div>
+      <button class="topButton">Top</button>
     </table>
-
+    
     {% include "cam/footer.html" %} {% endblock %}
   </div>
 </body>
 
+<script src= "{{ url_for('cam.static', filename="js/script.js") }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
 <script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>

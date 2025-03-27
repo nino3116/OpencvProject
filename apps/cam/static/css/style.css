@@ -20,13 +20,16 @@ body {
 }
 
 .cover-container {
-  max-width: 42em;
+  max-width: 58em;
 }
 
 /*
  * Header
  */
 
+.nav-masthead{
+  width: 100%;
+}
 .nav-masthead .nav-link {
   color: rgba(255, 255, 255, 0.5);
   border-bottom: 0.25rem solid transparent;
@@ -38,7 +41,7 @@ body {
 }
 
 .nav-masthead .nav-link + .nav-link {
-  margin-left: 1rem;
+  margin-left: 2rem;
 }
 
 .nav-masthead .active {
@@ -52,5 +55,14 @@ body {
 
 .cam-recording-status {
   color: black;
+  font-weight: bold;
+}
+
+.table {
+  width: 100%;
+}
+
+.td {
+  color : white;
   font-weight: bold;
 }
