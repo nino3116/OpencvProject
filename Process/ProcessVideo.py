@@ -9,11 +9,9 @@ from datetime import datetime
 import pymysql
 from dbconfig import dbconnect
 
+import traceback, logging
+
 def ProcessVideo(camera_url,camera_idx,q):
-    # for db
-    conn = dbconnect()
-    cur = conn.cursor()
-    
     # YOLO 모델 불러오기
     model = YOLO("yolo11n.pt")
     # 비디오 영상 불러오기
@@ -105,14 +103,7 @@ def ProcessVideo(camera_url,camera_idx,q):
         current_time = time.time()
         this_moment = datetime.now()
         if current_time - start_time >= 10:
-            print(f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.")
-            file.write(
-                f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.\n"
-            )
-            sql = "insert into Camera_Logs (camera_idx, dp_cnt, detected_time) values("+str(camera_idx)+","+str(person_count)+",'"+str(this_moment)+"')"
-            cur.execute(sql)
-            conn.commit()
-            
+            print(f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.")            
             q.put([camera_idx,person_count,this_moment])
 
             start_time = current_time
@@ -123,7 +114,6 @@ def ProcessVideo(camera_url,camera_idx,q):
         
     file.write("========Stopped Logging========\n")
     file.close()
-    conn.close()
     cap.release()
     cv.destroyAllWindows()
 
@@ -152,29 +142,66 @@ if __name__ == '__main__':
     for p in ProcessArr:
         p.start() 
     
+    camera_idxs = []
+    for row in camera_list:
+        camera_idxs.append(row['idx'])
+    logs = []
+    for i in camera_idxs:
+        logs.append([])
+    
+    cflag = False
+    current = []
+    
+    file = open("logt.txt", "a")
+    
     while True:
         try:
-            pd = q.get(block=False)
-            print(pd)
-        except:
-            for p in ProcessArr:
-                if p.is_alive() == True:
-                    flag = True
+            if q.empty():
+                for p in ProcessArr:
+                    if p.is_alive() == True:
+                        flag = True
+                        break
+                    else:
+                        flag = False
+                if flag == False:
                     break
+            else:
+                pd = q.get(block=False)
+                
+                if cflag == False:
+                    cflag = True
+                    start_time = pd[2]
+                    current.append(pd)
+                elif (pd[2] - start_time).seconds < 3:
+                    current.append(pd)
                 else:
-                    flag = False
-            if flag == False:
-                break
+                    tmp = []
+                    for i in current: # 카메라 중복 확인
+                        tmp.append(i[0])
+                        
+                    if len(tmp) != len(set(tmp)):
+                        print("ERROR: duplicated camera logs")
+                    else:
+                        total = 0
+                        for obj in current:
+                            total += obj[1]
+                        sql = "insert into Place_Logs (tp_cnt, dt_time) values("+str(total)+",'"+str(start_time)+"')"
+                        cur.execute(sql)
+                        conn.commit()
+                        idx = cur.lastrowid
+                        for obj in current:
+                            sql = "insert into Camera_Logs (camera_idx, dp_cnt, detected_time, plog_idx) values("+str(obj[0])+","+str(obj[1])+",'"+str(obj[2])+"',"+str(idx)+")"
+                            cur.execute(sql)
+                            conn.commit()
+                    current = []
+                    start_time = pd[2]
+                    current.append(pd)
+        except Exception as e:
+            traceback.print_exc()
 
     for p in ProcessArr:
         p.join()
         
     q.put("finish")
-    
-    print("queue")
-    while True:
-        tmp = q.get()
-        if tmp == "finish":
-            break
-        else:
-            print(tmp)
+
+    conn.close()
