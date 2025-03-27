@@ -45,8 +45,6 @@ def ProcessVideo(camera_url,camera_idx,q):
 
     # 타이머 설정
     start_time = time.time()
-    file = open("log.txt", "a")
-    file.write("========Loggin Start========\n")
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -112,8 +110,6 @@ def ProcessVideo(camera_url,camera_idx,q):
         if key == ord("q"):
             break
         
-    file.write("========Stopped Logging========\n")
-    file.close()
     cap.release()
     cv.destroyAllWindows()
 
@@ -151,8 +147,6 @@ if __name__ == '__main__':
     
     cflag = False
     current = []
-    
-    file = open("logt.txt", "a")
     
     while True:
         try:
