@@ -2,8 +2,9 @@ from datetime import datetime  # 날짜, 시간 라이브러리
 import pytz  # 타임존 변환 라이브러리
 from apps import db
 
-# 한국 시간 설정
-KST = pytz.timezone("Asia/Seoul")
+
+# # 한국 시간 설정
+# KST = pytz.timezone("Asia/Seoul")
 
 
 # DB 모델 설정하기
