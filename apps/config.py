@@ -8,6 +8,7 @@ baseDir = Path(__file__).parent.parent
 class BaseConfig:
     SECRET_KEY = "DM5Fq1G9XtMzWAeqYWNR"
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
+    WTF_CSRF_ENABLED = True
     VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
     SNAPSHOT_FOLDER = baseDir / "apps" / "static" / "snapshots"
     LOG_FOLDER = baseDir / "apps" / "static" / "logs"
@@ -19,6 +20,7 @@ class LocalConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{baseDir / 'local.sqlite'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True
+    WTF_CSRF_ENABLED = True
 
 
 # Testing 상황

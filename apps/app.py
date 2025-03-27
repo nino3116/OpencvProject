@@ -24,6 +24,7 @@ def record_camera(camera_url, camera_name):
     """
     video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
     snapshot_base_dir = Path(current_app.config["SNAPSHOT_FOLDER"])
+    camera_name_safe = camera_name.replace(" ", "_").lower()
 
     if not video_base_dir.exists():
         os.makedirs(video_base_dir)
@@ -51,7 +52,7 @@ def record_camera(camera_url, camera_name):
         frame_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
         record_start_time = time.time()
-        fourcc = cv.VideoWriter_fourcc(*"H264")
+        fourcc = cv.VideoWriter_fourcc(*"avc1")
         out = None
         current_record_filename = None
 
@@ -113,12 +114,14 @@ def record_camera(camera_url, camera_name):
                         # 스냅샷 저장 (각 사람별 최초 감지 시 또는 일정 간격으로)
                         now = datetime.now()
                         now_day_local = now.strftime("%Y-%m-%d")
-                        snapshot_dir = snapshot_base_dir / now_day_local / camera_name
+                        snapshot_dir = (
+                            snapshot_base_dir / now_day_local / camera_name_safe
+                        )
                         if not snapshot_dir.exists():
                             os.makedirs(snapshot_dir)
                         snapshot_filename = (
                             snapshot_dir
-                            / f"{camera_name}_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
+                            / f"{camera_name_safe}_{now.strftime('%Y%m%d_%H%M%S')}.jpg"
                         )
                         cv.imwrite(str(snapshot_filename), frame)
 
@@ -133,11 +136,11 @@ def record_camera(camera_url, camera_name):
                 now = datetime.now()
                 timestamp = now.strftime("%Y%m%d_%H%M%S")
                 now_day_local = now.strftime("%Y-%m-%d")
-                video_dir = video_base_dir / now_day_local / camera_name
+                video_dir = video_base_dir / now_day_local / camera_name_safe
                 if not video_dir.exists():
                     os.makedirs(video_dir)
                 current_record_filename = str(
-                    video_dir / f"{camera_name}_{timestamp}.mp4"
+                    video_dir / f"{camera_name_safe}_{timestamp}.mp4"
                 )
                 out = cv.VideoWriter(
                     current_record_filename,
