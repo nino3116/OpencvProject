@@ -1,7 +1,7 @@
 # 기업 연계 프로젝트 1
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired, URL
+from wtforms import StringField, SubmitField, SelectField, DateField
+from wtforms.validators import DataRequired, URL, Optional
 
 # 카메라 등록 폼 클래스
 
@@ -19,3 +19,11 @@ class CameraForm(FlaskForm):
 
 class DeleteCameraForm(FlaskForm):
     submit = SubmitField("삭제")
+
+
+class VideoSearchForm(FlaskForm):
+    camera_name = SelectField(
+        "카메라 이름", choices=[("", "전체")], validators=[Optional()]
+    )
+    date = DateField("날짜 (YYYY-MM-DD)", validators=[Optional()])
+    submit = SubmitField("검색")

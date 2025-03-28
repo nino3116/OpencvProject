@@ -1,7 +1,9 @@
 {% extends "cam/base.html" %} {%block title%}카메라 관리 {%endblock%} 
 <body class="d-flex h-100 text-center bg-dark text-white">
   {% block content%}
+  {% block content%}
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    {% include "cam/header.html" %}
     {% include "cam/header.html" %}
     <main>
       <h1>카메라 목록</h1>
