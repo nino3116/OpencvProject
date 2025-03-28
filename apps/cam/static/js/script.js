@@ -7,10 +7,6 @@ const itemsPerPage = 10; // 페이지당 아이템 수
 
 // 스크롤 이벤트 핸들러
 content.addEventListener('scroll', () => {
-    if (content.scrollTop + content.clientHeight >= content.scrollHeight - 100) {
-        page++;
-        additionalContent.innerHTML += generateContent(page, itemsPerPage);
-    }
 
     // 스크롤 위치에 따라 top button 표시/숨김
     if (content.scrollTop > 200) {
@@ -26,4 +22,4 @@ topButton.addEventListener('click', () => {
 });
 
 // 초기 콘텐츠 로드
-additionalContent.innerHTML = generateContent(page, itemsPerPage);
+// additionalContent.innerHTML = generateContent(page, itemsPerPage);

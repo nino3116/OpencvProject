@@ -1,15 +1,15 @@
 {% extends "cam/base.html" %} {% block title %}Video List{% endblock %}
 
-<body class="d-flex h-100 text-center bg-dark text-white">
+<body class="d-flex h-100 text-center bg-dark text-white" data-bs-spy="scroll" data-bs-target="#TableOfContents">
   {% block content %}
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
     <style>
-      .table {
+      #content {
         height: 500px;
         overflow: auto;
         border: 5px solid white;
       }
-      .topButton {
+      #topButton {
         display: none;
         position: fixed;
         bottom: 20px;
@@ -26,8 +26,8 @@
     <p>
       <a href="{{ url_for('cam.update_videos') }}" class="btn btn-primary">갱신</a>
     </p>
-    
-    <table class = "table">
+    <nav id = "TableOfContents">
+    <table class = "table table-hover ">
       <thead class = "table-dark">
         <tr>
           <th>ID</th>
@@ -39,8 +39,8 @@
         </tr>
       </thead>
       <tbody>
-        {% for i in range(200) %}
-        <tr>
+        {% for i in range(300) %}
+        <tr class="table-light">
           <td>테스트</td>
           <td>카메라1</td>
           <td>1111-22-33</td>
@@ -68,15 +68,15 @@
         </tr>
         {% endfor %}
       </tbody>
-      <div class="additionalContent"></div>
-      <button class="topButton">Top</button>
     </table>
+    <div class="additionalContent"></div>
+  </nav>
+    <button class="topButton">Top</button>
+    <script src= "{{ url_for ('cam.static', filename='js/script.js') }}"></script>
     
     {% include "cam/footer.html" %} {% endblock %}
   </div>
 </body>
-
-<script src= "{{ url_for('cam.static', filename="js/script.js") }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
 <script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
