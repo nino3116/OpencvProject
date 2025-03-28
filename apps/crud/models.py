@@ -18,10 +18,10 @@ class User(db.Model, UserMixin):
     __tablename__ = "users"
     # 컬럼 정의
     id = db.Column(db.Integer, primary_key=True)  # primary_key 속성 부여
-    username = db.Column(db.String, index=True)  # index 색인
-    user_id = db.Column(db.String, nullable=False, unique=True)
+    username = db.Column(db.String(10), index=True)  # index 색인
+    user_id = db.Column(db.String(100), nullable=False, unique=True)
     # email = db.Column(db.String, index=True, unique=True)  # unique, index 설정
-    password_hash = db.Column(db.String)
+    password_hash = db.Column(db.String(255))
     created_at = db.Column(
         db.DateTime, default=datetime.now
     )  # default는 기본값(현재시간)

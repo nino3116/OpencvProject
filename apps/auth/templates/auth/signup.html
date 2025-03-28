@@ -1,25 +1,24 @@
-{% extends "auth/base.html" %} 
-{% block title %} New Users {% endblock %}
-{% block content %}
+{% extends "auth/base.html" %} {% block title %} New Users {% endblock %} {%
+block content %}
 <div class="mx-auto dt-auth-main">
   <div class="card dt-auth-signup">
     <header>사용자 신규 등록</header>
     <section>
-  <form
-   method="post"  
-   action="{{ url_for('auth.signup', next = request.args.get('next')) }}"
-   class="form-signin"
-  >
-    {{ form.csrf_token }}
-    {% for message in get_flashed_messages() %}
-    <div class="dt-auth-flash">{{ message }}</div>
-    {% endfor %}
-    {{ form.user_id(class="form-control dt-auth-input", placeholder="아이디") }}
-    {{ form.username(size=30, class="form-control dt-auth-input", placeholder="사용자명") }}
-    {{ form.password(class="form-control dt-auth-input", placeholder="비밀번호") }}
-    {{ form.submit(class="btn btn-md btn-primary btn-block dt-auth-btn") }}
-  </form>
-</section>
-</div>
+      <form
+        method="post"
+        action="{{ url_for('auth.signup', next = request.args.get('next')) }}"
+        class="form-signin">
+        {{ form.csrf_token }} {% for message in
+        get_flashed_messages(category_filter=["auth_error"]) %}
+        <div class="dt-auth-flash">{{ message }}</div>
+        {% endfor %} {{ form.user_id(class="form-control dt-auth-input",
+        placeholder="아이디") }} {{ form.username(size=30, class="form-control
+        dt-auth-input", placeholder="사용자명") }} {{
+        form.password(class="form-control dt-auth-input",
+        placeholder="비밀번호") }} {{ form.submit(class="btn btn-md btn-primary
+        btn-block dt-auth-btn") }}
+      </form>
+    </section>
+  </div>
 </div>
 {% endblock %}

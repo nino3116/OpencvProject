@@ -10,8 +10,8 @@ KST = pytz.timezone("Asia/Seoul")
 # class Cam(db.Model):
 #     __tablename__ = "cam"
 #     id = db.Column(db.Integer, primary_key=True)
-#     cam_name = db.Column(db.String(255), nullable=False)
-#     cam_url = db.Column(db.String)
+#     cam_name = db.Column(db.VARCHAR(255), nullable=False)
+#     cam_url = db.Column(db.VARCHAR)
 #     create_At = db.Column(db.DateTime, default=datetime.datetime.now(KST))
 #     update_At = db.Column(
 #         db.DateTime,
@@ -25,13 +25,17 @@ KST = pytz.timezone("Asia/Seoul")
 class Cams(db.Model):
     __tablename__ = "cams"
     id = db.Column(db.Integer, primary_key=True)
-    cam_name = db.Column(db.String, nullable=False)
-    cam_url = db.Column(db.String, nullable=False)
+    cam_name = db.Column(db.String(255), unique=True, index=True)
+    cam_url = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     is_active = db.Column(
         db.Boolean, default=True
     )  # 활성화 상태를 나타내는 속성 추가, 기본값은 True
+    videos = db.relationship("Videos", backref="cam", foreign_keys="Videos.camera_id")
+    videos_by_name = db.relationship(
+        "Videos", backref="cam_by_name", foreign_keys="Videos.camera_name"
+    )
 
     def is_duplicate_url(self):
         return Cams.query.filter_by(cam_url=self.cam_url).first()
@@ -39,9 +43,9 @@ class Cams(db.Model):
 
 class Videos(db.Model):
     __tablename__ = "videos"
-    id = db.Column(db.Integer, primary_key=True)
-    camera_id = db.Column(db.Integer, db.ForeignKey(Cams.id))
-    camera_name = db.Column(db.String, db.ForeignKey(Cams.cam_name))
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    camera_id = db.Column(db.Integer, db.ForeignKey("cams.id"))
+    camera_name = db.Column(db.String(255), db.ForeignKey("cams.cam_name"))
     recorded_date = db.Column(db.DateTime)
     recorded_time = db.Column(db.Time)
-    video_path = db.Column(db.String, unique=True)
+    video_path = db.Column(db.String(255), unique=True)

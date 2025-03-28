@@ -10,6 +10,7 @@ from flask import (
     flash,
     current_app,
     send_from_directory,
+    abort,
 )
 from flask_wtf.csrf import generate_csrf
 from apps import db
@@ -28,6 +29,9 @@ from pathlib import Path
 from datetime import datetime, date, time
 from collections import defaultdict
 import os
+from S3upload.s3upload import sync_folder_to_s3
+
+# from S3upload.s3upload import
 
 
 # Blueprint로 crud 앱을 생성한다.
@@ -223,80 +227,35 @@ def play_video(video_id):
     current_app.logger.info(
         f"Attempting to play video with id: {video_id}, path: {video.video_path}"
     )
-    recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+    # recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+    recorded_video_base_dir = (
+        "https://ajwproject1bucket.s3.ap-northeast-2.amazonaws.com/videos"
+    )
     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
+    try:
+        path_obj = Path(video.video_path)
+        full_path = recorded_video_base_dir / path_obj
+        print(f"Full path: {full_path}")
 
-    path_obj = Path(video.video_path)
-    full_path = recorded_video_base_dir / path_obj
-    print(f"Full path: {full_path}")
-
-    if full_path.exists():
+        # if full_path.exists():
         # video_path는 이미 static/videos 폴더를 기준으로 하는 상대 경로이므로
         # url_for('static', filename=...)에 직접 전달할 수 있습니다.
-        video_url = url_for(
-            "static", filename="videos/" + video.video_path.replace("\\", "/")
-        )
+        # video_url = url_for(
+        #     "static", filename="videos/" + video.video_path.replace("\\", "/")
+        # )
+        video_url = recorded_video_base_dir + "/" + video.video_path.replace("\\", "/")
         print(f"Video URL: {video_url}")
         return render_template(
             "cam/play_video_page.html", video_path=video_url, video_id=video_id
         )
-    else:
-        current_app.logger.warning(f"File not found: {full_path}")
+    # else:
+    #     current_app.logger.warning(f"File not found: {full_path}")
+    #     abort(404)
+    except Exception as e:
+        print(f"Error: {e}")
         abort(404)
 
 
-# @cam.route("/videos", methods=["GET", "POST"])
-# @login_required
-# def list_videos():
-#     """저장된 비디오 목록을 보여주는 페이지 (날짜/카메라별 그룹화 및 검색 기능 추가)"""
-#     form = VideoSearchForm(request.form)
-#     form.camera_name.choices.extend(
-#         [
-#             (name, name)
-#             for name in sorted(
-#                 list(set(video.camera_name for video in Videos.query.all()))
-#             )
-#         ]
-#     )
-#     videos = Videos.query.order_by(
-#         Videos.recorded_date.desc(), Videos.camera_name
-#     ).all()
-
-#     if form.validate_on_submit():
-#         search_camera_name = form.camera_name.data
-#         search_date = form.date.data
-
-#         if search_camera_name:
-#             videos = [
-#                 video
-#                 for video in videos
-#                 if search_camera_name.lower() in video.camera_name.lower()
-#             ]
-#         if search_date:
-#             try:
-#                 search_date_obj = datetime.strptime(search_date, "%Y-%m-%d").date()
-#                 videos = [
-#                     video
-#                     for video in videos
-#                     if video.recorded_date.date() == search_date_obj
-#                 ]
-#             except ValueError:
-#                 flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
-
-#     grouped_videos = defaultdict(lambda: defaultdict(list))
-#     for video in videos:
-#         if video.recorded_date:
-#             date_str = video.recorded_date.strftime("%Y-%m-%d")
-#             grouped_videos[date_str][video.camera_name].append(video)
-#         else:
-#             grouped_videos["알 수 없는 날짜"][video.camera_name].append(video)
-
-
-#     return render_template(
-#         "cam/videoList.html",
-#         grouped_videos=grouped_videos,
-#         form=form,
-#     )
 @cam.route("/videos", methods=["GET", "POST"])
 @login_required
 def list_videos():
@@ -586,5 +545,29 @@ def update_videos():
             f"{deleted_videos_count} videos deleted from database because the files were not found.",
             "warning",
         )
+
+    return redirect(url_for("cam.list_videos"))
+
+
+@cam.route("/video_sync_s3")
+def video_sync_s3():
+    local_folder = current_app.config["VIDEO_FOLDER"]
+    s3_bucket_name = current_app.config["S3_BUCKET_NAME"]
+    s3_prefix = current_app.config["S3_PREFIX"]
+    aws_region = current_app.config["AWS_REGION"]
+    aws_access_key_id = current_app.config["AWS_ACCESS_KEY_ID"]
+    aws_secret_access_key = current_app.config["AWS_SECRET_ACCESS_KEY"]
+    try:
+        sync_folder_to_s3(
+            local_folder,
+            s3_bucket_name,
+            s3_prefix,
+            aws_region,
+            aws_access_key_id,
+            aws_secret_access_key,
+        )
+        flash("S3 동기화가 완료되었습니다.", "s3_success")
+    except Exception as e:
+        flash(f"Error : {e}", "s3_error")
 
     return redirect(url_for("cam.list_videos"))

@@ -44,7 +44,7 @@ def signup():
         #     return redirect(url_for("auth.signup"))
 
         if user.is_duplicate_user_id():
-            flash("지정 아이디는 이미 등록되어 입니다.")
+            flash("지정 아이디는 이미 등록되어 입니다.", "auth_error")
             return redirect(url_for("auth.signup"))
 
         # DB등록
@@ -82,7 +82,7 @@ def login():
             return redirect(url_for("cam.index"))
 
         # 로그인 실패시 메시지를 설정
-        flash("아이디 또는 비밀번호가 일치하지 않습니다.")
+        flash("아이디 또는 비밀번호가 일치하지 않습니다.", "auth_error")
     return render_template("auth/login.html", form=form)
 
 
