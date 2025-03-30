@@ -44,7 +44,7 @@ def create_app(config_key):
         from apps.app import start_recording_all
         from apps.app import detect_and_track_person
 
-        detect_and_track_person()
+        # detect_and_track_person()
         # print("create_app 내부에서 start_recording_all 호출 시도")
         # start_recording_all()
         # print("create_app 내부에서 start_recording_all 호출 완료")

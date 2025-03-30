@@ -29,7 +29,8 @@ from pathlib import Path
 from datetime import datetime, date, time
 from collections import defaultdict
 import os
-from S3upload.s3upload import sync_folder_to_s3
+
+# from S3upload.s3upload import sync_folder_to_s3
 
 # from S3upload.s3upload import
 
@@ -105,7 +106,9 @@ def cameras():
     cams = Cams.query.all()
     csrf_token = generate_csrf()
     form = DeleteCameraForm()  # Instantiate the form
-    return render_template("cam/cameraDB.html", cams=cams, csrf_token=csrf_token)
+    return render_template(
+        "cam/cameraDB.html", cams=cams, csrf_token=csrf_token, form=form
+    )
 
 
 @cam.route("/live")
@@ -227,33 +230,33 @@ def play_video(video_id):
     current_app.logger.info(
         f"Attempting to play video with id: {video_id}, path: {video.video_path}"
     )
-    # recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
-    recorded_video_base_dir = (
-        "https://ajwproject1bucket.s3.ap-northeast-2.amazonaws.com/videos"
-    )
+    recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+    # recorded_video_base_dir = (
+    #     "https://ajwproject1bucket.s3.ap-northeast-2.amazonaws.com/videos"
+    # )
     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
-    try:
-        path_obj = Path(video.video_path)
-        full_path = recorded_video_base_dir / path_obj
-        print(f"Full path: {full_path}")
+    # try:
+    path_obj = Path(video.video_path)
+    full_path = recorded_video_base_dir / path_obj
+    print(f"Full path: {full_path}")
 
-        # if full_path.exists():
+    if full_path.exists():
         # video_path는 이미 static/videos 폴더를 기준으로 하는 상대 경로이므로
         # url_for('static', filename=...)에 직접 전달할 수 있습니다.
-        # video_url = url_for(
-        #     "static", filename="videos/" + video.video_path.replace("\\", "/")
-        # )
-        video_url = recorded_video_base_dir + "/" + video.video_path.replace("\\", "/")
+        video_url = url_for(
+            "static", filename="videos/" + video.video_path.replace("\\", "/")
+        )
+        # video_url = recorded_video_base_dir + "/" + video.video_path.replace("\\", "/")
         print(f"Video URL: {video_url}")
         return render_template(
             "cam/play_video_page.html", video_path=video_url, video_id=video_id
         )
-    # else:
-    #     current_app.logger.warning(f"File not found: {full_path}")
-    #     abort(404)
-    except Exception as e:
-        print(f"Error: {e}")
+    else:
+        current_app.logger.warning(f"File not found: {full_path}")
         abort(404)
+    # except Exception as e:
+    #     print(f"Error: {e}")
+    #     abort(404)
 
 
 @cam.route("/videos", methods=["GET", "POST"])
@@ -549,25 +552,25 @@ def update_videos():
     return redirect(url_for("cam.list_videos"))
 
 
-@cam.route("/video_sync_s3")
-def video_sync_s3():
-    local_folder = current_app.config["VIDEO_FOLDER"]
-    s3_bucket_name = current_app.config["S3_BUCKET_NAME"]
-    s3_prefix = current_app.config["S3_PREFIX"]
-    aws_region = current_app.config["AWS_REGION"]
-    aws_access_key_id = current_app.config["AWS_ACCESS_KEY_ID"]
-    aws_secret_access_key = current_app.config["AWS_SECRET_ACCESS_KEY"]
-    try:
-        sync_folder_to_s3(
-            local_folder,
-            s3_bucket_name,
-            s3_prefix,
-            aws_region,
-            aws_access_key_id,
-            aws_secret_access_key,
-        )
-        flash("S3 동기화가 완료되었습니다.", "s3_success")
-    except Exception as e:
-        flash(f"Error : {e}", "s3_error")
+# @cam.route("/video_sync_s3")
+# def video_sync_s3():
+#     local_folder = current_app.config["VIDEO_FOLDER"]
+#     s3_bucket_name = current_app.config["S3_BUCKET_NAME"]
+#     s3_prefix = current_app.config["S3_PREFIX"]
+#     aws_region = current_app.config["AWS_REGION"]
+#     aws_access_key_id = current_app.config["AWS_ACCESS_KEY_ID"]
+#     aws_secret_access_key = current_app.config["AWS_SECRET_ACCESS_KEY"]
+#     try:
+#         sync_folder_to_s3(
+#             local_folder,
+#             s3_bucket_name,
+#             s3_prefix,
+#             aws_region,
+#             aws_access_key_id,
+#             aws_secret_access_key,
+#         )
+#         flash("S3 동기화가 완료되었습니다.", "s3_success")
+#     except Exception as e:
+#         flash(f"Error : {e}", "s3_error")
 
-    return redirect(url_for("cam.list_videos"))
+#     return redirect(url_for("cam.list_videos"))

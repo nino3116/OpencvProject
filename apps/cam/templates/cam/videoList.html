@@ -7,9 +7,9 @@ block content %}
     <a href="{{ url_for('cam.update_videos') }}" class="btn btn-primary"
       >갱신</a
     >
-    <a href="{{ url_for('cam.video_sync_s3') }}" class="btn btn-primary"
+    {#<a href="{{ url_for('cam.video_sync_s3') }}" class="btn btn-primary"
       >S3 갱신</a
-    >
+    >#}
   </p>
   {% for message in
   get_flashed_messages(category_filter=["s3_succes","warning","error"]) %}
@@ -70,12 +70,14 @@ block content %}
               <form
                 method="POST"
                 action="{{ url_for('cam.delete_video', video_id=video.id) }}"
-                style="display: inline">
+                style="display: inline"
+              >
                 {{ form.csrf_token }}
                 <button
                   type="submit"
                   class="btn btn-sm btn-outline-danger"
-                  onclick="return confirm('정말로 삭제하시겠습니까?')">
+                  onclick="return confirm('정말로 삭제하시겠습니까?')"
+                >
                   삭제
                 </button>
               </form>
