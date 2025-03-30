@@ -27,7 +27,8 @@ content %}
           © 2025-03~04 이현우 안재원 김제나 project!!
         </p>
 
-        {% for message in get_flashed_messages() %}
+        {% for message in get_flashed_messages(category_filter=["auth_error"])
+        %}
         <span class="dt-auth-flahed">{{ message }}</span>
         {% endfor %}
       </main>
