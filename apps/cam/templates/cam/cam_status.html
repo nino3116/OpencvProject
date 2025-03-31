@@ -1,46 +1,54 @@
 {% extends "cam/base.html" %} 
-{%block title%}카메라 관리{%endblock%} 
-<body class="d-flex h-100 text-center bg-dark text-white">
-  {% block content %}
-  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+{%block title%}카메라 관리{% endblock %} 
+<body class="d-flex w-100 h-100 text-center bg-dark text-white">
+{% block content %}
+  <div class="cover-container d-flex w-100 h-100 p-3 flex-column">
+
     {% include "cam/header.html" %}
-    <main>
-      <h1>카메라 목록</h1>
-      <table class = "table">
-        <thead class = "table-dark">
-          <tr>
-            <th>이름</th>
-            <th>URL</th>
-            <th>상태</th>
-            <th>액션</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for cam in cams %}
-          <tr>
-            <td class = "td" >{{ cam.cam_name }}</td>
-            <td class = "td" >{{ cam.cam_url }}</td>
-            <td class = "td" >
-              {% if cam.cam_name in recording_status and
-                recording_status[cam.cam_name] %} 녹화 중 {% else %} 대기 중 {%
-              endif %}
-            </td>
-            <td class = "td">
-              {% if cam.cam_name not in recording_status or not
-              recording_status[cam.cam_name] %}
-              <a class="btn btn-sg btn-light bg-success" 
-              href="{{ url_for('cam.start_record', camera_name=cam.cam_name) }}">녹화 시작</a>
-              {% else %}
-              <a class="btn btn-sg btn-light bg-danger"
-              href="{{ url_for('cam.stop_record_route', camera_name=cam.cam_name) }}">녹화 중지</a>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+    <main class = "my-auto">
+      
+      <div class= "table-responsive">
+        <table class = "table table-dark table-striped table-hover align-middle">
+        <h1>카메라 목록</h1>
+          <thead>
+            <tr>
+              <th>이름</th>
+              <th>URL</th>
+              <th>상태</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cam in cams %}
+            <tr>
+              <td class = "td" >{{ cam.cam_name }}</td>
+              <td class = "td text-break" >{{ cam.cam_url }}</td>
+              <td class = "td" >
+                {% if cam.cam_name in recording_status and recording_status[cam.cam_name] %}
+                  녹화 중 
+                {% else %} 
+                  대기 중
+                {% endif %}
+              </td>
+              <td class = "td">
+                {% if cam.cam_name not in recording_status or not
+                recording_status[cam.cam_name] %}
+                <a class="btn btn-sg btn-light bg-success" 
+                href="{{ url_for('cam.start_record', camera_name=cam.cam_name) }}">녹화 시작</a>
+                {% else %}
+                <a class="btn btn-sg btn-light bg-danger"
+                href="{{ url_for('cam.stop_record_route', camera_name=cam.cam_name) }}">녹화 중지</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    
       <div>
-        <button class = "btn btn-sg btn-outline-light bg-success">
+        <button class = "btn btn-sg btn-light bg-success">
       <a class="btn btn-sg " href="{{ url_for('cam.start_all_records')}}"> 모든 녹화 시작</a>
       </button>
       <button class = "btn btn-sg btn-light bg-danger">

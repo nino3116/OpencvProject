@@ -26,7 +26,7 @@ block content %}
       </div>
       <div class="col-md-3">{{ form.date(class="form-control") }}</div>
       <div class="col-md-auto">
-        {{ form.submit(class="btn btn-secondary") }}
+        {{ form.submit(class="btn btn-primary") }}
       </div>
     </div>
   </form>
@@ -57,12 +57,12 @@ block content %}
             <td>
               <a
                 href="{{ url_for('cam.play_video', video_id=video.id) }}"
-                class="btn btn-sm btn-outline-light"
+                class="btn btn-sm btn-outline-success"
                 >재생</a
               >
               <a
                 href="{{ url_for('cam.download_video', video_id=video.id) }}"
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-outline-light"
                 >다운로드</a
               >
               <form
@@ -73,7 +73,7 @@ block content %}
                 <button
                   type="submit"
                   class="btn btn-sm btn-outline-danger"
-                  onclick="return confirm('정말로 삭제하시겠습니까?')">
+                  onclick="return confirm('정말로 삭제하시겠습니까?')"> 
                   삭제
                 </button>
               </form>
