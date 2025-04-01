@@ -1,5 +1,5 @@
 import requests
-from app.kakao_client import (
+from apps.kakao.kakao_client import (
     CLIENT_ID,
     CLIENT_SECRET,
     REDIRECT_URI,
@@ -18,9 +18,9 @@ class Oauth:
 
     def auth(self, code):
         return requests.post(
-            url=self.auth_server % "/oauth/token",
+            url=self.auth_server + "/oauth/token",  # 수정된 부분: 문자열 연결 (+) 사용
             headers=self.default_header,
-            date={
+            data={
                 "grant_type": "authorization_code",
                 "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET,
@@ -31,7 +31,7 @@ class Oauth:
 
     def userInfo(self, bearer_token):
         return requests.post(
-            url=self.api_server % "/v2/user/me",
+            url=self.api_server + "/v2/user/me",  # 수정된 부분: 문자열 연결 (+) 사용
             headers={
                 **self.default_header,
                 **{"Authorization": bearer_token},

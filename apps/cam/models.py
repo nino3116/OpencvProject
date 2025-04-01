@@ -40,6 +40,9 @@ class Cams(db.Model):
     def is_duplicate_url(self):
         return Cams.query.filter_by(cam_url=self.cam_url).first()
 
+    def __repr__(self):
+        return f"<Cam {self.cam_name}>"
+
 
 class Videos(db.Model):
     __tablename__ = "videos"
@@ -49,3 +52,15 @@ class Videos(db.Model):
     recorded_date = db.Column(db.DateTime)
     recorded_time = db.Column(db.Time)
     video_path = db.Column(db.String(255), unique=True)
+
+
+class Camera_logs(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    camera_name = db.Column(db.String(128), nullable=False)
+    detection_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    person_count = db.Column(db.Integer, nullable=False)
+    snapshot_path = db.Column(db.String(256), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<CameraLog {self.camera_name} at {self.detection_time}>"

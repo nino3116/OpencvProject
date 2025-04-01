@@ -35,6 +35,10 @@ def create_app(config_key):
 
     app.register_blueprint(cam_views.cam, url_prefix="/cam")
 
+    from apps.kakao import views as kakao_views
+
+    app.register_blueprint(kakao_views.kakao, url_prefix="/oauth/kakao")
+
     @app.route("/")
     def to_index():
         return redirect(url_for("cam.index"))
@@ -42,11 +46,9 @@ def create_app(config_key):
     # start_recording_all 함수를 create_app 내에서 호출
     with app.app_context():
         from apps.app import start_recording_all
-        from apps.app import detect_and_track_person
 
-        # detect_and_track_person()
         # print("create_app 내부에서 start_recording_all 호출 시도")
-        # start_recording_all()
+        start_recording_all()
         # print("create_app 내부에서 start_recording_all 호출 완료")
 
     return app
