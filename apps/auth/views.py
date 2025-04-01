@@ -56,7 +56,7 @@ def signup():
             db.session.commit()
             print("회원가입 성공","success")
         except Exception as e:
-            print(f"회원가입 종 오류발생: {e}", "danger")
+            print(f"회원가입 중 오류발생: {e}", "danger")
             db.session.rollback()
             return redirect(url_for("auth.signup"))
 

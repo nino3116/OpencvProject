@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const passwordField = document.getElementById("floatingPassword");
     const passwordFeedback = document.createElement("small");
-    passwordFeedback.style.color = "white";
+    passwordFeedback.style.color = "black";
     passwordField.parentNode.appendChild(passwordFeedback);
 
     passwordField.addEventListener("input", function () {

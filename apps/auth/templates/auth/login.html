@@ -1,27 +1,29 @@
 {% extends "auth/base.html" %}
 {% block title %}login{% endblock %}
+<body class="d-flex w-100 h-100 text-center bg-dark text-white">
 {% block content %}
-<div class ="my-auto">
-  <div class = "card">
-      <form method="post" action="{{ url_for ('auth.login') }}">
-          <h1 class = "h3 mb-3 mt-3 fw-normal">Please sign in</h1>
-          <section>
-          <div class = "form-floating mb-3">
-            {{ form.csrf_token }}
-            {{ form.user_id(class ="form-control", id= "floatingInput", placeholder="UserID") }}
-            <label for="floatingInput">UserID</label>
-          </div>
-          <div class = "form-floating mb-3">
-            {{ form.password(class ="form-control", id= "floatingInput", placeholder="Password") }}
-            <label for="floatingInput">Password</label>
-          </div>
-          <button class = "btn btn-primary w-100", type = "submit">Login</button>
-            <p class = "mt-5 mb-3 text-black">© 2025-03~04 이현우 안재원 김제나 project!!</p> 
-          {% for message in get_flashed_messages() %}
-            <span class = "dt-auth-falshed">{{ message }}</span>
-          {% endfor %}
-        </section>
-      </form>
+<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+  <div class ="m-auto">
+    <div class = "card">
+        <form method="post" action="{{ url_for ('auth.login') }}" class = "form-login">
+            <h1 class = "h3 mb-3 mt-3 fw-normal">Please sign in</h1>
+            <div class = "form-floating mb-3">
+              {{ form.csrf_token }}
+              {{ form.user_id(class ="form-control", id= "floatingInput", placeholder="UserID") }}
+              <label for="floatingInput">UserID</label>
+            </div>
+            <div class = "form-floating mb-3">
+              {{ form.password(class ="form-control", id= "floatingPassword", placeholder="Password") }}
+              <label for="floatingPassword">Password</label>
+            </div>
+            <button class = "btn btn-primary w-100", type = "submit">Login</button>
+              <p class = "mt-5 mb-3 text-black">© 2025-03~04 이현우 안재원 김제나 project!!</p> 
+            {% for message in get_flashed_messages() %}
+              <span class = "dt-auth-falshed">{{ message }}</span>
+            {% endfor %}
+        </form>
+    </div>
   </div>
 </div>
-{% endblock %}
+  {% endblock %}
+</body>

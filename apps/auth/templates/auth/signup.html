@@ -1,32 +1,34 @@
 {% extends "auth/base.html" %} 
 {% block title %}Sign Up{% endblock %}
 {% block content %}
-<div class = "mx-auto dt-auth-main">
-  <div class = "card-dt-auth-login">
-    <form method = "post" action="{{ url_for('auth.signup', next = request.args.get('next')) }}">
-        <main class = "form-signin w-100 m-auto"> 
+<div class = "m-auto">
+  <div class = "card">
+    <div class = "form-signin"> 
+      <form method = "post" action="{{ url_for('auth.signup', next = request.args.get('next')) }}">
           <h1 class = "h3 mb-3 fw-normal">Please sign up</h1>
-          <div class = "form-floating">
+          <div class = "form-floating mb-3">
             {{ form.csrf_token }}
-            {{ form.user_id(class="form-control dt-auth-input", id= "floatingInput", placeholder="UserID") }}
-            <label for="floatingInput"></label>
+            {{ form.user_id(class="form-control", id= "floatingInput", placeholder="UserID") }}
+            <label for="floatingInput">UserID</label>
           </div>
-          <div class = "form-floating">
-            {{ form.username(class="form-control dt-auth-input", id="floatingName", placeholder="User Name") }}
-            <label for="floatingName"></label>
+          <div class = "form-floating mb-3">
+            {{ form.username(class="form-control", id="floatingName", placeholder="User Name") }}
+            <label for="floatingName">User Name</label>
           </div>
-          <div class ="form-floating">
-            {{ form.password(class="form-control dt-auth-input", id="floatingPassword", placeholder="Password") }}
-            <label for="floatingPassword"></label>
+          <div class ="form-floating mb-3">
+            {{ form.password(class="form-control", id="floatingPassword", placeholder="Password") }}
+            <label for="floatingPassword">Password</label>
           </div>
-          <button class = "btn btn-primary w-100 py-2", type = "submit">Sign Up</button>
-            <p class = "mt-5 mb-3 text-white">© 2025-03~04 이현우 안재원 김제나 project!!</p> 
+          <button class = "btn btn-primary w-100", type = "submit">Sign Up</button>
+            <p class = "mt-5 mb-3 text-black">© 2025-03~04 이현우 안재원 김제나 project!!</p> 
           {% for message in get_flashed_messages() %}
             <div class="dt-auth-flash">{{ message }}</div>
           {% endfor %}
-        </main>
-    </form>
+      </form>
+    </div>
   </div>
 </div>
+{% endblock %}
+{% block script %}
 <script src= " {{url_for('auth.static', filename='js/passWd.js') }} "></script>
 {% endblock %}

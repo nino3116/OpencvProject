@@ -88,7 +88,8 @@ block content %}
   <button id="topButton" class="btn btn-light">Top</button>
   {% include "cam/footer.html" %}
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+{% block scripts %}
 <script src=" {{ url_for('cam.static', filename='js/script.js')}}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
