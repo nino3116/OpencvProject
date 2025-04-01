@@ -44,6 +44,10 @@ cam = Blueprint(
 )
 
 
+@cam.route("/test")
+def test():
+    return render_template("cam/test.html")
+
 @cam.route("/")
 @login_required
 def index():
@@ -79,7 +83,7 @@ def edit_camera(camera_id):
     form = CameraForm()
     cam = Cams.query.filter_by(id=camera_id).first()
 
-    # form 으로 부터 제출된경우는 사용자를 갱시낳여 사용자의 일람 화면으로 리다이렉트
+    # form 으로 부터 제출된경우는 사용자를 갱신하여 사용자의 일람 화면으로 리다이렉트
     if form.validate_on_submit():
         cam.cam_name = form.cam_name.data
         cam.cam_url = form.cam_url.data

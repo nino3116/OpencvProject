@@ -1,20 +1,22 @@
 {% extends "cam/base.html" %} {% block title %}비디오 목록{% endblock %} {%
 block content %}
 <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+  <style>
+    #topButton {
+      display: none;
+      position: fixed;
+      font-weight: bold;
+      bottom: 20px;
+      right: 20px;
+    }
+  </style>
   {% include "cam/header.html" %}
   <h1 class="mb-3">비디오 목록</h1>
   <p>
     <a href="{{ url_for('cam.update_videos') }}" class="btn btn-primary"
       >갱신</a
     >
-    {#<a href="{{ url_for('cam.video_sync_s3') }}" class="btn btn-primary"
-      >S3 갱신</a
-    >#}
   </p>
-  {% for message in
-  get_flashed_messages(category_filter=["s3_succes","warning","error"]) %}
-  <span class="dt-auth-flahed">{{ message }}</span>
-  {% endfor %}
 
   <form method="POST" class="mb-4">
     {{ form.csrf_token }}
@@ -27,9 +29,7 @@ block content %}
         {{ form.date.label(class="col-form-label") }}
       </div>
       <div class="col-md-3">{{ form.date(class="form-control") }}</div>
-      <div class="col-md-auto">
-        {{ form.submit(class="btn btn-secondary") }}
-      </div>
+      <div class="col-md-auto">{{ form.submit(class="btn btn-primary") }}</div>
     </div>
   </form>
 
@@ -59,25 +59,23 @@ block content %}
             <td>
               <a
                 href="{{ url_for('cam.play_video', video_id=video.id) }}"
-                class="btn btn-sm btn-outline-light"
+                class="btn btn-sm btn-outline-success"
                 >재생</a
               >
               <a
                 href="{{ url_for('cam.download_video', video_id=video.id) }}"
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-outline-light"
                 >다운로드</a
               >
               <form
                 method="POST"
                 action="{{ url_for('cam.delete_video', video_id=video.id) }}"
-                style="display: inline"
-              >
+                style="display: inline">
                 {{ form.csrf_token }}
                 <button
                   type="submit"
                   class="btn btn-sm btn-outline-danger"
-                  onclick="return confirm('정말로 삭제하시겠습니까?')"
-                >
+                  onclick="return confirm('정말로 삭제하시겠습니까?')">
                   삭제
                 </button>
               </form>
@@ -88,9 +86,12 @@ block content %}
       </table>
     </div>
   </div>
-  {% endfor %} {% include "cam/footer.html" %}
+  {% endfor %}
+  <button id="topButton" class="btn btn-light">Top</button>
+  {% include "cam/footer.html" %}
 </div>
 {% endblock %} {% block scripts %}
+<script src=" {{ url_for('cam.static', filename='js/script.js')}}"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
