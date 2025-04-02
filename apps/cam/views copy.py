@@ -15,13 +15,11 @@ from flask import (
 from flask_wtf.csrf import generate_csrf
 from apps import db
 from apps.app import (
-    db,
-    camera_streams,
-    recording_status,
-    record_camera_with_context,
+    start_recording_all,
+    record_camera,
     stop_recording,
     stop_recording_all,
-    start_recording_all,
+    camera_streams,
 )
 from apps.cam.models import Cams, Videos
 from apps.cam.forms import CameraForm, DeleteCameraForm, VideoSearchForm
@@ -30,7 +28,6 @@ from pathlib import Path
 from datetime import datetime, date, time
 from collections import defaultdict
 import os
-
 # from threading import Event
 
 # from S3upload.s3upload import sync_folder_to_s3
@@ -135,10 +132,28 @@ def cam_status():
     from apps.app import camera_streams  # 순환 참조 방지
 
     cams = Cams.query.all()
-    # recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
+    recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
     return render_template(
         "cam/cam_status.html", cams=cams, recording_status=recording_status
     )
+
+
+IMAGE_SAVE_PATH = "capture_images"
+if not os.path.exists(IMAGE_SAVE_PATH):
+    os.mkdir(IMAGE_SAVE_PATH)
+
+
+# 파일 저장 함수 (이미지 캡처)
+def save_image(cam_id):
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"cam_{cam_id}_{timestamp}.jpg"
+    filepath = os.path.join(IMAGE_SAVE_PATH, filename)
+
+    # 더미 이미지 생성 (실제 환경에서는 캡처된 이미지 저장)
+    with open(filepath, "wb") as f:
+        f.write(os.urandom(1024))  # 임의의 데이터를 넣어 더미 이미지 생성
+
+    print(f"이미지 저장됨: {filepath}")
 
 
 @cam.route("/start_record/<camera_name>")
@@ -147,55 +162,33 @@ def start_record(camera_name):
     cam_info = Cams.query.filter_by(cam_name=camera_name).first()
     if cam_info:
         from apps.app import (
-            record_camera_with_context,
-            recording_status,
             camera_streams,
+            camera_stop_events,
+            record_camera_with_context,
         )  # 순환 참조 방지
 
+        stop_event = camera_stop_events.get(cam_info.cam_name)
+        if stop_event is None:
+            stop_event = Event()
+            camera_stop_events[cam_info.cam_name] = stop_event
         app = current_app._get_current_object()
-        record_camera_with_context(app, cam_info.cam_url, cam_info.cam_name)
-        recording_status[cam_info.cam_name] = (
-            True  # 개별 녹화 시작 시 recording_status 업데이트
-        )
-        # 개별 녹화 시작 시 camera_streams 업데이트
-        if cam_info.cam_name not in camera_streams:
-            recording_thread = threading.Thread(
-                target=record_camera_with_context,
-                args=(app, cam_info.cam_url, cam_info.cam_name),
-                daemon=True,
-            )
-            recording_thread.start()
-            camera_streams[cam_info.cam_name] = recording_thread
-        elif not camera_streams[
-            cam_info.cam_name
-        ].is_alive():  # 스레드가 종료되었을 경우 재시작
-            recording_thread = threading.Thread(
-                target=record_camera_with_context,
-                args=(app, cam_info.cam_url, cam_info.cam_name),
-                daemon=True,
-            )
-            recording_thread.start()
-            camera_streams[cam_info.cam_name] = recording_thread
-
+        record_camera_with_context(app, cam_info.cam_url, cam_info.cam_name, stop_event)
     return redirect(url_for("cam.cam_status"))
 
 
 @cam.route("/stop_record/<camera_name>")
-@login_required
 def stop_record_route(camera_name):
     stop_recording(camera_name)
     return redirect(url_for("cam.cam_status"))
 
 
 @cam.route("/stop_all_records")
-@login_required
 def stop_all_records():
     stop_recording_all()
     return redirect(url_for("cam.cam_status"))
 
 
 @cam.route("/start_all_records")
-@login_required
 def start_all_records():
     start_recording_all()
     return redirect(url_for("cam.cam_status"))

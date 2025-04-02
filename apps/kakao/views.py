@@ -142,12 +142,15 @@ def callback():
                 email=email,
                 password=generate_password_hash(name),
                 is_kakao=True,
+                kakao_access_token=access_token,
             )
             db.session.add(user)
             db.session.commit()
             login_user(user)
             message = "카카오 계정으로 회원 가입 및 로그인이 완료되었습니다."
         else:
+            user.kakao_access_token = access_token
+            db.session.commit()
             login_user(user)
             message = "카카오 계정으로 로그인에 성공하였습니다."
 

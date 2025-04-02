@@ -56,12 +56,13 @@ class Videos(db.Model):
 
 
 class Camera_logs(db.Model):
+    __tablename__ = "camera_log_tmp"  # camera_logs => camera_log_tmp 수정flask
     id = db.Column(db.Integer, primary_key=True)
     camera_name = db.Column(db.String(128), nullable=False)
-    detection_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    detection_time = db.Column(db.DateTime, nullable=False, default=datetime.now)
     person_count = db.Column(db.Integer, nullable=False)
     snapshot_path = db.Column(db.String(256), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def __repr__(self):
         return f"<CameraLog {self.camera_name} at {self.detection_time}>"

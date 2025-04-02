@@ -11,7 +11,8 @@ from dbconfig import dbconnect
 
 import traceback, logging
 
-def ProcessVideo(camera_url,camera_idx,q):
+
+def ProcessVideo(camera_url, camera_idx, q, pipe):
     # YOLO 모델 불러오기
     model = YOLO("yolo11n.pt")
     # 비디오 영상 불러오기
@@ -19,15 +20,12 @@ def ProcessVideo(camera_url,camera_idx,q):
 
     if not cap.isOpened():
         sys.exit("Cannot open camera")
-    
-    # 비디오 저장을 위한 변수
-    # fps = int(cap.get(cv.CAP_PROP_FPS))
-    # width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
-    # height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-    # output_path = f"piCamDetect_v11_{camera_idx}.mts"
-    # fourcc = cv.VideoWriter.fourcc(*"m2ts")
-    # video_writer = cv.VideoWriter(output_path, fourcc, fps, (width, height))
 
+    # 비디오 저장을 위한 변수
+    fps = int(cap.get(cv.CAP_PROP_FPS))
+    width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    fourcc = cv.VideoWriter.fourcc(*"avc1")
 
     # 사람별 색상 저장 딕셔너리
     person_colors = {}
@@ -45,6 +43,7 @@ def ProcessVideo(camera_url,camera_idx,q):
 
     # 타이머 설정
     start_time = time.time()
+    is_recording = False
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -81,7 +80,13 @@ def ProcessVideo(camera_url,camera_idx,q):
                     confidence = results[0].boxes.conf[i].cpu().item()
                     label = f"ID: {track_id}"
                     cv.putText(
-                        frame, label, (x1, y1 - 10), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
+                        frame,
+                        label,
+                        (x1, y1 - 10),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        color,
+                        2,
                     )
 
                     person_count += 1
@@ -96,58 +101,92 @@ def ProcessVideo(camera_url,camera_idx,q):
         )
 
         cv.imshow("Person Tracking by ByteTrack", frame)
-        # video_writer.write(frame)
-        
+
         current_time = time.time()
         this_moment = datetime.now()
-        if current_time - start_time >= 10:
-            print(f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.")            
-            q.put([camera_idx,person_count,this_moment])
+
+        try:
+            if pipe.poll() == True:
+                msg = pipe.recv()
+                if msg == "REC ON":
+                    if is_recording == False:
+                        is_recording = True
+                        output_path = f"{this_moment}_{camera_idx}.mp4"
+                        video_writer = cv.VideoWriter(
+                            output_path, fourcc, fps, (width, height)
+                        )
+                        print(video_writer.isOpened())
+                elif msg == "REC OFF":
+                    if is_recording == True:
+                        is_recording = False
+                        video_writer.release()
+        except:
+            pass
+
+        if is_recording == True:
+            video_writer.write(frame)
+
+        if current_time - start_time >= 30:
+            # print(f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.")
+            q.put([camera_idx, person_count, this_moment])
 
             start_time = current_time
-    
+
         key = cv.waitKey(1)
         if key == ord("q"):
             break
-        
+
+    try:
+        video_writer.release()
+    except:
+        pass
+
     cap.release()
     cv.destroyAllWindows()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import multiprocessing
+
     # freeze_support()
-    
+
     # Load Camera List from Database
     conn = dbconnect()
     cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute("select * from camera_list")
+    cur.execute("select * from cams")
     camera_list = cur.fetchall()
-    print(camera_list)
-    
+    # print(camera_list)
+
     parent_conn, child_conn = multiprocessing.Pipe()
-    
+
     ProcessArr = []
     q = multiprocessing.Queue()
+    ppipes = []
 
     for row in camera_list:
-        ProcessArr.append(multiprocessing.Process(target=ProcessVideo, args = (row['camera_url'], int(row['idx']),q)))
+        ppipe, cpipe = multiprocessing.Pipe()
+        ProcessArr.append(
+            multiprocessing.Process(
+                target=ProcessVideo, args=(row["cam_url"], int(row["id"]), q, cpipe)
+            )
+        )
+        ppipes.append(ppipe)
 
-    print(ProcessArr)
+    # print(ProcessArr)
 
     for p in ProcessArr:
-        p.start() 
-    
+        p.start()
+
     camera_idxs = []
     for row in camera_list:
-        camera_idxs.append(row['idx'])
+        camera_idxs.append(row["id"])
     logs = []
     for i in camera_idxs:
         logs.append([])
-    
+
     cflag = False
     current = []
-    
+
     while True:
         try:
             if q.empty():
@@ -161,33 +200,94 @@ if __name__ == '__main__':
                     break
             else:
                 pd = q.get(block=False)
-                
+
                 if cflag == False:
                     cflag = True
                     start_time = pd[2]
                     current.append(pd)
-                elif (pd[2] - start_time).seconds < 3: 
+                elif (pd[2] - start_time).seconds < 3:
                     # 시작 시점 기준으로 3초 이내의 데이터 함께 처리
                     current.append(pd)
                 else:
                     tmp = []
-                    for i in current: # 카메라 중복 확인
+                    for i in current:  # 카메라 중복 확인
                         tmp.append(i[0])
-                        
+
                     if len(tmp) != len(set(tmp)):
                         print("ERROR: duplicated camera logs")
                     else:
                         total = 0
                         for obj in current:
                             total += obj[1]
-                        sql = "insert into Place_Logs (tp_cnt, dt_time) values("+str(total)+",'"+str(start_time)+"')"
+                        sql = (
+                            "insert into Place_Logs (tp_cnt, dt_time) values("
+                            + str(total)
+                            + ",'"
+                            + str(start_time)
+                            + "')"
+                        )
                         cur.execute(sql)
                         conn.commit()
                         idx = cur.lastrowid
                         for obj in current:
-                            sql = "insert into Camera_Logs (camera_idx, dp_cnt, detected_time, plog_idx) values("+str(obj[0])+","+str(obj[1])+",'"+str(obj[2])+"',"+str(idx)+")"
+                            sql = (
+                                "insert into Camera_Logs (camera_idx, dp_cnt, detected_time, plog_idx) values("
+                                + str(obj[0])
+                                + ","
+                                + str(obj[1])
+                                + ",'"
+                                + str(obj[2])
+                                + "',"
+                                + str(idx)
+                                + ")"
+                            )
                             cur.execute(sql)
                             conn.commit()
+                        cur.execute(
+                            "select * from mode_schedule where end_time >= now() and start_time <= now();"
+                        )
+                        mode_now = cur.fetchall()
+
+                        if mode_now[0]["mode_type"] == "Running":
+                            if total > mode_now[0]["people_cnt"]:
+                                print(
+                                    str(start_time)
+                                    + ": 예약 인원 초과 감지: 총 "
+                                    + str(total)
+                                    + "명 감지 / 예약 인원 "
+                                    + str(mode_now[0]["people_cnt"])
+                                    + "명"
+                                )
+                                sql = (
+                                    "insert into Mode_Detected (mode_type, person_reserved, person_detected, detected_time) values('"
+                                    + str(mode_now[0]["mode_type"])
+                                    + "',"
+                                    + str(mode_now[0]["people_cnt"])
+                                    + ","
+                                    + str(total)
+                                    + ",'"
+                                    + str(start_time)
+                                    + "')"
+                                )
+                                for p in ppipes:
+                                    try:
+                                        p.send("REC ON")
+                                    except:
+                                        ppipes.remove(p)
+                                cur.execute(sql)
+                                conn.commit()
+                            else:
+                                for p in ppipes:
+                                    p.send("REC OFF")
+                        elif mode_now[0]["mode_type"] == "Secure":
+                            if total > 0:
+                                print(
+                                    str(start_time)
+                                    + ": 방범 모드 중 인물 감지: 총"
+                                    + str(total)
+                                    + "명 감지"
+                                )
+
                     # 처리한 뒤 초기화: 이후 데이터는 새로운 row로 처리
                     current = []
                     start_time = pd[2]
@@ -197,7 +297,7 @@ if __name__ == '__main__':
 
     for p in ProcessArr:
         p.join()
-        
+
     q.put("finish")
 
     conn.close()

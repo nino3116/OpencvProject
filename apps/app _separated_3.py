@@ -144,7 +144,7 @@ def record_original_video(camera_url, camera_name):
             current_time = time.time()
             elapsed_time = current_time - record_start_time
 
-            if elapsed_time >= 600:
+            if elapsed_time >= 300:
                 if out is not None:
                     out.release()
                     print(f"{current_record_filename} 저장 완료")
