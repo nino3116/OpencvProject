@@ -19,7 +19,6 @@ from apps.app import (
     record_camera,
     stop_recording,
     stop_recording_all,
-    recording_status,
     camera_streams,
 )
 from apps.cam.models import Cams, Videos
@@ -47,6 +46,7 @@ cam = Blueprint(
 @cam.route("/test")
 def test():
     return render_template("cam/test.html")
+
 
 @cam.route("/")
 @login_required
@@ -117,7 +117,10 @@ def cameras():
 
 @cam.route("/live")
 def live():
+    from apps.app import camera_streams  # 순환 참조 방지
+
     cams = Cams.query.all()
+    recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
     return render_template(
         "cam/live.html", cams=cams, recording_status=recording_status
     )
@@ -125,7 +128,10 @@ def live():
 
 @cam.route("/status")
 def cam_status():
+    from apps.app import camera_streams  # 순환 참조 방지
+
     cams = Cams.query.all()
+    recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
     return render_template(
         "cam/cam_status.html", cams=cams, recording_status=recording_status
     )

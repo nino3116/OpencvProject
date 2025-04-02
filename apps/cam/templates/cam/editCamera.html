@@ -10,6 +10,7 @@ title %} {% block content%}
           action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
           method="POST"
           novalidate="novalidate"
+          class="form-camadd"
         >
           {{ form.csrf_token }}
 

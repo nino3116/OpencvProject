@@ -17,6 +17,12 @@ block content %}
       >갱신</a
     >
   </p>
+  <p>
+    {% for message in
+    get_flashed_messages(category_filter=["success","error","warning"])%}
+    <span class="dt-auth-flashed">{{message}}</span>
+    {%endfor%}
+  </p>
 
   <form method="POST" class="mb-4">
     {{ form.csrf_token }}
