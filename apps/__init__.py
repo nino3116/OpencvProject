@@ -34,6 +34,10 @@ def create_app(config_key):
     from apps.cam import views as cam_views
 
     app.register_blueprint(cam_views.cam, url_prefix="/cam")
+    
+    from apps.mode import views as mode_views
+
+    app.register_blueprint(mode_views.mode, url_prefix="/mode")
 
     from apps.kakao import views as kakao_views
 
