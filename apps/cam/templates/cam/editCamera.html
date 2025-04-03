@@ -3,34 +3,44 @@ title %} {% block content%}
 <body class="d-flex h-100 text-center bg-dark text-white">
   {% include "cam/header.html"%}
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
-    <form
-      action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
-      method="POST"
-      novalidate="novalidate">
-      {{ form.csrf_token }}
-      <p>
-        {{ form.cam_name.label }} {{ form.cam_name(placeholder="카메라명",
-        value=cam.cam_name) }}
-      </p>
-      {% for error in form.cam_name.errors %}
-      <span style="color: red">{{ error }} </span>
-      {% endfor %}
-      <p>
-        {{ form.cam_url.label }} {{ form.cam_url(placeholder="영상 서버 주소",
-        value=cam.cam_url) }}
-      </p>
-      {% for error in form.cam_url.errors %}
-      <span style="color: red">{{ error }} </span>
-      {% endfor %}
-      <p>{{ form.submit(value='갱신') }}</p>
-    </form>
+    <div class="my-auto">
+      <div class="card">
+        <h1 class = "h3 mb-3 mt-3 fw-normal">Edit Camera</h1>
+        <form
+          action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
+          method="POST"
+          novalidate="novalidate"
+        >
+          {{ form.csrf_token }}
 
-    <form
+          <div class="form-floating mb-3">
+            {{ form.cam_name(class = "form-control dt-auth-input", id="floatingInput" , placeholder="Camera Name", value=cam.cam_name) }}
+            <label for="floatingInput">Camera Name</label>
+          </div>
+
+          {% for error in form.cam_name.errors %}
+          <span style="color: red">{{ error }} </span>
+          {% endfor %}
+
+          <div class="form-floating mb-3">
+            {{ form.cam_url(class = "form-control dt-auth-input", id="floatingInput" ,placeholder="Video server address", value=cam.cam_url) }}
+            <label for="floatingInput">Video server address</label>
+          </div>
+
+          <div class="form-floating mb-3">
+          {% for error in form.cam_url.errors %}
+          <span style="color: red">{{ error }} </span>
+          {% endfor %}
+          <p>{{ form.submit(class = "btn btn-md btn-primary btn-block dt-auth-btn" , value='갱신') }}</p>
+          </div>
+        </form>
+
+    <!-- <form
       action="{{ url_for('cam.delete_camera', camera_id=cam.id) }}"
       method="POST">
       {{ form.csrf_token }}
       <input type="submit" value="삭제" />
-    </form>
+    </form> -->
     {% endblock %}
   </div>
 </body>
