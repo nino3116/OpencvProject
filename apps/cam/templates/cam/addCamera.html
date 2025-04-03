@@ -7,11 +7,11 @@
     <div class="my-auto">
       <div class="card">
         <h1 class = "h3 mb-3 mt-3 fw-normal">Add New Camera</h1>
-        <section class="form-camadd">
+        
           <form
             action="{{ url_for('cam.add_camera', next=request.args.get('next')) }}"
             method="POST"
-            class="form-camera-add"
+            class="form-camadd"
           >
             {{ form.csrf_token }}
             {% for message in get_flashed_messages() %}
@@ -30,7 +30,7 @@
             {{ form.submit(class = "btn btn-md btn-primary btn-block dt-auth-btn") }}
             </div>
           </form>
-        </section>
+        
       </div>
     </div>
   </div>
