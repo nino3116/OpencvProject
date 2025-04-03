@@ -222,6 +222,7 @@ migrations/
 # videos
 *.mp4
 *.webm
+Process/recordings/*/*.*
 
 # yolo model
 *.pt
