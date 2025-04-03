@@ -40,21 +40,23 @@ def signup():
             username=form.username.data,
             password=form.password.data,
         )
-        
+
         if user.is_duplicate_user_id():
-            flash("지정 아이디는 이미 등록되어 있습니다.")
+            flash("지정 아이디는 이미 등록되어 입니다.", "auth_error")
             return redirect(url_for("auth.signup"))
 
-       
-        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}", form.password.data):
-                flash("비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.")
-                return redirect(url_for("auth.signup"))
-            
+        if not re.match(
+            r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}",
+            form.password.data,
+        ):
+            flash("비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.", "auth_error")
+            return redirect(url_for("auth.signup"))
+
         try:
             # DB등록
             db.session.add(user)
             db.session.commit()
-            print("회원가입 성공","success")
+            print("회원가입 성공", "success")
         except Exception as e:
             print(f"회원가입 중 오류발생: {e}", "danger")
             db.session.rollback()
@@ -91,7 +93,7 @@ def login():
             return redirect(url_for("cam.index"))
 
         # 로그인 실패시 메시지를 설정
-        flash("아이디 또는 비밀번호가 일치하지 않습니다.")
+        flash("아이디 또는 비밀번호가 일치하지 않습니다.", "auth_error")
     return render_template("auth/login.html", form=form)
 
 
