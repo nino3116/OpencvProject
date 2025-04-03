@@ -30,6 +30,7 @@ from pathlib import Path
 from datetime import datetime, date, time
 from collections import defaultdict
 import os
+import threading
 
 # from threading import Event
 
@@ -146,37 +147,23 @@ def cam_status():
 def start_record(camera_name):
     cam_info = Cams.query.filter_by(cam_name=camera_name).first()
     if cam_info:
-        from apps.app import (
-            record_camera_with_context,
-            recording_status,
-            camera_streams,
-        )  # 순환 참조 방지
-
         app = current_app._get_current_object()
-        record_camera_with_context(app, cam_info.cam_url, cam_info.cam_name)
-        recording_status[cam_info.cam_name] = (
-            True  # 개별 녹화 시작 시 recording_status 업데이트
-        )
-        # 개별 녹화 시작 시 camera_streams 업데이트
-        if cam_info.cam_name not in camera_streams:
+        # 이미 녹화 중인지 확인하고 시작
+        if (
+            cam_info.cam_name not in recording_status
+            or not recording_status[cam_info.cam_name]
+        ):
             recording_thread = threading.Thread(
                 target=record_camera_with_context,
                 args=(app, cam_info.cam_url, cam_info.cam_name),
                 daemon=True,
             )
             recording_thread.start()
+            recording_status[cam_info.cam_name] = True
             camera_streams[cam_info.cam_name] = recording_thread
-        elif not camera_streams[
-            cam_info.cam_name
-        ].is_alive():  # 스레드가 종료되었을 경우 재시작
-            recording_thread = threading.Thread(
-                target=record_camera_with_context,
-                args=(app, cam_info.cam_url, cam_info.cam_name),
-                daemon=True,
-            )
-            recording_thread.start()
-            camera_streams[cam_info.cam_name] = recording_thread
-
+            print(f"카메라 '{cam_info.cam_name}' 녹화 시작 요청됨.")
+        else:
+            print(f"카메라 '{cam_info.cam_name}'은 이미 녹화 중입니다.")
     return redirect(url_for("cam.cam_status"))
 
 
