@@ -227,3 +227,5 @@ Process/recordings/*/*.*
 # yolo model
 *.pt
 
+# codec
+Process/*.dll
