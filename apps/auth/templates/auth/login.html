@@ -8,18 +8,7 @@
           method="post"
           action="{{ url_for ('auth.login') }}"
           class="form-login">
-          <h1 class="h3 mb-3 mt-3 fw-normal">
-            <style>
-              @font-face {
-                font-family: "Apple SD Gothic Neo";
-                font-style: normal;
-                font-weight: 400;
-                src: url("{{ url_for('static', filename='fonts/AppleSDGothicNeo-Medium.woff') }}")
-                  format("woff");
-              }
-            </style>
-            Please sign in
-          </h1>
+          <h1 class="h3 mb-3 mt-3 fw-normal">Please sign in</h1>
           <div class="form-floating mb-3">
             {{ form.csrf_token }} {{ form.user_id(class ="form-control", id=
             "floatingInput", placeholder="UserID") }}

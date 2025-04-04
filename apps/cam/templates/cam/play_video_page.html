@@ -9,6 +9,10 @@ block content %}
       <source src="{{ video_path }}" type="video/mp4" />
       Your browser does not support the video tag.
     </video>
+    <p>
+      {% for message in get_flashed_messages(category_filter=["play_error"])%}
+      <span class="dt-auth-flashed">{{message}}</span> {%endfor%}
+    </p>
   </div>
   <p>
     <a
