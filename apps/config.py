@@ -10,9 +10,8 @@ class BaseConfig:
     SECRET_KEY = "DM5Fq1G9XtMzWAeqYWNR"
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
     WTF_CSRF_ENABLED = True
-    VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
-    SNAPSHOT_FOLDER = baseDir / "apps" / "static" / "snapshots"
-    LOG_FOLDER = baseDir / "apps" / "static" / "logs"
+    VIDEO_FOLDER = baseDir / "apps" / "videos"
+    SNAPSHOT_FOLDER = baseDir / "apps" / "snapshots"
     VIDEO_FPS = 30
 
 
