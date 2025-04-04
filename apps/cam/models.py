@@ -46,3 +46,4 @@ class Videos(db.Model):
     recorded_date = db.Column(db.DateTime)
     recorded_time = db.Column(db.Time)
     video_path = db.Column(db.String, unique=True)
+    is_dt = db.Column(db.Boolean)

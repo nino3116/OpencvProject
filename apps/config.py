@@ -10,6 +10,7 @@ class BaseConfig:
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
     WTF_CSRF_ENABLED = True
     VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
+    DT_VIDEO_FOLDER = baseDir / "apps" / "dt_videos"
     SNAPSHOT_FOLDER = baseDir / "apps" / "static" / "snapshots"
     LOG_FOLDER = baseDir / "apps" / "static" / "logs"
 

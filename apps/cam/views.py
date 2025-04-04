@@ -220,6 +220,17 @@ def start_all_records():
 #         grouped_videos=grouped_videos,
 #         form=form,  # 템플릿에 폼 객체 전달
 #     )
+
+@cam.route("/video/<path:filename>")
+@login_required
+def serve_video(filename):
+    return send_from_directory(current_app.config["VIDEO_FOLDER"], filename)
+
+@cam.route("/dt_video/<path:filename>")
+@login_required
+def serve_dt_video(filename):
+    return send_from_directory(current_app.config["DT_VIDEO_FOLDER"], filename)
+
 @cam.route("/play_video/<int:video_id>")
 @login_required
 def play_video(video_id):
@@ -227,26 +238,40 @@ def play_video(video_id):
     current_app.logger.info(
         f"Attempting to play video with id: {video_id}, path: {video.video_path}"
     )
-    recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+    
+    if video.is_dt:
+        recorded_video_base_dir = Path(current_app.config["DT_VIDEO_FOLDER"])
+    else: 
+        recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+        
     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
-
+    
     path_obj = Path(video.video_path)
     full_path = recorded_video_base_dir / path_obj
     print(f"Full path: {full_path}")
 
-    if full_path.exists():
-        # video_path는 이미 static/videos 폴더를 기준으로 하는 상대 경로이므로
-        # url_for('static', filename=...)에 직접 전달할 수 있습니다.
-        video_url = url_for(
-            "static", filename="videos/" + video.video_path.replace("\\", "/")
-        )
+    try:
+        if not full_path.exists():
+            flash(f"비디오 파일을 찾을 수 없습니다: {full_path}", "play_error")
+            return redirect(url_for("cam.list_videos"))
+        if video.is_dt:
+            video_url = url_for(
+                "cam.serve_dt_video", filename=video.video_path.replace("\\", "/")
+            )
+        else:
+            video_url = url_for(
+                "cam.serve_video", filename=video.video_path.replace("\\", "/")
+            )
         print(f"Video URL: {video_url}")
         return render_template(
             "cam/play_video_page.html", video_path=video_url, video_id=video_id
         )
-    else:
-        current_app.logger.warning(f"File not found: {full_path}")
-        abort(404)
+    except Exception as e:
+        current_app.logger.error(
+            f"비디오 재생 중 오류 발생 (ID: {video_id}, 경로: {video.video_path}): {e}"
+        )
+        flash(f"비디오 재생 중 오류가 발생했습니다: {e}", "play_error")
+        return redirect(url_for("cam.list_videos"))
 
 
 # @cam.route("/videos", methods=["GET", "POST"])
@@ -304,15 +329,16 @@ def play_video(video_id):
 @cam.route("/videos", methods=["GET", "POST"])
 @login_required
 def list_videos():
-    """저장된 비디오 목록을 보여주는 페이지 (날짜/카메라별 그룹화 및 검색 기능 추가)"""
+    """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
     form = VideoSearchForm(request.form)
 
     # 카메라 이름 목록을 가져와 choices 설정
     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
 
+    # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
     videos = Videos.query.order_by(
-        Videos.recorded_date.desc(), Videos.camera_name
+        Videos.recorded_date.desc(), Videos.recorded_time
     ).all()
 
     if form.validate_on_submit():
@@ -340,10 +366,8 @@ def list_videos():
                             match_date = False
                     except ValueError:
                         flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
-                        match_date = (
-                            False  # 날짜 형식이 잘못되면 해당 날짜의 비디오는 제외
-                        )
-                elif isinstance(search_date, date):  # 명시적으로 import한 'date' 사용
+                        match_date = False
+                elif isinstance(search_date, date):
                     if (
                         not video.recorded_date
                         or video.recorded_date.date() != search_date
@@ -355,13 +379,13 @@ def list_videos():
 
         videos = filtered_videos
 
-    grouped_videos = defaultdict(lambda: defaultdict(list))
+    grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
     for video in videos:
         if video.recorded_date:
             date_str = video.recorded_date.strftime("%Y-%m-%d")
-            grouped_videos[date_str][video.camera_name].append(video)
+            grouped_videos[date_str].append(video)
         else:
-            grouped_videos["알 수 없는 날짜"][video.camera_name].append(video)
+            grouped_videos["알 수 없는 날짜"].append(video)
 
     return render_template(
         "cam/videoList.html",

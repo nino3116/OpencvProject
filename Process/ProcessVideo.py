@@ -11,6 +11,7 @@ from dbconfig import dbconnect
 
 import traceback, logging
 import os
+from pathlib import Path
 
 # 로그 설정
 logging.basicConfig(
@@ -18,9 +19,12 @@ logging.basicConfig(
 )
 
 
+baseDir = Path(__file__).parent.parent  # 추가
+VIDEO_FOLDER = baseDir / "apps" / "dt_videos"  # 추가
+
 def ProcessVideo(camera_url, camera_idx, q, pipe):
     # 영상 녹화 저장 경로 설정
-    base_recording_folder = "recordings"
+    base_recording_folder = VIDEO_FOLDER  # 수정
     camera_recording_folder = os.path.join(base_recording_folder, f"cam_{camera_idx}")
     try:
         os.makedirs(camera_recording_folder, exist_ok=True)
@@ -244,6 +248,34 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                     if is_recording and video_writer is not None:
                         is_recording = False
                         video_writer.release()  # 파일 저장 완료
+                        
+                        try:
+                            conn = dbconnect()
+                            cur = conn.cursor(pymysql.cursors.DictCursor)
+                            sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%d, %s, %s, %s, %s, %d)"
+                            cur.execute(
+                                sql_video,
+                                (
+                                    camera_idx,
+                                    "Camera "+str(camera_idx),
+                                    safe_timestamp[0:safe_timestamp.find('_')],
+                                    safe_timestamp[safe_timestamp.find('_')+1:len(safe_timestamp)],
+                                    output_path,
+                                    1
+                                ),
+                            )  # 시간 포맷 맞춰주기
+                            conn.commit()
+                        except pymysql.Error as e:
+                            logging.error(f"Database error: {e}")
+                            sys.exit(1)  # DB 오류 시 종료
+                        except ConnectionError as e:
+                            logging.error(f"Database connection error: {e}")
+                            sys.exit(1)
+                        except Exception as e:  # 예상치 못한 다른 오류
+                            logging.error(f"An unexpected error occurred during DB setup: {e}")
+                            traceback.print_exc()
+                            sys.exit(1)
+                        
                         logging.info(
                             f"[Cam {camera_idx}] Stopped recording. File saved."
                         )
@@ -307,6 +339,33 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 f"[Cam {camera_idx}] Releasing video writer due to loop exit..."
             )
             video_writer.release()
+            if is_recording == True:
+                try:
+                    conn = dbconnect()
+                    cur = conn.cursor(pymysql.cursors.DictCursor)
+                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%s, %s, %s, %s, %s, %s)"
+                    cur.execute(
+                        sql_video,
+                        (
+                            camera_idx,
+                            "Camera "+str(camera_idx),
+                            safe_timestamp[0:safe_timestamp.find('_')],
+                            safe_timestamp[safe_timestamp.find('_')+1:len(safe_timestamp)],
+                            f"cam_{camera_idx}"+"/"+f"{safe_timestamp}_cam{camera_idx}.mp4",
+                            1
+                        ),
+                    )  # 시간 포맷 맞춰주기
+                    conn.commit()
+                except pymysql.Error as e:
+                    logging.error(f"Database error: {e}")
+                    sys.exit(1)  # DB 오류 시 종료
+                except ConnectionError as e:
+                    logging.error(f"Database connection error: {e}")
+                    sys.exit(1)
+                except Exception as e:  # 예상치 못한 다른 오류
+                    logging.error(f"An unexpected error occurred during DB setup: {e}")
+                    traceback.print_exc()
+                    sys.exit(1)
         except Exception as e:
             logging.error(
                 f"[Cam {camera_idx}] Error releasing video writer during cleanup: {e}"
