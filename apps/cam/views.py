@@ -361,7 +361,6 @@ def list_videos():
     # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
     videos = Videos.query.order_by(
         Videos.recorded_date.desc(), Videos.recorded_time
-        Videos.recorded_date.desc(), Videos.recorded_time
     ).all()
 
     if form.validate_on_submit():
