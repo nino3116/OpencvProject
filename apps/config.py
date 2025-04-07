@@ -10,16 +10,17 @@ class BaseConfig:
     SECRET_KEY = "DM5Fq1G9XtMzWAeqYWNR"
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
     WTF_CSRF_ENABLED = True
-    VIDEO_FOLDER = baseDir / "apps" / "videos"
-    SNAPSHOT_FOLDER = baseDir / "apps" / "snapshots"
-    VIDEO_FPS = 30
+    VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
+    DT_VIDEO_FOLDER = baseDir / "apps" / "dt_videos"
+    SNAPSHOT_FOLDER = baseDir / "apps" / "static" / "snapshots"
+    LOG_FOLDER = baseDir / "apps" / "static" / "logs"
 
 
 # 상황데  따른 환경 설정 작업 (BaseConfig 클래스 각 상황별로 상속하여 처리)
 # LocalTest 상황
 class LocalConfig(BaseConfig):
     # SQLALCHEMY_DATABASE_URI = f"sqlite:///{baseDir / 'local.sqlite'}"
-    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://testuser:test@127.0.0.1/project"
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://user:user@192.168.0.122/project"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True
     WTF_CSRF_ENABLED = True
@@ -40,3 +41,4 @@ class DeployConfig(BaseConfig):
 
 # config 사전 매핑 작업
 config = {"testing": TestingConfig, "local": LocalConfig, "deploy": DeployConfig}
+
