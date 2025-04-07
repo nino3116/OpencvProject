@@ -1,36 +1,34 @@
-{% extends "cam/base.html" %}
-{% block title%} 카메라 등록 {%endblock%} 
+{% extends "cam/base.html" %} {% block title%} 카메라 등록 {%endblock%}
 <body class="d-flex w-100 h-100 text-center bg-dark text-white">
-{% block content%}
+  {% block content%}
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
     {% include "cam/header.html"%}
     <div class="my-auto">
       <div class="card">
-        <h1 class = "h3 mb-3 mt-3 fw-normal">Add New Camera</h1>
-        <section class="form-camadd">
-          <form
-            action="{{ url_for('cam.add_camera', next=request.args.get('next')) }}"
-            method="POST"
-            class="form-camera-add"
-          >
-            {{ form.csrf_token }}
-            {% for message in get_flashed_messages() %}
-            <div class="dt-auth-flash">{{ message }}</div>
-            {% endfor %}
-            
-            <div class="form-floating mb-3">
-            {{ form.cam_name(class = "form-control", id="floatingInput", placeholder="Camera name (location)") }}
+        <h1 class="h3 mb-3 mt-3 fw-normal">Add New Camera</h1>
+        <form
+          action="{{ url_for('cam.add_camera', next=request.args.get('next')) }}"
+          method="POST"
+          class="form-camadd">
+          {{ form.csrf_token }} {% for message in get_flashed_messages() %}
+          <div class="dt-auth-flash">{{ message }}</div>
+          {% endfor %}
+
+          <div class="form-floating mb-3">
+            {{ form.cam_name(class = "form-control", id="floatingInput",
+            placeholder="Camera name (location)") }}
             <label for="floatingInput">Camera name (location)</label>
-            </div>
-            <div class="form-floating mb-3">
-            {{ form.cam_url(class = "form-control", id="floatingInput", placeholder="Video server address") }}
+          </div>
+          <div class="form-floating mb-3">
+            {{ form.cam_url(class = "form-control", id="floatingInput",
+            placeholder="Video server address") }}
             <label for="floatingInput">Video server address</label>
-            </div>
-            <div class="form-floating mb-3">
-            {{ form.submit(class = "btn btn-md btn-primary btn-block dt-auth-btn") }}
-            </div>
-          </form>
-        </section>
+          </div>
+          <div class="form-floating mb-3">
+            {{ form.submit(class = "btn btn-md btn-primary btn-block
+            dt-auth-btn") }}
+          </div>
+        </form>
       </div>
     </div>
   </div>

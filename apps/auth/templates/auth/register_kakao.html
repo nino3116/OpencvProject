@@ -1,0 +1,59 @@
+{% extends "cam/base.html" %} {% block title %}카카오 계정으로 사용자 등록{%
+endblock %} {% block content %} {% include "cam/header.html" %}
+<div class="container">
+  <h1>카카오 계정으로 사용자 등록</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+  <form method="POST" action="{{ url_for('kakao.register_submit') }}">
+    {{ form.csrf_token }}
+    <div class="mb-3">
+      <label for="{{ form.user_id.id }}" class="form-label"
+        >사용자 아이디</label
+      >
+      {{ form.user_id(class="form-control", id=form.user_id.id,
+      placeholder="영문, 숫자 조합으로 입력해주세요.") }} {% if
+      form.user_id.errors %}
+      <div class="error">{{ form.user_id.errors|join(', ') }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="{{ form.password.id }}" class="form-label">비밀번호</label>
+      {{ form.password(class="form-control", id=form.password.id,
+      placeholder="비밀번호를 입력해주세요.") }} {% if form.password.errors %}
+      <div class="error">{{ form.password.errors|join(', ') }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="{{ form.confirm_password.id }}" class="form-label"
+        >비밀번호 확인</label
+      >
+      {{ form.confirm_password(class="form-control",
+      id=form.confirm_password.id, placeholder="비밀번호를 다시 입력해주세요.")
+      }} {% if form.confirm_password.errors %}
+      <div class="error">{{ form.confirm_password.errors|join(', ') }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="kakao_name" class="form-label">카카오 이름</label>
+      <input
+        type="text"
+        class="form-control"
+        id="kakao_name"
+        value="{{ kakao_name }}"
+        readonly />
+    </div>
+    <div class="mb-3">
+      <label for="kakao_email" class="form-label">카카오 이메일</label>
+      <input
+        type="email"
+        class="form-control"
+        id="kakao_email"
+        value="{{ kakao_email }}"
+        readonly />
+    </div>
+    <button type="submit" class="btn btn-primary">등록하기</button>
+  </form>
+</div>
+{% endblock %}

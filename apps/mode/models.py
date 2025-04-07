@@ -5,7 +5,7 @@ from datetime import datetime
 class ModeSchedule(db.Model):
     __tablename__ = "mode_schedule"
     id = db.Column(db.Integer, primary_key=True)
-    mode_type = db.Column(db.String(256), nullable=False)
+    mode_type = db.Column(db.Enum("Running", "Cleaning", "Secure"), nullable=False)
     people_cnt = db.Column(db.Integer, nullable=False)
     rep_name = db.Column(db.String(256), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)

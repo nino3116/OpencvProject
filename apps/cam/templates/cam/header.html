@@ -16,6 +16,9 @@
                     <li class="nav-item">
                         <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("cam.list_videos") }}">Video List</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bold py-1 px-2" href="{{ url_for ("mode.index") }}">Mode Schedule</a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-bold py-1 px-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Cam Management
@@ -30,6 +33,10 @@
                 {% if current_user.is_authenticated %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
                     <a href="{{ url_for ("auth.logout")}}" class="text-reset" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
+                </button>
+                {% elif current_user.is_authenticated and user.is_kakao %}
+                <button type="button" class="btn btn-primary me-2 fw-bold">
+                    <a href="{{ url_for ("kakao.sign_out")}}" class="text-reset" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
                 </button>
                 {% else %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">

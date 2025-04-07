@@ -12,8 +12,8 @@ from apps.app import db
 from apps.mode.forms import ScheduleForm
 from apps.mode.models import ModeSchedule
 
-# from apps.kakao.kakao_client import CLIENT_ID, CLIENT_SECRET
-# from apps.kakao.kakao_controller import Oauth
+from apps.kakao.kakao_client import CLIENT_ID, CLIENT_SECRET
+from apps.kakao.kakao_controller import Oauth
 import requests
 import json
 
@@ -30,10 +30,10 @@ mode = Blueprint(
 @mode.route("/")
 @login_required
 def index():
-    # conn = dbconnect()
+    #  conn = dbconnect()
     # cur = conn.cursor(pymysql.cursors.DictCursor)
     # cur.execute("select * from mode_schedule")
-    # schedules = cur.fetchall()
+    # schedules = cur.fetchall()#
     schedules = ModeSchedule.query.all()
     print(f"가져온 스케줄 목록: {schedules}")  # 추가
     return render_template("mode/index.html", schedules=schedules)
@@ -55,45 +55,45 @@ def schedule():
         db.session.add(schedule)
         db.session.commit()
 
-        # # 현재 로그인한 사용자가 카카오 계정으로 로그인했고 Access Token이 있는 경우
-        # if (
-        #     current_user.is_authenticated
-        #     and getattr(current_user, "is_kakao", True)
-        #     and getattr(current_user, "kakao_access_token", None)
-        # ):
-        #     access_token = current_user.kakao_access_token
-        #     message_url = "https://kapi.kakao.com/v2/api/talk/memo/default/send"
-        #     headers = {
-        #         "Authorization": f"Bearer {access_token}",
-        #         "Content-Type": "application/x-www-form-urlencoded",
-        #     }
-        #     message_data_default = {
-        #         "object_type": "text",
-        #         "text": f"새로운 스케줄이 추가되었습니다.\n\n모드 종류: {schedule.mode_type}\n인원 수: {schedule.people_cnt}\n담당자: {schedule.rep_name}\n시작 시간: {schedule.start_time.strftime('%Y-%m-%d %H:%M:%S')}\n종료 시간: {schedule.end_time.strftime('%Y-%m-%d %H:%M:%S')}\n메모: {schedule.memo or '-'}",
-        #         "link": {
-        #             "web_url": url_for("mode.index", _external=True),
-        #             "mobile_web_url": url_for("mode.index", _external=True),
-        #         },
-        #     }
+        # 현재 로그인한 사용자가 카카오 계정으로 로그인했고 Access Token이 있는 경우
+        if (
+            current_user.is_authenticated
+            and getattr(current_user, "is_kakao", True)
+            and getattr(current_user, "kakao_access_token", None)
+        ):
+            access_token = current_user.kakao_access_token
+            message_url = "https://kapi.kakao.com/v2/api/talk/memo/default/send"
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            }
+            message_data_default = {
+                "object_type": "text",
+                "text": f"새로운 스케줄이 추가되었습니다.\n\n모드 종류: {schedule.mode_type}\n인원 수: {schedule.people_cnt}\n담당자: {schedule.rep_name}\n시작 시간: {schedule.start_time.strftime('%Y-%m-%d %H:%M:%S')}\n종료 시간: {schedule.end_time.strftime('%Y-%m-%d %H:%M:%S')}\n메모: {schedule.memo or '-'}",
+                "link": {
+                    "web_url": url_for("mode.index", _external=True),
+                    "mobile_web_url": url_for("mode.index", _external=True),
+                },
+            }
 
-        #     template_object = json.dumps(message_data_default, ensure_ascii=False)
-        #     data = {"template_object": template_object}
+            template_object = json.dumps(message_data_default, ensure_ascii=False)
+            data = {"template_object": template_object}
 
-        #     try:
-        #         response = requests.post(message_url, headers=headers, data=data)
-        #         response.raise_for_status()
-        #         print("카카오톡 메시지 전송 성공:", response.json())
-        #     except requests.exceptions.RequestException as e:
-        #         print(f"카카오톡 메시지 전송 실패: {e}")
-        #         if hasattr(e.response, "text"):
-        #             print(f"카카오 API 응답 (Text): {e.response.text}")
-        #         if hasattr(e.response, "json"):
-        #             try:
-        #                 print(f"카카오 API 응답 (JSON): {e.response.json()}")
-        #             except json.JSONDecodeError:
-        #                 print("카카오 API 응답 (JSON 디코드 실패)")
-        # else:
-        #     print("카카오 계정으로 로그인되지 않았거나 Access Token이 없습니다.")
+            try:
+                response = requests.post(message_url, headers=headers, data=data)
+                response.raise_for_status()
+                print("카카오톡 메시지 전송 성공:", response.json())
+            except requests.exceptions.RequestException as e:
+                print(f"카카오톡 메시지 전송 실패: {e}")
+                if hasattr(e.response, "text"):
+                    print(f"카카오 API 응답 (Text): {e.response.text}")
+                if hasattr(e.response, "json"):
+                    try:
+                        print(f"카카오 API 응답 (JSON): {e.response.json()}")
+                    except json.JSONDecodeError:
+                        print("카카오 API 응답 (JSON 디코드 실패)")
+        else:
+            print("카카오 계정으로 로그인되지 않았거나 Access Token이 없습니다.")
 
         # GET 파라미터 next에는 다음으로 이동할 경로 정보를 담는다.
         next_ = request.args.get("next")

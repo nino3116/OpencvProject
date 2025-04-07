@@ -5,10 +5,14 @@ block content %}
   <h1 class="mb-3">비디오 재생</h1>
   <div class="mb-3">
     <h2>비디오 ID: {{ video_id }}</h2>
-    <video width="80%" controls autoplay loop crossorigin>
+    <video width="80%" controls autoplay loop>
       <source src="{{ video_path }}" type="video/mp4" />
       Your browser does not support the video tag.
     </video>
+    <p>
+      {% for message in get_flashed_messages(category_filter=["play_error"])%}
+      <span class="dt-auth-flashed">{{message}}</span> {%endfor%}
+    </p>
   </div>
   <p>
     <a

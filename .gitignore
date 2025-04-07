@@ -216,7 +216,8 @@ Process/dbconfig.py
 *.jpg
 
 # Migrations
-migrations/
+migrations*/
+
 *.sqlite
 
 # videos

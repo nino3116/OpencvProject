@@ -1,0 +1,10 @@
+{% extends "cam/base.html" %} {% block title%} 카카오톡 로그인 {% endblock %} {%
+block content%} {% include "cam/header.html"%}
+<h1>카카오톡 계정으로 로그인</h1>
+<p>아래 버튼을 클릭하여 카카오톡으로 로그인하세요.</p>
+<a href="{{ url_for('kakao.kakao_sign_in') }}">
+  <img
+    src="{{ url_for('kakao.static', filename='kakao_login/en/kakao_login_medium_wide.png') }}"
+    alt="카카오톡 로그인" />
+</a>
+{% include "cam/footer.html" %} {% endblock%}

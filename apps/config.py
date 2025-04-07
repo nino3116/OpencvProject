@@ -1,5 +1,6 @@
 # 경로값을 알아오기 위하여
 from pathlib import Path
+import pymysql
 
 baseDir = Path(__file__).parent.parent
 

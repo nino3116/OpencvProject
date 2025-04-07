@@ -1,32 +1,13 @@
-<!DOCTYPE html>
-<html lang="ko" class="h-100" data-bs-theme="auto">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="" />
-    <title>모드 스케줄 관리</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for ('static', filename='css/bootstrap.min.css') }}" />
-    <link
-      rel="stylesheet"
-      href="{{ url_for ('mode.static', filename='style.css') }}" />
-    <link
-      rel="stylesheet"
-      href="{{ url_for ('cam.static', filename='style.css') }}" />
-    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"> -->
-  </head>
+{% extends "cam/base.html"%} {%block title%}모드 스케줄 관리{%endblock%} {%block
+content%}
+<body class="d-flex h-100 text-center bg-dark text-white">
+  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+    {% include "cam/header.html" %}
 
-  <body class="d-flex h-100 text-center bg-dark text-white">
-    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
-      {% include "cam/header.html" %}
-
-      <h1>모드 스케줄 목록</h1>
-      <p>
-        <a href="{{ url_for('mode.schedule') }}" class="btn btn-primary"
-          >추가</a
-        >
-      </p>
+    <h1>모드 스케줄 목록</h1>
+    <p>
+      <a href="{{ url_for('mode.schedule') }}" class="btn btn-primary">추가</a>
+    </p>
     <table>
       <thead>
         <tr>
@@ -46,16 +27,17 @@
           <td>{{ schedule.start_time }}</td>
           <td>{{ schedule.end_time }}</td>
           <td>{{ schedule.rep_name }}</td>
-          <td> <a title="{{ schedule.memo }}">메모</a> </td>
+          <td><a title="{{ schedule.memo }}">메모</a></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">등록된 스케줄이 없습니다.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
 
-      {% include "cam/footer.html" %}
-    </div>
-  </body>
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
-  <script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
-</html>
+    {% include "cam/footer.html" %}
+  </div>
+</body>
+{%endblock%}
