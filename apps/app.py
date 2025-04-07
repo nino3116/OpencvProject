@@ -10,6 +10,8 @@ from flask import current_app
 import cv2 as cv
 import time
 import random
+from S3upload.s3client import upload_file
+from S3upload.s3_config import BUCKET
 
 camera_streams: dict[str, Thread] = {}
 recording_status: dict[str, bool] = {}
@@ -30,6 +32,7 @@ def record_original_video(camera_url, camera_name):
         if camera:
             camera.is_active = False
             db.session.commit()
+            recording_status[camera_name] = False
         return
 
     camera = Cams.query.filter_by(cam_name=camera_name).first()
@@ -82,9 +85,10 @@ def record_original_video(camera_url, camera_name):
                 file_path = current_record_filename.replace(
                     str(video_base_dir) + os.sep, ""
                 ).replace(os.sep, "/")
+                s3_file_path = f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4"
                 record_start_time = datetime.now().time()  # 최초 녹화 시작 시간 기록
                 record_start_time_sec = time.time()
-                print(record_start_time)
+                # print(record_start_time)
 
             if out is not None and frame_rate is not None:
                 out.write(frame)
@@ -95,12 +99,23 @@ def record_original_video(camera_url, camera_name):
             if elapsed_time >= 600:
                 if out is not None:
                     out.release()
-                    print(f"{current_record_filename} 저장 완료")
+                    time.sleep(1)
+                    upload_file(
+                        current_record_filename,
+                        f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4",
+                    )
+                    print(
+                        f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(10분경과)"
+                    )
+                    time.sleep(1)
+                    os.remove(current_record_filename)
+                    print(f"로컬 파일 {current_record_filename} 삭제완료")
                     time.sleep(1)
                     new_video = Videos(
                         camera_id=Cams.query.filter_by(cam_name=camera_name).first().id,
                         camera_name=camera_name,
-                        video_path=file_path,
+                        # video_path=file_path,
+                        video_path=s3_file_path,
                         recorded_date=now_day_local,
                         recorded_time=record_start_time,
                     )
@@ -134,16 +149,28 @@ def record_original_video(camera_url, camera_name):
         if out is not None:
             out.release()
             time.sleep(1)
+            upload_file(
+                current_record_filename,
+                f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4",
+            )
+            print(
+                f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(종료)"
+            )
+            time.sleep(1)
+            os.remove(current_record_filename)
+            print(f"로컬 파일 {current_record_filename} 삭제완료")
+            time.sleep(1)
             new_video = Videos(
                 camera_id=Cams.query.filter_by(cam_name=camera_name).first().id,
                 camera_name=camera_name,
-                video_path=file_path,
+                # video_path=file_path,
+                video_path=s3_file_path,
                 recorded_date=now_day_local,
                 recorded_time=record_start_time,
             )
             db.session.add(new_video)
             db.session.commit()
-            print(f"{current_record_filename} 저장 완료 (종료)")
+
         time.sleep(1)
         cap.release()
         print(f"카메라 {camera_name} ({camera_url}) 연결 종료 (녹화).")

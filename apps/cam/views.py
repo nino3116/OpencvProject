@@ -31,12 +31,12 @@ from datetime import datetime, date, time
 from collections import defaultdict
 import os
 import threading
+import boto3
 
 # from threading import Event
 
-# from S3upload.s3upload import sync_folder_to_s3
-
-# from S3upload.s3upload import
+from S3upload.s3client import delete_file, generate_presigned_url
+from S3upload.s3_config import BUCKET
 
 
 # Blueprint로 crud 앱을 생성한다.
@@ -188,60 +188,6 @@ def start_all_records():
     return redirect(url_for("cam.cam_status"))
 
 
-# @cam.route("/play_video/<int:video_id>")
-# @login_required
-# def list_videos():
-#     """저장된 비디오 목록을 보여주는 페이지 (날짜/카메라별 그룹화 및 검색 기능 추가)"""
-#     form = VideoSearchForm(request.form)  # VideoSearchForm 객체 생성
-#     form.camera_name.choices.extend(
-#         [
-#             (name, name)
-#             for name in sorted(
-#                 list(set(video.camera_name for video in Videos.query.all()))
-#             )
-#         ]
-#     )
-#     videos = Videos.query.order_by(
-#         Videos.recorded_date.desc(), Videos.camera_name
-#     ).all()
-
-#     if form.validate_on_submit():
-#         search_camera_name = form.camera_name.data
-#         search_date = form.date.data
-
-#         if search_camera_name:
-#             videos = [
-#                 video
-#                 for video in videos
-#                 if search_camera_name.lower() in video.camera_name.lower()
-#             ]
-#         if search_date:
-#             try:
-#                 search_date_obj = datetime.strptime(search_date, "%Y-%m-%d").date()
-#                 videos = [
-#                     video
-#                     for video in videos
-#                     if video.recorded_date.date() == search_date_obj
-#                 ]
-#             except ValueError:
-#                 flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
-
-#     grouped_videos = defaultdict(lambda: defaultdict(list))
-#     for video in videos:
-#         if video.recorded_date:
-#             date_str = video.recorded_date.strftime("%Y-%m-%d")
-#             grouped_videos[date_str][video.camera_name].append(video)
-#         else:
-#             grouped_videos["알 수 없는 날짜"][video.camera_name].append(video)
-
-
-#     return render_template(
-#         "cam/videoList.html",
-#         grouped_videos=grouped_videos,
-#         form=form,  # 템플릿에 폼 객체 전달
-#     )
-
-
 @cam.route("/video/<path:filename>")
 @login_required
 def serve_video(filename):
@@ -254,101 +200,76 @@ def serve_dt_video(filename):
     return send_from_directory(current_app.config["DT_VIDEO_FOLDER"], filename)
 
 
+# @cam.route("/play_video/<int:video_id>")
+# @login_required
+# def play_video(video_id):
+#     video = Videos.query.get_or_404(video_id)
+#     current_app.logger.info(
+#         f"Attempting to play video with id: {video_id}, path: {video.video_path}"
+#     )
+
+#     if video.is_dt:
+#         recorded_video_base_dir = Path(current_app.config["DT_VIDEO_FOLDER"])
+#     else:
+#         recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+
+#     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
+
+#     path_obj = Path(video.video_path)
+#     full_path = recorded_video_base_dir / path_obj
+#     print(f"Full path: {full_path}")
+
+#     try:
+#         if not full_path.exists():
+#             flash(f"비디오 파일을 찾을 수 없습니다: {full_path}", "play_error")
+#             return redirect(url_for("cam.list_videos"))
+#         if video.is_dt:
+#             video_url = url_for(
+#                 "cam.serve_dt_video", filename=video.video_path.replace("\\", "/")
+#             )
+#         else:
+#             video_url = url_for(
+#                 "cam.serve_video", filename=video.video_path.replace("\\", "/")
+#             )
+#         print(f"Video URL: {video_url}")
+#         return render_template(
+#             "cam/play_video_page.html", video_path=video_url, video_id=video_id
+#         )
+#     except Exception as e:
+#         current_app.logger.error(
+#             f"비디오 재생 중 오류 발생 (ID: {video_id}, 경로: {video.video_path}): {e}"
+#         )
+#         flash(f"비디오 재생 중 오류가 발생했습니다: {e}", "play_error")
+#         return redirect(url_for("cam.list_videos"))
+
+
 @cam.route("/play_video/<int:video_id>")
 @login_required
 def play_video(video_id):
+    """특정 ID의 비디오 파일을 S3에서 재생할 수 있는 presigned URL을 생성하고 템플릿에 전달합니다."""
     video = Videos.query.get_or_404(video_id)
-    current_app.logger.info(
-        f"Attempting to play video with id: {video_id}, path: {video.video_path}"
-    )
-
-    if video.is_dt:
-        recorded_video_base_dir = Path(current_app.config["DT_VIDEO_FOLDER"])
-    else:
-        recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
-
-    current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
-
-    path_obj = Path(video.video_path)
-    full_path = recorded_video_base_dir / path_obj
-    print(f"Full path: {full_path}")
+    s3_key = video.video_path
 
     try:
-        if not full_path.exists():
-            flash(f"비디오 파일을 찾을 수 없습니다: {full_path}", "play_error")
-            return redirect(url_for("cam.list_videos"))
-        if video.is_dt:
-            video_url = url_for(
-                "cam.serve_dt_video", filename=video.video_path.replace("\\", "/")
+        presigned_url = generate_presigned_url(s3_key)
+        if presigned_url:
+            current_app.logger.info(
+                f"Generated S3 presigned URL for playback: {presigned_url}"
+            )
+            return render_template(
+                "cam/play_video_page.html", video_path=presigned_url, video_id=video_id
             )
         else:
-            video_url = url_for(
-                "cam.serve_video", filename=video.video_path.replace("\\", "/")
-            )
-        print(f"Video URL: {video_url}")
-        return render_template(
-            "cam/play_video_page.html", video_path=video_url, video_id=video_id
-        )
+            flash("재생 URL 생성에 실패했습니다.", "play_error")
+            return redirect(url_for("cam.list_videos"))
     except Exception as e:
         current_app.logger.error(
-            f"비디오 재생 중 오류 발생 (ID: {video_id}, 경로: {video.video_path}): {e}"
+            f"S3 비디오 재생 중 오류 발생 (ID: {video_id}, 경로: {video.video_path}): {e}"
         )
         flash(f"비디오 재생 중 오류가 발생했습니다: {e}", "play_error")
         return redirect(url_for("cam.list_videos"))
 
 
-# @cam.route("/videos", methods=["GET", "POST"])
-# @login_required
-# def list_videos():
-#     """저장된 비디오 목록을 보여주는 페이지 (날짜/카메라별 그룹화 및 검색 기능 추가)"""
-#     form = VideoSearchForm(request.form)
-#     form.camera_name.choices.extend(
-#         [
-#             (name, name)
-#             for name in sorted(
-#                 list(set(video.camera_name for video in Videos.query.all()))
-#             )
-#         ]
-#     )
-#     videos = Videos.query.order_by(
-#         Videos.recorded_date.desc(), Videos.camera_name
-#     ).all()
-
-#     if form.validate_on_submit():
-#         search_camera_name = form.camera_name.data
-#         search_date = form.date.data
-
-#         if search_camera_name:
-#             videos = [
-#                 video
-#                 for video in videos
-#                 if search_camera_name.lower() in video.camera_name.lower()
-#             ]
-#         if search_date:
-#             try:
-#                 search_date_obj = datetime.strptime(search_date, "%Y-%m-%d").date()
-#                 videos = [
-#                     video
-#                     for video in videos
-#                     if video.recorded_date.date() == search_date_obj
-#                 ]
-#             except ValueError:
-#                 flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
-
-#     grouped_videos = defaultdict(lambda: defaultdict(list))
-#     for video in videos:
-#         if video.recorded_date:
-#             date_str = video.recorded_date.strftime("%Y-%m-%d")
-#             grouped_videos[date_str][video.camera_name].append(video)
-#         else:
-#             grouped_videos["알 수 없는 날짜"][video.camera_name].append(video)
-
-
-#     return render_template(
-#         "cam/videoList.html",
-#         grouped_videos=grouped_videos,
-#         form=form,
-#     )
 @cam.route("/videos", methods=["GET", "POST"])
 @login_required
 def list_videos():
@@ -391,10 +312,7 @@ def list_videos():
                         flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
                         match_date = False
                 elif isinstance(search_date, date):
-                    if (
-                        not video.recorded_date
-                        or video.recorded_date.date() != search_date
-                    ):
+                    if not video.recorded_date or video.recorded_date != search_date:
                         match_date = False
 
             if match_camera and match_date:
@@ -427,10 +345,11 @@ def delete_video(video_id):
         video.video_path.replace("apps/videos/", ""),
     )
     filename = video.video_path.split("/")[-1].split("\\")[-1]  # 파일 이름 추출
+    s3_filename = video.video_path
     try:
-        os.remove(file_path)
         db.session.delete(video)
         db.session.commit()
+        delete_file(s3_filename)
         flash(
             f"'{filename}' 파일이 삭제되었습니다.", "success"
         )  # 추출한 파일 이름 사용
@@ -449,28 +368,51 @@ def delete_video(video_id):
     return redirect(url_for("cam.list_videos"))
 
 
+# @cam.route("/download_video/<int:video_id>")
+# @login_required
+# def download_video(video_id):
+#     """특정 ID의 비디오 파일을 다운로드하는 라우트"""
+#     video = Videos.query.get_or_404(video_id)
+#     video_path_relative = video.video_path
+#     video_dir = Path(current_app.config["VIDEO_FOLDER"])
+#     file_name = Path(video.video_path).name
+
+#     full_path = video_dir / video_path_relative
+
+#     try:
+#         if not full_path.exists():
+#             flash("파일을 찾을 수 없습니다.", "error")
+#             return redirect(url_for("cam.list_videos"))
+
+
+#         return send_from_directory(
+#             directory=str(video_dir),
+#             path=str(video_path_relative),
+#             as_attachment=True,
+#             download_name=file_name,
+#         )
+#     except Exception as e:
+#         flash(f"다운로드 오류: {e}", "error")
+#         return redirect(url_for("cam.list_videos"))
+
+
 @cam.route("/download_video/<int:video_id>")
 @login_required
 def download_video(video_id):
-    """특정 ID의 비디오 파일을 다운로드하는 라우트"""
+    """특정 ID의 비디오 파일을 S3에서 다운로드할 수 있는 presigned URL을 생성하고 리다이렉트합니다."""
     video = Videos.query.get_or_404(video_id)
-    video_path_relative = video.video_path
-    video_dir = Path(current_app.config["VIDEO_FOLDER"])
-    file_name = Path(video.video_path).name
-
-    full_path = video_dir / video_path_relative
+    s3_key = video.video_path
 
     try:
-        if not full_path.exists():
-            flash("파일을 찾을 수 없습니다.", "error")
+        presigned_url = generate_presigned_url(s3_key)
+        if presigned_url:
+            current_app.logger.info(
+                f"Generated S3 presigned URL for download: {presigned_url}"
+            )
+            return redirect(presigned_url)
+        else:
+            flash("다운로드 URL 생성에 실패했습니다.", "error")
             return redirect(url_for("cam.list_videos"))
-
-        return send_from_directory(
-            directory=str(video_dir),
-            path=str(video_path_relative),
-            as_attachment=True,
-            download_name=file_name,
-        )
     except Exception as e:
         flash(f"다운로드 오류: {e}", "error")
         return redirect(url_for("cam.list_videos"))

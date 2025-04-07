@@ -49,12 +49,13 @@ class Cams(db.Model):
 
 class Videos(db.Model):
     __tablename__ = "videos"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    camera_id = db.Column(db.Integer, db.ForeignKey("cams.id"))
-    camera_name = db.Column(db.String(255), db.ForeignKey("cams.cam_name"))
-    recorded_date = db.Column(db.Date)
+    id = db.Column(db.Integer, primary_key=True)
+    camera_id = db.Column(db.Integer, db.ForeignKey(Cams.id))
+    camera_name = db.Column(db.String, db.ForeignKey(Cams.cam_name))
+    recorded_date = db.Column(db.DateTime)
     recorded_time = db.Column(db.Time)
-    video_path = db.Column(db.String(255), unique=True)
+    video_path = db.Column(db.String, unique=True)
+    is_dt = db.Column(db.Boolean)
 
 
 class Camera_logs(db.Model):
