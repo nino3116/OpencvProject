@@ -307,7 +307,7 @@ def list_videos():
                 elif isinstance(search_date, date):
                     if (
                         not video.recorded_date
-                        or video.recorded_date.date() != search_date
+                        or video.recorded_date != search_date
                     ):
                         match_date = False
 
@@ -360,6 +360,48 @@ def delete_video(video_id):
             f"'{filename}' 파일 삭제 중 오류가 발생했습니다: {e}", "danger"
         )  # 추출한 파일 이름 사용
         db.session.rollback()
+    return redirect(url_for("cam.list_videos"))
+
+
+@cam.route("/delete_selected_videos", methods=["POST"])
+@login_required
+def delete_selected_videos():
+    video_ids = request.form.getlist("video_ids")
+    deleted, warnings, errors = [], [], []
+
+    for vid in video_ids:
+        video = Videos.query.get(vid)
+        if not video:
+            warnings.append(f"ID {vid} 없음")
+            continue
+
+        file_path = os.path.join(
+            current_app.config["VIDEO_FOLDER"],
+            video.video_path.replace("apps/videos/", "")
+        )
+        filename = os.path.basename(file_path)
+
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            else:
+                warnings.append(f"{filename} 파일 없음")
+
+            db.session.delete(video)
+            deleted.append(filename)
+        except Exception as e:
+            db.session.rollback()
+            errors.append(str(e))
+
+    db.session.commit()
+
+    if deleted:
+        flash(f"{len(deleted)}개 파일 삭제 완료", "success")
+    if warnings:
+        flash(f"경고: {len(warnings)}개 파일 없음", "warning")
+    if errors:
+        flash(f"오류 발생: {len(errors)}개", "danger")
+
     return redirect(url_for("cam.list_videos"))
 
 
