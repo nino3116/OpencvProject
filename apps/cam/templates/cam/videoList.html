@@ -66,7 +66,10 @@ block content %}
           {% for video in videos|sort(reverse=True, attribute='recorded_time')
           %}
           <tr>
-            <td>{{ video.camera_name }}</td>
+            <td>
+              {{ video.camera_name }}{% if video.is_dt == True %} (Auto) {%
+              endif %}
+            </td>
 
             <td>
               {% if video.recorded_time %} {{

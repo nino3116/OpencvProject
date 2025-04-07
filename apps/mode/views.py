@@ -4,8 +4,10 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 # 등록 정보를 세션에 공유
 from flask_login import login_required, current_user  # type: ignore
+from flask_login import login_required, current_user  # type: ignore
 
 import pymysql
+
 
 # from Process.dbconfig import dbconnect
 from apps.app import db
