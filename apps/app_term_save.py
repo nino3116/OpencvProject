@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from apps import create_app, db
-from apps.cam.models import Cams, Camera_logs, Videos
+from apps.cam.models import Cams, Camera_logs, Videos  # Import Camera_logs model
 from datetime import datetime
 from pathlib import Path
 from threading import Thread
@@ -32,11 +32,6 @@ def record_original_video(camera_url, camera_name):
             db.session.commit()
         return
 
-    camera = Cams.query.filter_by(cam_name=camera_name).first()
-    if camera:
-        camera.is_active = True
-        db.session.commit()
-
     video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
     camera_name_safe = camera_name.replace(" ", "_").lower()
 
@@ -50,7 +45,6 @@ def record_original_video(camera_url, camera_name):
     frame_width = None
     frame_height = None
     fourcc = cv.VideoWriter_fourcc(*"avc1")
-    file_path = None
 
     try:
         while recording_status.get(camera_name, False) and cap.isOpened():
@@ -80,19 +74,17 @@ def record_original_video(camera_url, camera_name):
                     (frame_width, frame_height),
                 )
                 file_path = current_record_filename.replace(
-                    str(video_base_dir) + os.sep, ""
-                ).replace(os.sep, "/")
-                record_start_time = datetime.now().time()  # 최초 녹화 시작 시간 기록
-                record_start_time_sec = time.time()
-                print(record_start_time)
+                    str(video_base_dir) + "\\", ""
+                ).replace("\\", "/")
+                record_start_time = time.time()  # 최초 녹화 시작 시간 기록
 
             if out is not None and frame_rate is not None:
                 out.write(frame)
 
             current_time = time.time()
-            elapsed_time = current_time - record_start_time_sec
+            elapsed_time = current_time - record_start_time
 
-            if elapsed_time >= 600:
+            if elapsed_time >= 30:
                 if out is not None:
                     out.release()
                     print(f"{current_record_filename} 저장 완료")
@@ -101,8 +93,8 @@ def record_original_video(camera_url, camera_name):
                         camera_id=Cams.query.filter_by(cam_name=camera_name).first().id,
                         camera_name=camera_name,
                         video_path=file_path,
-                        recorded_date=now_day_local,
-                        recorded_time=record_start_time,
+                        recorded_date=datetime.now().date(),
+                        recorded_time=datetime.now().time(),
                     )
                     db.session.add(new_video)
                     db.session.commit()
@@ -137,8 +129,8 @@ def record_original_video(camera_url, camera_name):
                 camera_id=Cams.query.filter_by(cam_name=camera_name).first().id,
                 camera_name=camera_name,
                 video_path=file_path,
-                recorded_date=now_day_local,
-                recorded_time=record_start_time,
+                recorded_date=datetime.now().date(),
+                recorded_time=datetime.now().time(),
             )
             db.session.add(new_video)
             db.session.commit()

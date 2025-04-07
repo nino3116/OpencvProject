@@ -3,7 +3,7 @@
 from datetime import datetime
 
 # flask-login 내에 UserMixin 을 import
-from flask_login import UserMixin  # type: ignore
+from flask_login import UserMixin, current_user  # type: ignore
 
 # password_hash 처리를 위한 모듈 import, check_password_hash 추가
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -18,10 +18,12 @@ class User(db.Model, UserMixin):
     __tablename__ = "users"
     # 컬럼 정의
     id = db.Column(db.Integer, primary_key=True)  # primary_key 속성 부여
-    username = db.Column(db.String, index=True)  # index 색인
-    user_id = db.Column(db.String, nullable=False, unique=True)
-    # email = db.Column(db.String, index=True, unique=True)  # unique, index 설정
-    password_hash = db.Column(db.String)
+    username = db.Column(db.String(100), index=True)  # index 색인
+    user_id = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(255), index=True, unique=True)  # unique, index 설정
+    password_hash = db.Column(db.String(255))
+    is_kakao = db.Column(db.Boolean, default=False)
+    kakao_access_token = db.Column(db.String(255), nullable=True)
     created_at = db.Column(
         db.DateTime, default=datetime.now
     )  # default는 기본값(현재시간)
@@ -51,9 +53,6 @@ class User(db.Model, UserMixin):
     def is_duplicate_user_id(self):
         return User.query.filter_by(user_id=self.user_id).first()
 
-    def is_duplicate_user_id(self):
-        return User.query.filter_by(user_id=self.user_id).first()
-    
     # 로그인하고 있는 사용자 정보를 얻는 함수를 작성
     @login_manager.user_loader
     def load_user(user_id):

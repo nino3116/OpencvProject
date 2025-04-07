@@ -1,7 +1,6 @@
-{% extends "cam/base.html" %}
-{% block title%} 카메라 등록 {%endblock%} 
+{% extends "cam/base.html" %} {% block title%} 카메라 등록 {%endblock%}
 <body class="d-flex w-100 h-100 text-center bg-dark text-white">
-{% block content%}
+  {% block content%}
   <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
     {% include "cam/header.html"%}
     <div class="my-auto">
@@ -21,9 +20,10 @@
             <div class="form-floating mb-3">
             {{ form.cam_name(class = "form-control", id="floatingInput", placeholder="Camera name (location)") }}
             <label for="floatingInput">Camera name (location)</label>
-            </div>
-            <div class="form-floating mb-3">
-            {{ form.cam_url(class = "form-control", id="floatingInput", placeholder="Video server address") }}
+          </div>
+          <div class="form-floating mb-3">
+            {{ form.cam_url(class = "form-control", id="floatingInput",
+            placeholder="Video server address") }}
             <label for="floatingInput">Video server address</label>
             </div>
             <div class="form-floating mb-3">
