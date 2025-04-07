@@ -45,8 +45,11 @@
 			>
 		</main>
 		</div>
+		{% include "cam/footer.html" %}
 	</div>
+{% endblock %}
 
+{% block scripts %}
 	<script>
 		function deleteCamera(cameraId, csrfToken) {
 			if (confirm("정말로 삭제하시겠습니까?")) {
@@ -65,5 +68,5 @@
 			}
 		}
 	</script>
-	{% endblock %}
+{% endblock %}
 </body>

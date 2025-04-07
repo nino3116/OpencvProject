@@ -79,6 +79,8 @@ def create_app(config_key):
     app.register_blueprint(cam_views.cam, url_prefix="/cam")
     # app.register_blueprint(cam_views.cam)
 
+    # from apps.google import views as google_views
+    # app.register_blueprint(google_viesw.google, url_prefix="/google")
     # app.register_error_handler(404, page_not_found)
     # app.register_error_handler(500, internal_server_error)
 
