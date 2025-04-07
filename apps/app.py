@@ -129,6 +129,7 @@ def record_original_video(camera_url, camera_name):
 
     except Exception as e:
         print(f"카메라 {camera_name} 녹화 중 오류 발생: {e}")
+        recording_status[camera_name] = False
     finally:
         if out is not None:
             out.release()

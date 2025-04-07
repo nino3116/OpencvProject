@@ -23,15 +23,16 @@ import os  # 파일 경로 처리를 위해 추가
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-baseDir = Path(__file__).parent.parent
-VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
+baseDir = Path(__file__).parent.parent  # 추가
+VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"  # 추가
 
 
 def ProcessVideo(camera_url, camera_idx, q, pipe):
     # --- 영상 녹화 저장 경로 설정 ---
     # 스크립트가 실행되는 위치 아래에 'recordings' 폴더 생성 (없으면)
     # recordings 폴더 아래에 카메라 ID별 폴더 생성
-    base_recording_folder = VIDEO_FOLDER
+    base_recording_folder = VIDEO_FOLDER  # 수정
+
     camera_recording_folder = os.path.join(base_recording_folder, f"cam_{camera_idx}")
     try:
         os.makedirs(camera_recording_folder, exist_ok=True)

@@ -226,4 +226,7 @@ migrations*/
 
 # yolo model
 *.pt
-
+kakao_login/
+fonts/
+*.bz2
+*.zip

@@ -104,6 +104,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
         current_time = time.time()
         this_moment = datetime.now()
+        this_moment_str = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         try:
             if pipe.poll() == True:
@@ -111,7 +112,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 if msg == "REC ON":
                     if is_recording == False:
                         is_recording = True
-                        output_path = f"{this_moment}_{camera_idx}.mp4"
+                        output_path = f"{this_moment_str}_{camera_idx}.mp4"
                         video_writer = cv.VideoWriter(
                             output_path, fourcc, fps, (width, height)
                         )
@@ -148,6 +149,8 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 if __name__ == "__main__":
     import multiprocessing
 
+    # Windows에서 multiprocessing 사용 시 필요할 수 있음
+
     # freeze_support()
 
     # Load Camera List from Database
@@ -172,7 +175,7 @@ if __name__ == "__main__":
         )
         ppipes.append(ppipe)
 
-    # print(ProcessArr)
+    print(ProcessArr)
 
     for p in ProcessArr:
         p.start()
