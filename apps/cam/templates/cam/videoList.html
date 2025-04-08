@@ -21,7 +21,7 @@ block content %}
   #}
 
   
-  <form method="POST" class="mb-4">
+  <form method="POST" class="mb-4 mt-4">
     {{ form.csrf_token }}
     <div class="row g-3 align-items-center">
       <div class="col-md-auto">
@@ -39,7 +39,7 @@ block content %}
       <div class="col-md-auto">{{ form.submit(class="btn btn-primary") }}</div>
     </div>
   </form>
-  <p class = "my-5 mx-5 mt-5 mb-5 fs-6">
+  <p>
     {% for message in
     get_flashed_messages(category_filter=["success","error","warning"]) %}
     <span class="dt-auth-flashed">{{message}}</span> {%endfor%}
@@ -59,7 +59,7 @@ block content %}
         선택 삭제
       </button>
     </h2>
-
+  </form>
     <div class="table-responsive">
       <table class="table table-bordered table-striped table-dark fw-bold">
         <thead>
@@ -128,11 +128,10 @@ block content %}
       </table>
     </div>
   </div>
-</form>
 {% endfor %}
-  <button id="topButton" class="btn btn-light">Top</button> 
-</div>
+<button id="topButton" class="btn btn-light">Top</button> 
 {% include "cam/footer.html" %}
+</div>
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {

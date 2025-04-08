@@ -1,10 +1,8 @@
-<!DOCTYPE html>
 {% extends "cam/base.html" %}
 {% block title %}camera 관리{% endblock %}
 
-<body class="d-flex text-center bg-dark bg-gradient text-white">
-  {% block content %}
-  <div class="cover-container d-flex w-100 h-100 p-1 mx-auto flex-column">
+{% block content %}
+  <div class = "cover-container w-100 h-100 p-3 mx-auto">
     {% include "cam/header.html" %}
         <main class="m-auto px-5" >
           <h1>스마트 CCTV 관리</h1>
@@ -14,17 +12,17 @@
             관리하세요.
           </p>
           <p class="lead">
-            <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white"
+            <a href="#" class="btn btn-lg btn-light fw-bold bg-white"
               >Learn more</a
             >
           </p>
         </main>
-
         {% include "cam/footer.html" %}
-        {% endblock %}
       </div>
-    </body>
+{% endblock %}
+
+{% block script %}
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
   <script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
-</html>
+{% endblock %}

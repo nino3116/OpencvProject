@@ -48,11 +48,6 @@ cam = Blueprint(
 )
 
 
-@cam.route("/test")
-def test():
-    return render_template("cam/test.html")
-
-
 @cam.route("/")
 @login_required
 def index():
