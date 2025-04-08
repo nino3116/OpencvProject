@@ -46,6 +46,13 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         logging.error(f"[Cam {camera_idx}] Failed to load YOLO model: {e}")
         return  # 모델 로드 실패 시 프로세스 종료
 
+    try:
+        model = YOLO("yolo11n.pt")  # 모델 파일 경로 확인
+        logging.info(f"[Cam {camera_idx}] YOLO model loaded successfully.")
+    except Exception as e:
+        logging.error(f"[Cam {camera_idx}] Failed to load YOLO model: {e}")
+        return  # 모델 로드 실패 시 프로세스 종료
+
     # 비디오 영상 불러오기
     cap = cv.VideoCapture(camera_url)
 
@@ -89,6 +96,19 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         logging.warning(
             "[Cam {camera_idx}] Model does not have 'names' attribute. Cannot find 'person' class ID."
         )
+        try:
+            person_class_id = [k for k, v in model.names.items() if v == "person"][0]
+            logging.info(
+                f"[Cam {camera_idx}] 'person' class ID found: {person_class_id}"
+            )
+        except IndexError:
+            logging.warning(
+                "[Cam {camera_idx}] 'person' class not found in YOLO model names."
+            )
+    else:
+        logging.warning(
+            "[Cam {camera_idx}] Model does not have 'names' attribute. Cannot find 'person' class ID."
+        )
 
     if person_class_id is None:
         logging.warning(
@@ -109,8 +129,17 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             logging.warning(
                 f"[Cam {camera_idx}] Failed to read frame from camera or stream ended."
             )
+            logging.warning(
+                f"[Cam {camera_idx}] Failed to read frame from camera or stream ended."
+            )
             break
 
+        # 객체 추적 수행
+        try:
+            results = model.track(frame, persist=True, verbose=False, conf=0.2)
+        except Exception as e:
+            logging.error(f"[Cam {camera_idx}] Error during YOLO tracking: {e}")
+            continue  # 현재 프레임 건너뛰기
         # 객체 추적 수행
         try:
             results = model.track(frame, persist=True, verbose=False, conf=0.2)
@@ -120,7 +149,19 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
         person_count = 0
         # 결과 처리 및 프레임에 그리기
+        # 결과 처리 및 프레임에 그리기
         if results and results[0].boxes:
+            # CPU로 데이터 이동 및 타입 변환 (오류 방지)
+            boxes = (
+                results[0].boxes.xyxy.cpu().numpy().astype(int)
+                if results[0].boxes.xyxy is not None
+                else []
+            )
+            classes = (
+                results[0].boxes.cls.cpu().numpy().astype(int)
+                if results[0].boxes.cls is not None
+                else []
+            )
             # CPU로 데이터 이동 및 타입 변환 (오류 방지)
             boxes = (
                 results[0].boxes.xyxy.cpu().numpy().astype(int)
@@ -137,6 +178,24 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 if results[0].boxes.id is not None
                 else []
             )
+            confidences = (
+                results[0].boxes.conf.cpu().numpy()
+                if results[0].boxes.conf is not None
+                else []
+            )
+
+            # track_ids가 있을 경우에만 처리 (없으면 추적 실패)
+            if len(track_ids) > 0 and len(boxes) == len(classes) == len(
+                track_ids
+            ) == len(confidences):
+                for i, (x1, y1, x2, y2) in enumerate(boxes):
+                    current_class = classes[i]
+                    track_id = track_ids[i]
+                    confidence = confidences[i]
+
+                    # 'person' 클래스인 경우
+                    if current_class == person_class_id:
+                        person_count += 1
             confidences = (
                 results[0].boxes.conf.cpu().numpy()
                 if results[0].boxes.conf is not None
@@ -184,6 +243,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         current_timestamp_display = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cv.putText(
             frame,
+            current_timestamp_display,
             current_timestamp_display,
             (10, 30),
             cv.FONT_HERSHEY_SIMPLEX,
@@ -646,13 +706,21 @@ if __name__ == "__main__":
             main_loop_active = False  # 메인 루프 종료 플래그 설정
         except Exception as e:
             logging.error(f"An error occurred in the main loop: {e}")
+            logging.error(f"An error occurred in the main loop: {e}")
             traceback.print_exc()
             # 오류 발생 시 잠시 대기 후 계속 (상황에 따라 종료 결정)
             time.sleep(1)
 
     # 메인 루프 종료 후 처리
     logging.info("Main loop finished. Cleaning up...")
+            # 오류 발생 시 잠시 대기 후 계속 (상황에 따라 종료 결정)
+            time.sleep(1)
 
+    # 메인 루프 종료 후 처리
+    logging.info("Main loop finished. Cleaning up...")
+
+    # 모든 자식 프로세스가 종료될 때까지 대기 (join)
+    logging.info("Waiting for child processes to terminate...")
     # 모든 자식 프로세스가 종료될 때까지 대기 (join)
     logging.info("Waiting for child processes to terminate...")
     for p in ProcessArr:

@@ -41,3 +41,4 @@ class DeployConfig(BaseConfig):
 
 # config 사전 매핑 작업
 config = {"testing": TestingConfig, "local": LocalConfig, "deploy": DeployConfig}
+
