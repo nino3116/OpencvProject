@@ -1,8 +1,9 @@
-{% extends "cam/base.html" %}{% block title %} 카메라 정보 편집 {% endblock
-title %} {% block content%}
-<body class="d-flex h-100 text-center bg-dark text-white">
-  {% include "cam/header.html"%}
-  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+{% extends "cam/base.html" %}
+{% block title %} 카메라 정보 편집{% endblock title %} 
+{% block content%}
+
+<div class="cover-container w-100 h-100 p-3 m-auto">
+{% include "cam/header.html"%}
     <div class="my-auto">
       <div class="card">
         <h1 class = "h3 mb-3 mt-3 fw-normal">Edit Camera</h1>
@@ -10,7 +11,7 @@ title %} {% block content%}
           action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
           method="POST"
           novalidate="novalidate"
-          class="form-camadd"
+          class = "form-camadd"
         >
           {{ form.csrf_token }}
 
@@ -43,5 +44,5 @@ title %} {% block content%}
       <input type="submit" value="삭제" />
     </form> -->
     {% endblock %}
-  </div>
-</body>
+</div>
+
