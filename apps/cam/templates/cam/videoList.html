@@ -1,6 +1,6 @@
 {% extends "cam/base.html" %} {% block title %}비디오 목록{% endblock %} {%
 block content %}
-<div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+<div class="cover-container d-flex w-100 p-3 mx-auto flex-column">
   <style>
     #topButton {
       display: none;
@@ -78,12 +78,20 @@ block content %}
             </td>
 
             <td>
+              {% if video.is_dt %}
               <a
                 href="{{ url_for('cam.play_video', video_id=video.id) }}"
                 class="btn btn-sm btn-outline-success"
                 >재생</a
               >
 
+              {% else %}
+              <a
+                href="{{ url_for('cam.play_origin_video', video_id=video.id) }}"
+                class="btn btn-sm btn-outline-success"
+                >재생</a
+              >
+              {% endif %}
               <a
                 href="{{ url_for('cam.download_video', video_id=video.id) }}"
                 class="btn btn-sm btn-outline-light"

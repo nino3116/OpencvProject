@@ -200,52 +200,52 @@ def serve_dt_video(filename):
     return send_from_directory(current_app.config["DT_VIDEO_FOLDER"], filename)
 
 
-# @cam.route("/play_video/<int:video_id>")
-# @login_required
-# def play_video(video_id):
-#     video = Videos.query.get_or_404(video_id)
-#     current_app.logger.info(
-#         f"Attempting to play video with id: {video_id}, path: {video.video_path}"
-#     )
-
-#     if video.is_dt:
-#         recorded_video_base_dir = Path(current_app.config["DT_VIDEO_FOLDER"])
-#     else:
-#         recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
-
-#     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
-
-#     path_obj = Path(video.video_path)
-#     full_path = recorded_video_base_dir / path_obj
-#     print(f"Full path: {full_path}")
-
-#     try:
-#         if not full_path.exists():
-#             flash(f"비디오 파일을 찾을 수 없습니다: {full_path}", "play_error")
-#             return redirect(url_for("cam.list_videos"))
-#         if video.is_dt:
-#             video_url = url_for(
-#                 "cam.serve_dt_video", filename=video.video_path.replace("\\", "/")
-#             )
-#         else:
-#             video_url = url_for(
-#                 "cam.serve_video", filename=video.video_path.replace("\\", "/")
-#             )
-#         print(f"Video URL: {video_url}")
-#         return render_template(
-#             "cam/play_video_page.html", video_path=video_url, video_id=video_id
-#         )
-#     except Exception as e:
-#         current_app.logger.error(
-#             f"비디오 재생 중 오류 발생 (ID: {video_id}, 경로: {video.video_path}): {e}"
-#         )
-#         flash(f"비디오 재생 중 오류가 발생했습니다: {e}", "play_error")
-#         return redirect(url_for("cam.list_videos"))
-
-
 @cam.route("/play_video/<int:video_id>")
 @login_required
 def play_video(video_id):
+    video = Videos.query.get_or_404(video_id)
+    current_app.logger.info(
+        f"Attempting to play video with id: {video_id}, path: {video.video_path}"
+    )
+
+    if video.is_dt:
+        recorded_video_base_dir = Path(current_app.config["DT_VIDEO_FOLDER"])
+    else:
+        recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
+
+    current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
+
+    path_obj = Path(video.video_path)
+    full_path = recorded_video_base_dir / path_obj
+    print(f"Full path: {full_path}")
+
+    try:
+        if not full_path.exists():
+            flash(f"비디오 파일을 찾을 수 없습니다: {full_path}", "play_error")
+            return redirect(url_for("cam.list_videos"))
+        if video.is_dt:
+            video_url = url_for(
+                "cam.serve_dt_video", filename=video.video_path.replace("\\", "/")
+            )
+        else:
+            video_url = url_for(
+                "cam.serve_video", filename=video.video_path.replace("\\", "/")
+            )
+        print(f"Video URL: {video_url}")
+        return render_template(
+            "cam/play_video_page.html", video_path=video_url, video_id=video_id
+        )
+    except Exception as e:
+        current_app.logger.error(
+            f"비디오 재생 중 오류 발생 (ID: {video_id}, 경로: {video.video_path}): {e}"
+        )
+        flash(f"비디오 재생 중 오류가 발생했습니다: {e}", "play_error")
+        return redirect(url_for("cam.list_videos"))
+
+
+@cam.route("/play_origin_video/<int:video_id>")
+@login_required
+def play_origin_video(video_id):
     """특정 ID의 비디오 파일을 S3에서 재생할 수 있는 presigned URL을 생성하고 템플릿에 전달합니다."""
     video = Videos.query.get_or_404(video_id)
     s3_key = video.video_path
@@ -583,27 +583,3 @@ def update_videos():
         )
 
     return redirect(url_for("cam.list_videos"))
-
-
-# @cam.route("/video_sync_s3")
-# def video_sync_s3():
-#     local_folder = current_app.config["VIDEO_FOLDER"]
-#     s3_bucket_name = current_app.config["S3_BUCKET_NAME"]
-#     s3_prefix = current_app.config["S3_PREFIX"]
-#     aws_region = current_app.config["AWS_REGION"]
-#     aws_access_key_id = current_app.config["AWS_ACCESS_KEY_ID"]
-#     aws_secret_access_key = current_app.config["AWS_SECRET_ACCESS_KEY"]
-#     try:
-#         sync_folder_to_s3(
-#             local_folder,
-#             s3_bucket_name,
-#             s3_prefix,
-#             aws_region,
-#             aws_access_key_id,
-#             aws_secret_access_key,
-#         )
-#         flash("S3 동기화가 완료되었습니다.", "s3_success")
-#     except Exception as e:
-#         flash(f"Error : {e}", "s3_error")
-
-#     return redirect(url_for("cam.list_videos"))

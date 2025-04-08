@@ -188,7 +188,7 @@ def start_recording_all():
                 if camera.is_active:
                     # 시작: 원본 영상 녹화
                     if (
-                        f"{camera.cam_name}_record" not in recording_status
+                        camera.cam_name not in recording_status
                         or not recording_status[camera.cam_name]
                     ):
                         app = current_app._get_current_object()
