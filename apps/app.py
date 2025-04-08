@@ -33,7 +33,6 @@ def record_original_video(camera_url, camera_name):
             camera.is_active = False
             db.session.commit()
             recording_status[camera_name] = False
-        return
 
     camera = Cams.query.filter_by(cam_name=camera_name).first()
     if camera:
