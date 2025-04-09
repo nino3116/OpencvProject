@@ -12,15 +12,67 @@ from dbconfig import dbconnect
 import traceback, logging
 import os
 from pathlib import Path
+import smtplib  # Import for email functionality
+from email.mime.text import MIMEText  # Import for email message creation
+from email.mime.multipart import MIMEMultipart
+from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
 
 # 로그 설정
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
 baseDir = Path(__file__).parent.parent  # 추가
 VIDEO_FOLDER = baseDir / "apps" / "dt_videos"  # 추가
+
+
+def send_email(subject, body):
+    """Sends an email with the given subject and body."""
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_SENDER
+        msg["To"] = EMAIL_RECEIVER
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:  # Use Gmail SMTP
+            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        logging.info("Email sent successfully!")
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        traceback.print_exc()
+
+
+def send_html_email(info, to_email):
+
+    # # 다운로드 링크 생성
+    # download_url = f"http://yourserver.com/videos/{info['filename']}"
+
+    # HTML 템플릿에 데이터 삽입
+    html_template = open("./Process/email_template.html", "r", encoding="utf-8").read()
+    html_content = (
+        html_template.replace("{{event}}", info["event"]).replace(
+            "{{timestamp}}", info["timestamp"]
+        )
+        # .replace("{{filename}}", info["filename"])
+        # .replace("{{download_url}}", download_url)
+    )
+
+    # 이메일 구성
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"[경고] {info['event']} - {info['timestamp']}"
+    msg["From"] = EMAIL_SENDER
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.send_message(msg)
+            print("이메일 전송 성공")
+    except Exception as e:
+        print("이메일 전송 실패:", e)
 
 
 def ProcessVideo(camera_url, camera_idx, q, pipe):
@@ -39,13 +91,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         pass
 
     # YOLO 모델 불러오기
-    try:
-        model = YOLO("yolo11n.pt")  # 모델 파일 경로 확인
-        logging.info(f"[Cam {camera_idx}] YOLO model loaded successfully.")
-    except Exception as e:
-        logging.error(f"[Cam {camera_idx}] Failed to load YOLO model: {e}")
-        return  # 모델 로드 실패 시 프로세스 종료
-
     try:
         model = YOLO("yolo11n.pt")  # 모델 파일 경로 확인
         logging.info(f"[Cam {camera_idx}] YOLO model loaded successfully.")
@@ -96,19 +141,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         logging.warning(
             "[Cam {camera_idx}] Model does not have 'names' attribute. Cannot find 'person' class ID."
         )
-        try:
-            person_class_id = [k for k, v in model.names.items() if v == "person"][0]
-            logging.info(
-                f"[Cam {camera_idx}] 'person' class ID found: {person_class_id}"
-            )
-        except IndexError:
-            logging.warning(
-                "[Cam {camera_idx}] 'person' class not found in YOLO model names."
-            )
-    else:
-        logging.warning(
-            "[Cam {camera_idx}] Model does not have 'names' attribute. Cannot find 'person' class ID."
-        )
 
     if person_class_id is None:
         logging.warning(
@@ -129,17 +161,8 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             logging.warning(
                 f"[Cam {camera_idx}] Failed to read frame from camera or stream ended."
             )
-            logging.warning(
-                f"[Cam {camera_idx}] Failed to read frame from camera or stream ended."
-            )
             break
 
-        # 객체 추적 수행
-        try:
-            results = model.track(frame, persist=True, verbose=False, conf=0.2)
-        except Exception as e:
-            logging.error(f"[Cam {camera_idx}] Error during YOLO tracking: {e}")
-            continue  # 현재 프레임 건너뛰기
         # 객체 추적 수행
         try:
             results = model.track(frame, persist=True, verbose=False, conf=0.2)
@@ -149,19 +172,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
         person_count = 0
         # 결과 처리 및 프레임에 그리기
-        # 결과 처리 및 프레임에 그리기
         if results and results[0].boxes:
-            # CPU로 데이터 이동 및 타입 변환 (오류 방지)
-            boxes = (
-                results[0].boxes.xyxy.cpu().numpy().astype(int)
-                if results[0].boxes.xyxy is not None
-                else []
-            )
-            classes = (
-                results[0].boxes.cls.cpu().numpy().astype(int)
-                if results[0].boxes.cls is not None
-                else []
-            )
             # CPU로 데이터 이동 및 타입 변환 (오류 방지)
             boxes = (
                 results[0].boxes.xyxy.cpu().numpy().astype(int)
@@ -178,24 +189,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 if results[0].boxes.id is not None
                 else []
             )
-            confidences = (
-                results[0].boxes.conf.cpu().numpy()
-                if results[0].boxes.conf is not None
-                else []
-            )
-
-            # track_ids가 있을 경우에만 처리 (없으면 추적 실패)
-            if len(track_ids) > 0 and len(boxes) == len(classes) == len(
-                track_ids
-            ) == len(confidences):
-                for i, (x1, y1, x2, y2) in enumerate(boxes):
-                    current_class = classes[i]
-                    track_id = track_ids[i]
-                    confidence = confidences[i]
-
-                    # 'person' 클래스인 경우
-                    if current_class == person_class_id:
-                        person_count += 1
             confidences = (
                 results[0].boxes.conf.cpu().numpy()
                 if results[0].boxes.conf is not None
@@ -243,7 +236,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         current_timestamp_display = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cv.putText(
             frame,
-            current_timestamp_display,
             current_timestamp_display,
             (10, 30),
             cv.FONT_HERSHEY_SIMPLEX,
@@ -313,7 +305,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                         try:
                             conn = dbconnect()
                             cur = conn.cursor(pymysql.cursors.DictCursor)
-                            sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%d, %s, %s, %s, %s, %d)"
+                            sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%s, %s, %s, %s, %s, %d)"
                             cur.execute(
                                 sql_video,
                                 (
@@ -407,7 +399,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 try:
                     conn = dbconnect()
                     cur = conn.cursor(pymysql.cursors.DictCursor)
-                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%s, %s, %s, %s, %s, %s)"
+                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%d, %s, %s, %s, %s, %s)"
                     cur.execute(
                         sql_video,
                         (
@@ -453,6 +445,7 @@ if __name__ == "__main__":
 
     # Load Camera List from Database
     conn = None
+    cur = None
     try:
         conn = dbconnect()
         if conn is None:
@@ -479,6 +472,17 @@ if __name__ == "__main__":
     q = multiprocessing.Queue()
     ProcessArr = []
     ppipes = {}
+
+    # Initialize email sent flag for each camera
+    email_sent_flags = {}
+    for row in camera_list:
+        if "id" not in row or "cam_url" not in row:
+            logging.warning(
+                f"Skipping camera entry due to missing 'id' or 'cam_url': {row}"
+            )
+            continue
+        camera_id = int(row["id"])
+        email_sent_flags[camera_id] = False
 
     for row in camera_list:
         if "id" not in row or "cam_url" not in row:
@@ -515,6 +519,7 @@ if __name__ == "__main__":
     batch_start_time = None  # 배치 시작 시간
 
     main_loop_active = True
+
     while main_loop_active:
         try:
             # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
@@ -613,6 +618,11 @@ if __name__ == "__main__":
                                         mode_type == "Running"
                                         and people_cnt_limit is not None
                                     ):
+                                        # Access the camera ID from the current batch
+                                        camera_id_batch = current_batch[0][
+                                            0
+                                        ]  # Get camera ID from batch
+
                                         if total_persons > people_cnt_limit:
                                             logging.warning(
                                                 f"[{log_timestamp}] Exceeded person limit! Detected: {total_persons}, Limit: {people_cnt_limit} (Mode ID: {mode_id})"
@@ -632,6 +642,20 @@ if __name__ == "__main__":
                                             )
                                             conn.commit()
 
+                                            # SEND EMAIL
+                                            if not email_sent_flags[camera_id_batch]:
+                                                # email_subject = "Person Limit Exceeded"
+                                                # email_body = f"The person limit of {people_cnt_limit} has been exceeded.  Currently {total_persons} persons are detected. Camera : {camera_id_batch} time {log_timestamp}"
+                                                # send_email(email_subject, email_body)
+                                                # email_sent_flags[camera_id_batch] = True
+                                                info = {
+                                                    "event": "Person Limit Exceeded",
+                                                    "timestamp": str(log_timestamp),
+                                                }
+                                                send_html_email(
+                                                    info, to_email=EMAIL_RECEIVER
+                                                )
+                                                email_sent_flags[camera_id_batch] = True
                                     elif mode_type == "Secure":
                                         if total_persons > 0:
                                             logging.warning(
@@ -652,7 +676,14 @@ if __name__ == "__main__":
                                                 ),
                                             )
                                             conn.commit()
-
+                                            # SEND EMAIL
+                                            if not email_sent_flags[camera_id_batch]:
+                                                email_subject = (
+                                                    "Person Detected during Secure Mode"
+                                                )
+                                                email_body = f"Person Detected During Secure Mode.  Currently {total_persons} persons are detected. Camera : {camera_id_batch} time {log_timestamp}"
+                                                send_email(email_subject, email_body)
+                                                email_sent_flags[camera_id_batch] = True
                             else:  # 활성화된 모드가 없을 때
                                 logging.debug(
                                     f"[{log_timestamp}] No active mode schedule found."
@@ -694,6 +725,9 @@ if __name__ == "__main__":
                             )
                             traceback.print_exc()
                             conn.rollback()
+                # Reset the flag for sending email, a new evaluation of mode starts
+                for camera_id in email_sent_flags:
+                    email_sent_flags[camera_id] = False
 
                 # 현재 데이터로 새 배치 시작
                 current_batch = [pd]
@@ -706,21 +740,13 @@ if __name__ == "__main__":
             main_loop_active = False  # 메인 루프 종료 플래그 설정
         except Exception as e:
             logging.error(f"An error occurred in the main loop: {e}")
-            logging.error(f"An error occurred in the main loop: {e}")
             traceback.print_exc()
             # 오류 발생 시 잠시 대기 후 계속 (상황에 따라 종료 결정)
             time.sleep(1)
 
     # 메인 루프 종료 후 처리
     logging.info("Main loop finished. Cleaning up...")
-            # 오류 발생 시 잠시 대기 후 계속 (상황에 따라 종료 결정)
-            time.sleep(1)
 
-    # 메인 루프 종료 후 처리
-    logging.info("Main loop finished. Cleaning up...")
-
-    # 모든 자식 프로세스가 종료될 때까지 대기 (join)
-    logging.info("Waiting for child processes to terminate...")
     # 모든 자식 프로세스가 종료될 때까지 대기 (join)
     logging.info("Waiting for child processes to terminate...")
     for p in ProcessArr:
