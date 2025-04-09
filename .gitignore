@@ -211,6 +211,8 @@ pip-selfcheck.json
 Process/log.txt
 Process/yolo11n.pt
 Process/dbconfig.py
+Process/S3Upload
+Process/S3Upload/s3_config.py
 
 # jpg, jpeg, png, gif, bmp, tif, tiff, svg, eps, webp
 *.jpg
