@@ -13,7 +13,7 @@ import random
 from S3upload.s3client import upload_file
 from S3upload.s3_config import BUCKET
 
-camera_streams: dict[str, Thread] = {}
+camera_streams: dict[int, Thread] = {}
 # recording_status: dict[str, bool] = {}
 
 
@@ -88,38 +88,37 @@ def record_original_video(camera_url, camera_id):
                     str(video_base_dir) + os.sep, ""
                 ).replace(os.sep, "/")
                 s3_file_path = f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4"
-                record_start_time = datetime.now().time()  # 최초 녹화 시작 시간 기록
-                record_start_time_sec = time.time()
+                record_start_time = now  # 최초 녹화 시작 시간 (datetime 객체)
                 # print(record_start_time)
 
             if out is not None and frame_rate is not None:
                 out.write(frame)
 
-            current_time = time.time()
-            elapsed_time = current_time - record_start_time_sec
-
-            if elapsed_time >= 600:
+            current_time_sec = time.time()
+            elapsed_time = (
+                current_time_sec - record_start_time.timestamp()
+            )  # datetime 객체로 비교
+            if elapsed_time >= 60:
                 if out is not None:
                     out.release()
+
                     time.sleep(1)
                     upload_file(
                         current_record_filename,
                         f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4",
                     )
                     print(
-                        f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(10분경과)"
+                        f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(1분경과)"
                     )
                     time.sleep(1)
                     os.remove(current_record_filename)
                     print(f"로컬 파일 {current_record_filename} 삭제완료")
-                    time.sleep(1)
                     new_video = Videos(
                         camera_id=camera_id,
                         camera_name=camera.cam_name,
-                        # video_path=file_path,
                         video_path=s3_file_path,
                         recorded_date=now_day_local,
-                        recorded_time=record_start_time,
+                        recorded_time=record_start_time.time(),  # .time() 속성으로 시간만 저장
                     )
                     db.session.add(new_video)
                     db.session.commit()
@@ -139,7 +138,8 @@ def record_original_video(camera_url, camera_id):
                         frame_rate,
                         (frame_width, frame_height),
                     )
-                    record_start_time = current_time
+                    record_start_time = now  # 새로운 1분 세그먼트 시작 시간 업데이트
+                    s3_file_path = f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4"
 
             if out is not None:
                 out.write(frame)
@@ -165,15 +165,14 @@ def record_original_video(camera_url, camera_id):
             os.remove(current_record_filename)
             print(f"로컬 파일 {current_record_filename} 삭제완료")
             time.sleep(1)
-            new_video = Videos(
+            end_video = Videos(
                 camera_id=camera_id,
                 camera_name=camera.cam_name,
-                # video_path=file_path,
                 video_path=s3_file_path,
                 recorded_date=now_day_local,
-                recorded_time=record_start_time,
+                recorded_time=record_start_time.time(),  # 마지막 세그먼트 시작 시간
             )
-            db.session.add(new_video)
+            db.session.add(end_video)
             db.session.commit()
 
         time.sleep(1)
@@ -231,6 +230,8 @@ def stop_recording(camera_id):
             db.session.commit()
             if camera_id in camera_streams:
                 print(f"카메라 ID '{camera_id}' 원본 영상 녹화 중단 요청됨.")
+                del camera_streams[camera_id]
+                print(f"카메라 ID '{camera_id}' 녹화 스레드 제거됨.")
             else:
                 print(f"카메라 ID '{camera_id}'에 대한 녹화 스레드를 찾을 수 없습니다.")
         elif camera and not camera.is_recording:
@@ -249,3 +250,6 @@ def stop_recording_all():
                 camera.is_recording = False
                 db.session.commit()
                 print(f"카메라 ID '{camera.id}' 원본 영상 녹화 중단 요청됨.")
+                if camera.id in camera_streams:
+                    del camera_streams[camera.id]
+                    print(f"카메라 ID '{camera.id}' 녹화 스레드 제거됨.")

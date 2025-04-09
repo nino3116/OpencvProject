@@ -131,15 +131,14 @@ def cam_status():
     return render_template("cam/cam_status.html", cams=cams)
 
 
-@cam.route("/start_record/<camera_id>")
+@cam.route("/start_record/<int:camera_id>")
 @login_required
 def start_record(camera_id):
-    cam_info = Cams.query.filter_by(cam_name=camera_id).first()
+    cam_info = Cams.query.get(camera_id)
     if cam_info:
         app = current_app._get_current_object()
-        # 이미 녹화 중인지 확인하고 시작
-        if cam_info.is_recording:
-            recording_thread = threading.Thread(
+        if not cam_info.is_recording:  # 이미 녹화 중이 아닌 경우에만 시작
+            recording_thread = Thread(
                 target=record_camera_with_context,
                 args=(app, cam_info.cam_url, cam_info.id),
                 daemon=True,
@@ -147,6 +146,7 @@ def start_record(camera_id):
             recording_thread.start()
             cam_info.is_recording = True
             camera_streams[cam_info.id] = recording_thread
+            print(f"camera_streams (start): {camera_streams}")
             db.session.commit()
             print(f"카메라 '{cam_info.cam_name}' 녹화 시작 요청됨.")
         else:
@@ -154,7 +154,7 @@ def start_record(camera_id):
     return redirect(url_for("cam.cam_status"))
 
 
-@cam.route("/stop_record/<camera_id>")
+@cam.route("/stop_record/<int:camera_id>")
 @login_required
 def stop_record_route(camera_id):
     stop_recording(camera_id)
@@ -163,15 +163,17 @@ def stop_record_route(camera_id):
 
 @cam.route("/stop_all_records")
 @login_required
-def stop_all_records():
+def stop_all_records_route():
+    print(f"camera_streams (stop all): {camera_streams}")
     stop_recording_all()
     return redirect(url_for("cam.cam_status"))
 
 
 @cam.route("/start_all_records")
 @login_required
-def start_all_records():
+def start_all_records_route():
     start_recording_all()
+    print(f"camera_streams (start all): {camera_streams}")
     return redirect(url_for("cam.cam_status"))
 
 

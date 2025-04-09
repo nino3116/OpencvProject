@@ -6,8 +6,8 @@ class ModeSchedule(db.Model):
     __tablename__ = "mode_schedule"
     id = db.Column(db.Integer, primary_key=True)
     mode_type = db.Column(db.String(256), nullable=False)
-    people_cnt = db.Column(db.Integer, nullable=False)
-    rep_name = db.Column(db.String(256), nullable=False)
+    people_cnt = db.Column(db.Integer)
+    rep_name = db.Column(db.String(256))
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     memo = db.Column(db.String(256), nullable=True)
