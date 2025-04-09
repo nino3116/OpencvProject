@@ -16,19 +16,17 @@
               <div id="camera-{{ cam.id }}-stream" class="mt-2">
                 <img src="{{cam.cam_url}}" style="width: 100%" />
                 <p class="cam-recording-status">
-                  <a href="{{url_for("cam.cam_status")}}">{% if cam.cam_name in recording_status and
-                    recording_status[cam.cam_name] %} 녹화 중 {% else %} 대기 중 {%
+                  <a href="{{url_for("cam.cam_status")}}">{% if cam.is_recording %} 녹화 중 {% else %} 대기 중 {%
                     endif %}</a>
                 </p>
-                {% if cam.cam_name not in recording_status or not
-                  recording_status[cam.cam_name] %}
+                {% if not cam.is_recording %}
                   <a
-                    href="{{ url_for('cam.start_record', camera_name=cam.cam_name) }}"
+                    href="{{ url_for('cam.start_record', camera_id=cam.id) }}"
                     >녹화 시작</a
                   >
                   {% else %}
                   <a
-                    href="{{ url_for('cam.stop_record_route', camera_name=cam.cam_name) }}"
+                    href="{{ url_for('cam.stop_record_route', camera_id=cam.id) }}"
                     >녹화 중지</a
                   >
                   {% endif %}

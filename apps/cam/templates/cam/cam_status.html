@@ -24,21 +24,19 @@
               <td class="td">{{ cam.cam_name }}</td>
               <td class="td text-break">{{ cam.cam_url }}</td>
               <td class="td">
-                {% if cam.cam_name in recording_status and
-                recording_status[cam.cam_name] %} 녹화 중 {% else %} 대기 중 {%
+                {% if cam.is_recording %} 녹화 중 {% else %} 대기 중 {%
                 endif %}
               </td>
               <td class="td">
-                {% if cam.cam_name not in recording_status or not
-                recording_status[cam.cam_name] %}
+                {% if not cam.is_recording %}
                 <button class = "btn btn-sm btn-light bg-success">
                 <a class="btn btn-sm" 
-                href="{{ url_for('cam.start_record', camera_name=cam.cam_name) }}">녹화 시작</a>
+                href="{{ url_for('cam.start_record', camera_id=cam.id) }}">녹화 시작</a>
                 </button>
                 {% else %}
                 <button class = "btn btn-sm btn-light bg-danger">
                 <a class="btn btn-sm"
-                href="{{ url_for('cam.stop_record_route', camera_name=cam.cam_name) }}">녹화 중지</a>
+                href="{{ url_for('cam.stop_record_route', camera_id=cam.id) }}">녹화 중지</a>
                 </button>
                 {% endif %}
               </td>

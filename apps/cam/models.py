@@ -35,6 +35,9 @@ class Cams(db.Model):
     is_active = db.Column(
         db.Boolean, default=True
     )  # 활성화 상태를 나타내는 속성 추가, 기본값은 True
+    is_recording = db.Column(
+        db.Boolean, default=False
+    )  # 녹화상태를 나타내는 속성 추가 기본값은 False
     videos = db.relationship("Videos", backref="cam", foreign_keys="Videos.camera_id")
     videos_by_name = db.relationship(
         "Videos", backref="cam_by_name", foreign_keys="Videos.camera_name"

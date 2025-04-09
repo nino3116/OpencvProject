@@ -17,7 +17,6 @@ from apps import db
 from apps.app import (
     db,
     camera_streams,
-    recording_status,
     record_camera_with_context,
     stop_recording,
     stop_recording_all,
@@ -120,10 +119,7 @@ def live():
     from apps.app import camera_streams  # 순환 참조 방지
 
     cams = Cams.query.all()
-    recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
-    return render_template(
-        "cam/live.html", cams=cams, recording_status=recording_status
-    )
+    return render_template("cam/live.html", cams=cams)
 
 
 @cam.route("/status")
@@ -132,40 +128,36 @@ def cam_status():
 
     cams = Cams.query.all()
     # recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
-    return render_template(
-        "cam/cam_status.html", cams=cams, recording_status=recording_status
-    )
+    return render_template("cam/cam_status.html", cams=cams)
 
 
-@cam.route("/start_record/<camera_name>")
+@cam.route("/start_record/<camera_id>")
 @login_required
-def start_record(camera_name):
-    cam_info = Cams.query.filter_by(cam_name=camera_name).first()
+def start_record(camera_id):
+    cam_info = Cams.query.filter_by(cam_name=camera_id).first()
     if cam_info:
         app = current_app._get_current_object()
         # 이미 녹화 중인지 확인하고 시작
-        if (
-            cam_info.cam_name not in recording_status
-            or not recording_status[cam_info.cam_name]
-        ):
+        if cam_info.is_recording:
             recording_thread = threading.Thread(
                 target=record_camera_with_context,
-                args=(app, cam_info.cam_url, cam_info.cam_name),
+                args=(app, cam_info.cam_url, cam_info.id),
                 daemon=True,
             )
             recording_thread.start()
-            recording_status[cam_info.cam_name] = True
-            camera_streams[cam_info.cam_name] = recording_thread
+            cam_info.is_recording = True
+            camera_streams[cam_info.id] = recording_thread
+            db.session.commit()
             print(f"카메라 '{cam_info.cam_name}' 녹화 시작 요청됨.")
         else:
             print(f"카메라 '{cam_info.cam_name}'은 이미 녹화 중입니다.")
     return redirect(url_for("cam.cam_status"))
 
 
-@cam.route("/stop_record/<camera_name>")
+@cam.route("/stop_record/<camera_id>")
 @login_required
-def stop_record_route(camera_name):
-    stop_recording(camera_name)
+def stop_record_route(camera_id):
+    stop_recording(camera_id)
     return redirect(url_for("cam.cam_status"))
 
 
@@ -209,7 +201,7 @@ def play_video(video_id):
         recorded_video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
 
     current_app.logger.info(f"recorded_video_base_dir: {recorded_video_base_dir}")
-    
+
     path_obj = Path(video.video_path)
     full_path = recorded_video_base_dir / path_obj
     print(f"Full path: {full_path}")
@@ -277,14 +269,12 @@ def play_origin_video(video_id):
 @login_required
 def list_videos():
     """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
-    """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
     form = VideoSearchForm(request.form)
 
     # 카메라 이름 목록을 가져와 choices 설정
     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
 
-    # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
     # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
     videos = Videos.query.order_by(
         Videos.recorded_date.desc(), Videos.recorded_time
@@ -326,14 +316,12 @@ def list_videos():
         videos = filtered_videos
 
     grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
-    grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
     for video in videos:
         if video.recorded_date:
             date_str = video.recorded_date.strftime("%Y-%m-%d")
             grouped_videos[date_str].append(video)
-            grouped_videos[date_str].append(video)
+
         else:
-            grouped_videos["알 수 없는 날짜"].append(video)
             grouped_videos["알 수 없는 날짜"].append(video)
 
     return render_template(
@@ -373,6 +361,48 @@ def delete_video(video_id):
             f"'{filename}' 파일 삭제 중 오류가 발생했습니다: {e}", "danger"
         )  # 추출한 파일 이름 사용
         db.session.rollback()
+    return redirect(url_for("cam.list_videos"))
+
+
+@cam.route("/delete_selected_videos", methods=["POST"])
+@login_required
+def delete_selected_videos():
+    video_ids = request.form.getlist("video_ids")
+    deleted, warnings, errors = [], [], []
+
+    for vid in video_ids:
+        video = Videos.query.get(vid)
+        if not video:
+            warnings.append(f"ID {vid} 없음")
+            continue
+
+        file_path = os.path.join(
+            current_app.config["VIDEO_FOLDER"],
+            video.video_path.replace("apps/videos/", ""),
+        )
+        filename = os.path.basename(file_path)
+
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            else:
+                warnings.append(f"{filename} 파일 없음")
+            delete_file(video.video_path)
+            db.session.delete(video)
+            deleted.append(filename)
+        except Exception as e:
+            db.session.rollback()
+            errors.append(str(e))
+
+    db.session.commit()
+
+    if deleted:
+        flash(f"{len(deleted)}개 파일 삭제 완료", "success")
+    if warnings:
+        flash(f"경고: {len(warnings)}개 파일 없음", "warning")
+    if errors:
+        flash(f"오류 발생: {len(errors)}개", "danger")
+
     return redirect(url_for("cam.list_videos"))
 
 
