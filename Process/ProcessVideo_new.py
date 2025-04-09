@@ -1,38 +1,83 @@
 import cv2 as cv
 import sys
 import numpy as np
-from ultralytics import YOLO  # type:ignore
+from ultralytics import YOLO
 import random
 import time
 from datetime import datetime
-from pathlib import Path
-
 
 import pymysql
-
-# dbconfig.py 파일이 같은 디렉토리에 있고, dbconnect() 함수가 정의되어 있다고 가정합니다.
-# 예시:
-# def dbconnect():
-#     return pymysql.connect(host='localhost', user='user', password='password', db='database', charset='utf8mb4')
 from dbconfig import dbconnect
 
 import traceback, logging
-import os  # 파일 경로 처리를 위해 추가
+import os
+from pathlib import Path
+import smtplib  # Import for email functionality
+from email.mime.text import MIMEText  # Import for email message creation
+from email.mime.multipart import MIMEMultipart
+from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
 
-# 로그 설정 (선택 사항이지만 디버깅에 유용)
+# 로그 설정
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 baseDir = Path(__file__).parent.parent  # 추가
-VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"  # 추가
+VIDEO_FOLDER = baseDir / "apps" / "dt_videos"  # 추가
+
+
+def send_email(subject, body):
+    """Sends an email with the given subject and body."""
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_SENDER
+        msg["To"] = EMAIL_RECEIVER
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:  # Use Gmail SMTP
+            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        logging.info("Email sent successfully!")
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        traceback.print_exc()
+
+
+def send_html_email(info, to_email):
+
+    # # 다운로드 링크 생성
+    # download_url = f"http://yourserver.com/videos/{info['filename']}"
+
+    # HTML 템플릿에 데이터 삽입
+    html_template = open("./Process/email_template.html", "r", encoding="utf-8").read()
+    html_content = (
+        html_template.replace("{{event}}", info["event"]).replace(
+            "{{timestamp}}", info["timestamp"]
+        )
+        # .replace("{{filename}}", info["filename"])
+        # .replace("{{download_url}}", download_url)
+    )
+
+    # 이메일 구성
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"[경고] {info['event']} - {info['timestamp']}"
+    msg["From"] = EMAIL_SENDER
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.send_message(msg)
+            print("이메일 전송 성공")
+    except Exception as e:
+        print("이메일 전송 실패:", e)
 
 
 def ProcessVideo(camera_url, camera_idx, q, pipe):
-    # --- 영상 녹화 저장 경로 설정 ---
-    # 스크립트가 실행되는 위치 아래에 'recordings' 폴더 생성 (없으면)
-    # recordings 폴더 아래에 카메라 ID별 폴더 생성
+    # 영상 녹화 저장 경로 설정
     base_recording_folder = VIDEO_FOLDER  # 수정
-
     camera_recording_folder = os.path.join(base_recording_folder, f"cam_{camera_idx}")
     try:
         os.makedirs(camera_recording_folder, exist_ok=True)
@@ -43,8 +88,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         logging.error(
             f"[Cam {camera_idx}] Failed to create recording directory {camera_recording_folder}: {e}"
         )
-        # 폴더 생성 실패 시 녹화 기능 비활성화 또는 다른 경로 사용 등의 처리 필요
-        # 여기서는 일단 진행하지만, 실제로는 오류 처리 후 종료하는 것이 안전할 수 있음
         pass
 
     # YOLO 모델 불러오기
@@ -67,10 +110,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
-    # --- 코덱 설정 ---
-    # avc1 (H.264), mp4v (MPEG-4) 등을 시도해볼 수 있습니다. 시스템에 설치된 코덱에 따라 동작 여부가 달라집니다.
-    # H.264 계열 코덱 (avc1, h264)이 압축률이 좋으나, 설치가 필요할 수 있습니다.
-    # mp4v는 호환성이 비교적 좋으나 압축률이 낮을 수 있습니다.
+    # 코덱 설정
     fourcc = cv.VideoWriter.fourcc(*"avc1")  # 또는 "mp4v", "h264" 등 시도
     # fourcc = cv.VideoWriter.fourcc(*"mp4v")
     logging.info(
@@ -81,7 +121,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         logging.warning(
             f"[Cam {camera_idx}] Invalid video properties obtained from camera. Recording might fail. W:{width}, H:{height}, FPS:{fps}"
         )
-        # 필요시 여기서 처리를 중단하거나 기본값 설정 가능
 
     # 사람별 색상 저장 딕셔너리
     person_colors = {}
@@ -90,7 +129,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
     person_class_id = None
     if hasattr(model, "names"):
         try:
-            # model.names가 {id: 'name'} 형태의 딕셔너리라고 가정
             person_class_id = [k for k, v in model.names.items() if v == "person"][0]
             logging.info(
                 f"[Cam {camera_idx}] 'person' class ID found: {person_class_id}"
@@ -193,12 +231,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             color,
                             2,
                         )
-            # else: # 주석 처리된 부분: track_id가 없는 경우 (추적 실패 또는 감지만) 처리 로직 (필요시 구현)
-            #     for i, (x1, y1, x2, y2) in enumerate(boxes):
-            #          current_class = classes[i]
-            #          if current_class == person_class_id:
-            #              # 추적 ID 없이 'person'만 표시
-            #              cv.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2) # 빨간색으로 표시
 
         # 현재 시간 표시
         current_timestamp_display = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -231,9 +263,8 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             f"Person Tracking - Cam {camera_idx}", frame
         )  # 창 제목에 카메라 ID 추가
 
-        # --- Pipe 메시지 처리 (녹화 제어) ---
+        # Pipe 메시지 처리 (녹화 제어)
         try:
-            # Non-blocking check for message
             if pipe.poll():
                 msg = pipe.recv()
                 logging.info(f"[Cam {camera_idx}] Received message: {msg}")
@@ -270,6 +301,39 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                     if is_recording and video_writer is not None:
                         is_recording = False
                         video_writer.release()  # 파일 저장 완료
+
+                        try:
+                            conn = dbconnect()
+                            cur = conn.cursor(pymysql.cursors.DictCursor)
+                            sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%s, %s, %s, %s, %s, %d)"
+                            cur.execute(
+                                sql_video,
+                                (
+                                    camera_idx,
+                                    "Camera " + str(camera_idx),
+                                    safe_timestamp[0 : safe_timestamp.find("_")],
+                                    safe_timestamp[
+                                        safe_timestamp.find("_")
+                                        + 1 : len(safe_timestamp)
+                                    ],
+                                    output_path,
+                                    1,
+                                ),
+                            )  # 시간 포맷 맞춰주기
+                            conn.commit()
+                        except pymysql.Error as e:
+                            logging.error(f"Database error: {e}")
+                            sys.exit(1)  # DB 오류 시 종료
+                        except ConnectionError as e:
+                            logging.error(f"Database connection error: {e}")
+                            sys.exit(1)
+                        except Exception as e:  # 예상치 못한 다른 오류
+                            logging.error(
+                                f"An unexpected error occurred during DB setup: {e}"
+                            )
+                            traceback.print_exc()
+                            sys.exit(1)
+
                         logging.info(
                             f"[Cam {camera_idx}] Stopped recording. File saved."
                         )
@@ -290,7 +354,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
         # --- 프레임 녹화 ---
         if is_recording and video_writer is not None:
-            # video_writer가 유효한지 다시 한번 확인 (isOpened는 매번 호출하기 비효율적일 수 있음)
             try:
                 video_writer.write(frame)
             except Exception as e:
@@ -302,16 +365,13 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 video_writer.release()
                 video_writer = None
 
-        # --- 주기적 로그 전송 ---
+        # 주기적 로그 전송
         current_time = time.time()
         if current_time - last_log_time >= log_interval:
             log_time = datetime.now()  # 로그 시점의 정확한 시간 기록
             # logging.info(f"[Cam {camera_idx}] Sending log: Count={person_count} at {log_time}")
             try:
-                # q.put() 호출은 다른 프로세스와 통신하므로 예외 처리
-                q.put(
-                    [camera_idx, person_count, log_time], block=False
-                )  # Non-blocking으로 시도
+                q.put([camera_idx, person_count, log_time], block=False)
             except Full:  # Queue가 가득 찼을 경우 (메인 프로세스 처리 지연)
                 logging.warning(
                     f"[Cam {camera_idx}] Queue is full. Log data might be lost."
@@ -321,18 +381,13 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
             last_log_time = current_time  # 마지막 로그 시간 갱신
 
-        # --- 종료 키 처리 ('q') ---
-        key = cv.waitKey(1) & 0xFF  # waitKey(1) 필수 (프레임 표시 및 키 입력 대기)
+        # 종료 키 처리 ('q')
+        key = cv.waitKey(1) & 0xFF
         if key == ord("q"):
             logging.info(f"[Cam {camera_idx}] 'q' key pressed. Exiting loop.")
             break
-        # elif key == ord('r'): # 테스트용 수동 녹화 시작/중지 (디버깅 시 유용)
-        #      if not is_recording:
-        #          pipe.send("REC ON") # 실제로는 부모 프로세스에서 받아야 함 (테스트용 코드)
-        #      else:
-        #          pipe.send("REC OFF")
 
-    # --- 루프 종료 후 정리 ---
+    # 루프 종료 후 정리
     logging.info(f"[Cam {camera_idx}] Cleaning up resources...")
     if is_recording and video_writer is not None:
         try:
@@ -340,6 +395,37 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 f"[Cam {camera_idx}] Releasing video writer due to loop exit..."
             )
             video_writer.release()
+            if is_recording == True:
+                try:
+                    conn = dbconnect()
+                    cur = conn.cursor(pymysql.cursors.DictCursor)
+                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%d, %s, %s, %s, %s, %s)"
+                    cur.execute(
+                        sql_video,
+                        (
+                            camera_idx,
+                            "Camera " + str(camera_idx),
+                            safe_timestamp[0 : safe_timestamp.find("_")],
+                            safe_timestamp[
+                                safe_timestamp.find("_") + 1 : len(safe_timestamp)
+                            ],
+                            f"cam_{camera_idx}"
+                            + "/"
+                            + f"{safe_timestamp}_cam{camera_idx}.mp4",
+                            1,
+                        ),
+                    )  # 시간 포맷 맞춰주기
+                    conn.commit()
+                except pymysql.Error as e:
+                    logging.error(f"Database error: {e}")
+                    sys.exit(1)  # DB 오류 시 종료
+                except ConnectionError as e:
+                    logging.error(f"Database connection error: {e}")
+                    sys.exit(1)
+                except Exception as e:  # 예상치 못한 다른 오류
+                    logging.error(f"An unexpected error occurred during DB setup: {e}")
+                    traceback.print_exc()
+                    sys.exit(1)
         except Exception as e:
             logging.error(
                 f"[Cam {camera_idx}] Error releasing video writer during cleanup: {e}"
@@ -347,30 +433,27 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
     if cap is not None and cap.isOpened():
         cap.release()
-    cv.destroyAllWindows()  # 해당 프로세스의 모든 OpenCV 창 닫기
+    cv.destroyAllWindows()
     logging.info(f"[Cam {camera_idx}] Process finished.")
 
 
 if __name__ == "__main__":
     import multiprocessing
-    from queue import Full, Empty  # Queue 예외 처리를 위해 추가
-
-    # Windows에서 multiprocessing 사용 시 필요할 수 있음
-    # multiprocessing.freeze_support()
+    from queue import Full, Empty
 
     logging.info("Main process started.")
 
     # Load Camera List from Database
     conn = None
+    cur = None
     try:
         conn = dbconnect()
         if conn is None:
             raise ConnectionError("Failed to establish database connection.")
         cur = conn.cursor(pymysql.cursors.DictCursor)
-        cur.execute("SELECT * FROM cams")  # 테이블명 'cams' 확인
+        cur.execute("SELECT * FROM cams")
         camera_list = cur.fetchall()
         logging.info(f"Loaded {len(camera_list)} cameras from database.")
-        # print(camera_list) # 필요시 주석 해제
         if not camera_list:
             logging.warning("No cameras found in the database. Exiting.")
             sys.exit(0)
@@ -384,16 +467,24 @@ if __name__ == "__main__":
         logging.error(f"An unexpected error occurred during DB setup: {e}")
         traceback.print_exc()
         sys.exit(1)
-    # finally: # cur는 conn이 성공적으로 생성되었을 때만 존재하므로 finally 블록에서 닫는 것은 부적절
-    #    if cur: cur.close()
 
     # Multiprocessing 설정
     q = multiprocessing.Queue()
     ProcessArr = []
-    ppipes = {}  # 카메라 ID를 키로 사용하는 딕셔너리로 변경 (파이프 관리 용이)
+    ppipes = {}
+
+    # Initialize email sent flag for each camera
+    email_sent_flags = {}
+    for row in camera_list:
+        if "id" not in row or "cam_url" not in row:
+            logging.warning(
+                f"Skipping camera entry due to missing 'id' or 'cam_url': {row}"
+            )
+            continue
+        camera_id = int(row["id"])
+        email_sent_flags[camera_id] = False
 
     for row in camera_list:
-        # row['id'] 와 row['cam_url'] 존재 확인
         if "id" not in row or "cam_url" not in row:
             logging.warning(
                 f"Skipping camera entry due to missing 'id' or 'cam_url': {row}"
@@ -424,23 +515,22 @@ if __name__ == "__main__":
 
     # 로그 처리 및 모드 확인 로직
     cflag = False
-    current_batch = []  # 이름을 'current_batch'로 변경 (의미 명확화)
+    current_batch = []
     batch_start_time = None  # 배치 시작 시간
 
     main_loop_active = True
+
     while main_loop_active:
         try:
             # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
             if not any(p.is_alive() for p in ProcessArr):
                 logging.info("All child processes have terminated. Exiting main loop.")
                 main_loop_active = False
-                # 큐에 남은 데이터 처리 필요 시 여기에 로직 추가
-                # while not q.empty(): process_data(q.get()) ...
-                continue  # 루프 조건이 False가 되므로 종료됨
+                continue
 
             # 큐에서 데이터 가져오기 (Non-blocking)
             try:
-                pd = q.get(block=False)  # [camera_idx, person_count, this_moment]
+                pd = q.get(block=False)
                 # logging.debug(f"Received data from queue: {pd}") # 디버깅 시 주석 해제
             except Empty:  # 큐가 비어있으면 잠시 대기 후 다시 시도
                 time.sleep(0.1)  # CPU 사용률 감소
@@ -456,7 +546,6 @@ if __name__ == "__main__":
             ).total_seconds() < 3:  # 이전 데이터 시간 기준으로 3초 미만
                 current_batch.append(pd)
             else:  # 3초 경과, 이전 배치 처리
-                # --- 이전 배치 데이터 처리 ---
                 if current_batch:
                     # 중복 카메라 로그 확인 (배치 내)
                     cam_ids_in_batch = [item[0] for item in current_batch]
@@ -504,10 +593,6 @@ if __name__ == "__main__":
                             # logging.info(f"Inserted {len(log_entries)} entries into Camera_Logs for plog_idx={plog_idx}")
 
                             # 3. 현재 모드 확인 및 처리
-                            # now() 함수는 DB 서버 시간 기준. Python 시간과 약간의 차이가 있을 수 있음.
-                            # 좀 더 정확하게 하려면 log_timestamp를 사용하여 비교하는 것이 좋음.
-                            # sql_mode = "SELECT * FROM mode_schedule WHERE end_time >= %s AND start_time <= %s"
-                            # cur.execute(sql_mode, (log_timestamp, log_timestamp))
                             sql_mode = "SELECT * FROM mode_schedule WHERE end_time >= NOW() AND start_time <= NOW()"
                             cur.execute(sql_mode)
                             active_modes = (
@@ -533,6 +618,11 @@ if __name__ == "__main__":
                                         mode_type == "Running"
                                         and people_cnt_limit is not None
                                     ):
+                                        # Access the camera ID from the current batch
+                                        camera_id_batch = current_batch[0][
+                                            0
+                                        ]  # Get camera ID from batch
+
                                         if total_persons > people_cnt_limit:
                                             logging.warning(
                                                 f"[{log_timestamp}] Exceeded person limit! Detected: {total_persons}, Limit: {people_cnt_limit} (Mode ID: {mode_id})"
@@ -552,6 +642,20 @@ if __name__ == "__main__":
                                             )
                                             conn.commit()
 
+                                            # SEND EMAIL
+                                            if not email_sent_flags[camera_id_batch]:
+                                                # email_subject = "Person Limit Exceeded"
+                                                # email_body = f"The person limit of {people_cnt_limit} has been exceeded.  Currently {total_persons} persons are detected. Camera : {camera_id_batch} time {log_timestamp}"
+                                                # send_email(email_subject, email_body)
+                                                # email_sent_flags[camera_id_batch] = True
+                                                info = {
+                                                    "event": "Person Limit Exceeded",
+                                                    "timestamp": str(log_timestamp),
+                                                }
+                                                send_html_email(
+                                                    info, to_email=EMAIL_RECEIVER
+                                                )
+                                                email_sent_flags[camera_id_batch] = True
                                     elif mode_type == "Secure":
                                         if total_persons > 0:
                                             logging.warning(
@@ -572,28 +676,28 @@ if __name__ == "__main__":
                                                 ),
                                             )
                                             conn.commit()
-
-                                    # 다른 모드 타입 처리 로직 추가 가능
-
+                                            # SEND EMAIL
+                                            if not email_sent_flags[camera_id_batch]:
+                                                email_subject = (
+                                                    "Person Detected during Secure Mode"
+                                                )
+                                                email_body = f"Person Detected During Secure Mode.  Currently {total_persons} persons are detected. Camera : {camera_id_batch} time {log_timestamp}"
+                                                send_email(email_subject, email_body)
+                                                email_sent_flags[camera_id_batch] = True
                             else:  # 활성화된 모드가 없을 때
                                 logging.debug(
                                     f"[{log_timestamp}] No active mode schedule found."
                                 )
-                                # 필요시 모드가 없을 때 녹화 중지 등 처리
 
-                            # --- 녹화 제어 메시지 전송 ---
+                            # 녹화 제어 메시지 전송
                             # should_record 플래그를 기반으로 모든 활성 카메라 프로세스에 메시지 전송
                             message_to_send = "REC ON" if should_record else "REC OFF"
                             active_pipes = []
                             for cam_id, pipe_conn in list(
                                 ppipes.items()
                             ):  # list()로 복사본 순회 (삭제 대비)
-                                # 해당 카메라의 자식 프로세스가 살아있는지 확인
                                 process_alive = False
                                 for p in ProcessArr:
-                                    # Process 객체에서 camera_id를 직접 얻을 수 없으므로,
-                                    # 생성 시 args를 저장하거나 다른 방식으로 매핑해야 함.
-                                    # 여기서는 일단 모든 활성 프로세스에 보내는 것으로 가정 (개선 필요)
                                     if p.is_alive():  # 간단히 모든 활성 프로세스에 전송
                                         process_alive = True  # 실제로는 특정 cam_id에 해당하는 프로세스만 확인해야 함
                                         try:
@@ -614,7 +718,6 @@ if __name__ == "__main__":
                             logging.error(
                                 f"Database error during batch processing: {db_err}"
                             )
-                            # DB 오류 시 연결 재시도 또는 다른 복구 로직 필요
                             conn.rollback()  # 오류 발생 시 트랜잭션 롤백
                         except Exception as proc_err:
                             logging.error(
@@ -622,12 +725,15 @@ if __name__ == "__main__":
                             )
                             traceback.print_exc()
                             conn.rollback()
+                # Reset the flag for sending email, a new evaluation of mode starts
+                for camera_id in email_sent_flags:
+                    email_sent_flags[camera_id] = False
 
-                # --- 현재 데이터로 새 배치 시작 ---
+                # 현재 데이터로 새 배치 시작
                 current_batch = [pd]
                 batch_start_time = pd[2]
 
-        except Empty:  # q.get()에서 발생 (위에서 처리했지만 이중 확인)
+        except Empty:
             time.sleep(0.1)  # 잠시 대기
         except KeyboardInterrupt:  # Ctrl+C 처리
             logging.info("KeyboardInterrupt received. Shutting down...")
@@ -638,15 +744,8 @@ if __name__ == "__main__":
             # 오류 발생 시 잠시 대기 후 계속 (상황에 따라 종료 결정)
             time.sleep(1)
 
-    # --- 메인 루프 종료 후 처리 ---
+    # 메인 루프 종료 후 처리
     logging.info("Main loop finished. Cleaning up...")
-
-    # 자식 프로세스들에게 종료 신호 보내기 (선택적, Pipe 사용)
-    # for cam_id, pipe_conn in ppipes.items():
-    #     try:
-    #         pipe_conn.send("TERMINATE") # 자식 프로세스에서 이 메시지를 받고 종료하도록 구현 필요
-    #         pipe_conn.close()
-    #     except: pass
 
     # 모든 자식 프로세스가 종료될 때까지 대기 (join)
     logging.info("Waiting for child processes to terminate...")
@@ -661,11 +760,6 @@ if __name__ == "__main__":
                 p.join()  # 강제 종료 후 대기
         except Exception as e:
             logging.error(f"Error joining process {p.pid}: {e}")
-
-    # 큐 비우기 (선택적)
-    # while not q.empty():
-    #     try: q.get_nowait()
-    #     except Empty: break
 
     q.close()
     q.join_thread()
