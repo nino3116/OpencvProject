@@ -81,6 +81,7 @@ if __name__ == "__main__":
     record_flag_before = False
     md_idx = 0
     max_person_detected = 0
+    log_timestamp = None
     
     main_loop_active = True
     while main_loop_active:
@@ -208,7 +209,7 @@ if __name__ == "__main__":
                                         if ProcessDic[cid].is_alive():  # 간단히 모든 활성 프로세스에 전송
                                             try:
                                                 ppipes[cid].send(message_to_send)
-                                                # logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cid}") # 디버그 로그
+                                                logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cid}") # 디버그 로그
                                             except (BrokenPipeError, EOFError):
                                                 logging.warning(
                                                     f"Pipe for Cam ID {cid} seems broken. Removing."
@@ -221,7 +222,8 @@ if __name__ == "__main__":
                                                 )
                                     # 녹화 종료: mode_detected 테이블 업데이트
                                     if should_record == False and record_flag_before == True:
-                                        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected where idx = %s"
+                                        logging.info(f"Update Mode_detected dend_time={log_timestamp} and max_person_detected = {max_person_detected}")
+                                        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s where idx = %s"
                                         cur.execute(
                                             sql_mode_detected,
                                             (
@@ -230,6 +232,7 @@ if __name__ == "__main__":
                                             md_idx
                                             ),
                                         )
+                                        conn.commit()
                                     # 녹화 시작: mode_detected 테이블 인서트
                                     elif should_record == True and record_flag_before == False:
                                         # Mode_Detected 테이블에 기록
@@ -298,6 +301,19 @@ if __name__ == "__main__":
 
     q.close()
     q.join_thread()
+    
+    if should_record == True and log_timestamp != None:
+        logging.info(f"Update Mode_detected dend_time={log_timestamp} and max_person_detected = {max_person_detected}")
+        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s where idx = %s"
+        cur.execute(
+            sql_mode_detected,
+            (
+            log_timestamp,
+            max_person_detected,
+            md_idx
+            ),
+        )
+        conn.commit()
 
     # DB 연결 닫기
     if cur:
