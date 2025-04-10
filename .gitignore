@@ -211,6 +211,7 @@ pip-selfcheck.json
 Process/log.txt
 Process/yolo11n.pt
 Process/dbconfig.py
+Process/email_config.py
 Process/S3Upload
 Process/S3Upload/s3_config.py
 
@@ -232,3 +233,15 @@ Process/recordings/*/*.*
 
 # codec
 Process/*.dll
+
+# kakao etc
+kakao_login/
+fonts/
+*.bz2
+*.zip
+
+# configs
+S3upload/s3_config.py
+
+# backup copys
+*/*copy*.*

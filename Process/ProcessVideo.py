@@ -22,7 +22,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
 baseDir = Path(__file__).parent.parent  # 추가
 VIDEO_FOLDER = baseDir / "dt_videos"  # 추가
 
@@ -298,10 +297,12 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             logging.error(f"Database connection error: {e}")
                             sys.exit(1)
                         except Exception as e:  # 예상치 못한 다른 오류
-                            logging.error(f"An unexpected error occurred during DB setup: {e}")
+                            logging.error(
+                                f"An unexpected error occurred during DB setup: {e}"
+                            )
                             traceback.print_exc()
                             sys.exit(1)
-                        
+
                         logging.info(
                             f"[Cam {camera_idx}] Stopped recording. File saved."
                         )
@@ -339,9 +340,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             log_time = datetime.now()  # 로그 시점의 정확한 시간 기록
             # logging.info(f"[Cam {camera_idx}] Sending log: Count={person_count} at {log_time}")
             try:
-                q.put(
-                    [camera_idx, person_count, log_time], block=False
-                )
+                q.put([camera_idx, person_count, log_time], block=False)
             except Full:  # Queue가 가득 찼을 경우 (메인 프로세스 처리 지연)
                 logging.warning(
                     f"[Cam {camera_idx}] Queue is full. Log data might be lost."
