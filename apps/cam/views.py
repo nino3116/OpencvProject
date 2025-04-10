@@ -345,14 +345,12 @@ def play_video(video_id):
 @login_required
 def list_videos():
     """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
-    """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
     form = VideoSearchForm(request.form)
 
     # 카메라 이름 목록을 가져와 choices 설정
     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
 
-    # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
     # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
     videos = Videos.query.order_by(
         Videos.recorded_date.desc(), Videos.recorded_time
@@ -399,14 +397,11 @@ def list_videos():
         videos = filtered_videos
 
     grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
-    grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
     for video in videos:
         if video.recorded_date:
             date_str = video.recorded_date.strftime("%Y-%m-%d")
-            grouped_videos[date_str].append(video)
-            grouped_videos[date_str].append(video)
+            grouped_videos[date_str].append(video) 
         else:
-            grouped_videos["알 수 없는 날짜"].append(video)
             grouped_videos["알 수 없는 날짜"].append(video)
 
     return render_template(

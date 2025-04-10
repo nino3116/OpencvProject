@@ -1,7 +1,7 @@
 <header>
     <div class="container-fluid">
         <nav class="nav nav-masthead navbar navbar-expand-lg" data-bs-theme="dark">
-            <h3 class="navbar brand fs-3">Camera</h3>
+            <h3 class="navbar brand fs-3 fw-bold">Camera</h3>
             <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
             </button>
@@ -32,15 +32,15 @@
             
                 {% if current_user.is_authenticated %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
-                    <a href="{{ url_for ("auth.logout")}}" class="text-reset" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
+                    <a href="{{ url_for ("auth.logout")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
                 </button>
                 {% elif current_user.is_authenticated and user.is_kakao %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
-                    <a href="{{ url_for ("kakao.sign_out")}}" class="text-reset" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
+                    <a href="{{ url_for ("kakao.sign_out")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
                 </button>
                 {% else %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
-                    <a href="{{ url_for ("auth.login")}}" class="text-reset" title = "로그인" role = "button" alt= "로그인 버튼">login</a>
+                    <a href="{{ url_for ("auth.login")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그인" role = "button" alt= "로그인 버튼">login</a>
                 </button>
                 <!-- <button type="button" class="btn btn-outline-light">
                     <a href="{{ url_for ("auth.signup")}}" title = "사용자 신규 등록" role = "button" alt= "사용자 신규 등록">sign in</a>

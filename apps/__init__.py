@@ -44,15 +44,24 @@ def create_app(config_key):
     app.register_blueprint(kakao_views.kakao, url_prefix="/oauth/kakao")
 
     @app.route("/")
+    
     def to_index():
+        
+        
         return redirect(url_for("cam.index"))
 
-    # start_recording_all 함수를 create_app 내에서 호출
-    with app.app_context():
-        from apps.app import start_recording_all
+    @app.context_processor
+    def inject_camera_counts():
+        from apps.cam.models import Cams
+        num_total_cams = Cams.query.count()
+        num_active_cams = Cams.query.filter_by(is_active=True).count()
+        num_recording_cams = Cams.query.filter_by(is_recording=True).count()
 
-        # print("create_app 내부에서 start_recording_all 호출 시도")
-        # start_recording_all()
-        # print("create_app 내부에서 start_recording_all 호출 완료")
-
+        return dict(
+            num_total_cams=num_total_cams,
+            num_active_cams=num_active_cams,
+            num_recording_cams=num_recording_cams,
+        )
+    
     return app
+

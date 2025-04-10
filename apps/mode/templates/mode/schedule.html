@@ -1,28 +1,30 @@
 {% extends "mode/base.html" %}
 {% block title %} New Users {% endblock %}
 {% block content %}
-<div class="m-auto">
-  <div class="card">
-    <h3 class ="mt-4">모드 스케줄 추가</h3>
-    <form
-    method="post"  
-    action="{{ url_for('mode.schedule', next = request.args.get('next')) }}"
-    class="form-schedule"
-    >
-      {{ form.csrf_token }}
-      {% for message in get_flashed_messages() %}
-      <div class="dt-auth-flash">{{ message }}</div>
-      {% endfor %}
+<div class="cover-container p-5 m-auto">
+  <div class = "my-auto">
+    <div class="card">
+      <h3 class ="mt-4">모드 스케줄 추가</h3>
+      <form
+      method="post"  
+      action="{{ url_for('mode.schedule', next = request.args.get('next')) }}"
+      class="form-schedule"
+      >
+        {{ form.csrf_token }}
+        {% for message in get_flashed_messages() %}
+        <div class="dt-auth-flash">{{ message }}</div>
+        {% endfor %}
 
-      {{ form.mode_type(class="form-control", placeholder="모드") }}
-      {{ form.people_cnt(class="form-control", placeholder="인원") }}
-      {{ form.rep_name(class="form-control ", placeholder="대표자") }}
-      {{ form.start_time(class="form-control ", placeholder="시작 시각") }}
-      {{ form.end_time(class="form-control", placeholder="종료 시각") }}
-      {{ form.memo(class="form-control", placeholder="메모") }}
-      <p></p>
-      {{ form.submit(class="btn btn-md btn-primary btn-block") }}
-    </form>
+        {{ form.mode_type(class="form-control", placeholder="모드") }}
+        {{ form.people_cnt(class="form-control", placeholder="인원") }}
+        {{ form.rep_name(class="form-control ", placeholder="대표자") }}
+        {{ form.start_time(class="form-control ", placeholder="시작 시각") }}
+        {{ form.end_time(class="form-control", placeholder="종료 시각") }}
+        {{ form.memo(class="form-control", placeholder="메모") }}
+        <p></p>
+        {{ form.submit(class="btn btn-md btn-primary btn-block") }}
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}
