@@ -27,19 +27,6 @@ baseDir = Path(__file__).parent.parent  # 추가
 VIDEO_FOLDER = baseDir / "dt_videos"  # 추가
 
 def ProcessVideo(camera_url, camera_idx, q, pipe):
-    # 영상 녹화 저장 경로 설정
-    base_recording_folder = VIDEO_FOLDER  # 수정
-    camera_recording_folder = os.path.join(base_recording_folder, f"cam_{camera_idx}")
-    try:
-        os.makedirs(camera_recording_folder, exist_ok=True)
-        logging.info(
-            f"[Cam {camera_idx}] Recordings will be saved to: {camera_recording_folder}"
-        )
-    except OSError as e:
-        logging.error(
-            f"[Cam {camera_idx}] Failed to create recording directory {camera_recording_folder}: {e}"
-        )
-        pass
 
     # YOLO 모델 불러오기
     try:
@@ -221,6 +208,21 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 logging.info(f"[Cam {camera_idx}] Received message: {msg}")
                 if msg == "REC ON":
                     if not is_recording:
+                        # 영상 녹화 저장 경로 설정
+                        base_recording_folder = VIDEO_FOLDER  # 수정
+                        camera_recording_folder = os.path.join(base_recording_folder, f"cam_{camera_idx}")
+                        
+                        try:
+                            os.makedirs(camera_recording_folder, exist_ok=True)
+                            # logging.info(
+                            #     f"[Cam {camera_idx}] Recordings will be saved to: {camera_recording_folder}"
+                            # )
+                        except OSError as e:
+                            logging.error(
+                                f"[Cam {camera_idx}] Failed to create recording directory {camera_recording_folder}: {e}"
+                            )
+                            pass
+                        
                         # 파일 이름 생성 (콜론 제거, 안전한 형식)
                         now = datetime.now()
                         safe_timestamp = now.strftime("%Y%m%d_%H%M%S")
@@ -232,7 +234,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                         s3_file_path = f"videos/{now_day_local}/{camera_idx}/{camera_idx}_{safe_timestamp}.mp4"
                         record_start_time = datetime.now().time()  # 최초 녹화 시작 시간 기록
                         record_start_time_sec = time.time()
-
+                        
                         # VideoWriter 생성
                         video_writer = cv.VideoWriter(
                             output_path, fourcc, fps, (width, height)
@@ -261,6 +263,15 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             output_path,
                             s3_file_path,
                         )
+                        try:
+                            os.remove(output_path)
+                            logging.info(
+                                f"로컬 파일 {output_path} 삭제완료"
+                            )
+                        except:
+                            logging.error(
+                                f"로컬 파일 {output_path} 삭제실패"
+                            )
                         try:
                             conn = dbconnect()
                             cur = conn.cursor(pymysql.cursors.DictCursor)
@@ -362,10 +373,15 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 f"{output_path} -> s3://{BUCKET}/{s3_file_path} 저장 완료(움직임 감지 녹화 중 프로세스 종료)"
             )
             time.sleep(1)
-            os.remove(output_path)
-            logging.info(
-                f"로컬 파일 {output_path} 삭제완료"
-            )
+            try:
+                os.remove(output_path)
+                logging.info(
+                    f"로컬 파일 {output_path} 삭제완료"
+                )
+            except:
+                logging.error(
+                    f"로컬 파일 {output_path} 삭제실패"
+                )
             
             if is_recording == True:
                 try:
