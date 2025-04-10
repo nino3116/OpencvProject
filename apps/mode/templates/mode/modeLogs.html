@@ -1,0 +1,50 @@
+{% extends "cam/base.html"%} {% block title %}모드 스케줄 상세 {% endblock %} {%
+block content %}
+
+<div class="cover-container p-3 mx-auto n">
+  {% include "cam/header.html" %}
+
+  <main>
+    <h2>모드 스케줄 상세</h2>
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
+        <tbody>
+          <tr>
+            <th>모드</th>
+            <td>{{ schedule.mode_type }}</td>
+          </tr>
+          <tr>
+            <th>인원</th>
+            <td>{{ schedule.people_cnt }}</td>
+          </tr>
+          <tr>
+            <th>시작 시각</th>
+            <td>{{ schedule.start_time }}</td>
+          </tr>
+          <tr>
+            <th>종료 시각</th>
+            <td>{{ schedule.end_time }}</td>
+          </tr>
+          <tr>
+            <th>대표자</th>
+            <td>{{ schedule.rep_name }}</td>
+          </tr>
+          <tr>
+            <th>메모</th>
+            <td>{{ schedule.memo if schedule.memo else '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        <a href="{{ url_for('mode.index') }}" class="btn btn-secondary"
+          >목록으로 돌아가기</a
+        >
+      </p>
+    </div>
+  </main>
+
+  {% include "cam/footer.html" %}
+</div>
+
+{%endblock%}

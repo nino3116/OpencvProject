@@ -14,7 +14,8 @@
             <tr>
               <th>이름</th>
               <th>URL</th>
-              <th>상태</th>
+              <th>카메라 상태</th>
+              <th>녹화 상태</th>
               <th>액션</th>
             </tr>
           </thead>
@@ -24,7 +25,10 @@
               <td class="td">{{ cam.cam_name }}</td>
               <td class="td text-break">{{ cam.cam_url }}</td>
               <td class="td">
-                {% if cam.is_recording %} 녹화 중 {% else %} 대기 중 {%
+                {% if cam.is_active %} 활성화 {% else %} 비활성화 {% endif %}
+              </td>
+              <td class="td">
+                {% if cam.is_recording %} 녹화 중 {% else %} 녹화 대기 중 {%
                 endif %}
               </td>
               <td class="td">

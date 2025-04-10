@@ -43,7 +43,7 @@ def record_original_video(camera_url, camera_id):
     db.session.commit()
 
     video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
-    camera_name_safe = camera.cam_name.replace(" ", "_").lower()
+    # camera_name_safe = camera.cam_name.replace(" ", "_").lower()
 
     if not video_base_dir.exists():
         os.makedirs(video_base_dir)
@@ -58,7 +58,15 @@ def record_original_video(camera_url, camera_id):
     file_path = None
 
     try:
+        print(f"카메라 ID {camera_id}: 녹화 스레드 시작")  # 추가
         while Cams.query.get(camera_id).is_recording and cap.isOpened():
+            if (
+                not Cams.query.get(camera_id).is_recording
+                or camera_id not in camera_streams
+            ):
+                print(f"카메라 ID {camera_id}의 녹화 중단 요청 감지. 즉시 중단합니다.")
+                break
+
             ret, frame = cap.read()
             if not ret:
                 print(
@@ -67,16 +75,16 @@ def record_original_video(camera_url, camera_id):
                 break
 
             if frame_rate is None:
-                frame_rate = current_app.config.get("VIDEO_FPS", 30)  # 기본 FPS 설정
+                frame_rate = current_app.config.get("VIDEO_FPS", 60)  # 기본 FPS 설정
                 frame_height, frame_width, _ = frame.shape
                 now = datetime.now()
                 timestamp = now.strftime("%Y%m%d_%H%M%S")
                 now_day_local = now.strftime("%Y-%m-%d")
-                video_dir = video_base_dir / now_day_local / camera_name_safe
+                video_dir = video_base_dir / now_day_local / str(camera_id)
                 if not video_dir.exists():
                     os.makedirs(video_dir)
                 current_record_filename = str(
-                    video_dir / f"{camera_name_safe}_{timestamp}.mp4"
+                    video_dir / f"{camera_id}_{timestamp}.mp4"
                 )
                 out = cv.VideoWriter(
                     current_record_filename,
@@ -87,7 +95,9 @@ def record_original_video(camera_url, camera_id):
                 file_path = current_record_filename.replace(
                     str(video_base_dir) + os.sep, ""
                 ).replace(os.sep, "/")
-                s3_file_path = f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4"
+                s3_file_path = (
+                    f"videos/{now_day_local}/{camera_id}/{camera_id}_{timestamp}.mp4"
+                )
                 record_start_time = now  # 최초 녹화 시작 시간 (datetime 객체)
                 # print(record_start_time)
 
@@ -99,16 +109,17 @@ def record_original_video(camera_url, camera_id):
                 current_time_sec - record_start_time.timestamp()
             )  # datetime 객체로 비교
             if elapsed_time >= 600:
+                # 10분이 경과하면 현재 파일을 저장하고 새로운 파일로 전환
                 if out is not None:
                     out.release()
 
                     time.sleep(1)
                     upload_file(
                         current_record_filename,
-                        f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4",
+                        s3_file_path,
                     )
                     print(
-                        f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(1분경과)"
+                        f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(10분경과)"
                     )
                     time.sleep(1)
                     os.remove(current_record_filename)
@@ -126,11 +137,11 @@ def record_original_video(camera_url, camera_id):
                     now = datetime.now()
                     timestamp = now.strftime("%Y%m%d_%H%M%S")
                     now_day_local = now.strftime("%Y-%m-%d")
-                    video_dir = video_base_dir / now_day_local / camera_name_safe
+                    video_dir = video_base_dir / now_day_local / str(camera_id)
                     if not video_dir.exists():
                         os.makedirs(video_dir)
                     current_record_filename = str(
-                        video_dir / f"{camera_name_safe}_{timestamp}.mp4"
+                        video_dir / f"{camera_id}_{timestamp}.mp4"
                     )
                     out = cv.VideoWriter(
                         current_record_filename,
@@ -139,8 +150,9 @@ def record_original_video(camera_url, camera_id):
                         (frame_width, frame_height),
                     )
                     record_start_time = now  # 새로운 1분 세그먼트 시작 시간 업데이트
-                    s3_file_path = f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4"
+                    s3_file_path = f"videos/{now_day_local}/{camera_id}/{camera_id}_{timestamp}.mp4"
 
+            time.sleep(0.01)
             if out is not None:
                 out.write(frame)
 
@@ -151,12 +163,13 @@ def record_original_video(camera_url, camera_id):
             camera.is_recording = False
             db.session.commit()
     finally:
+        print(f"카메라 ID {camera_id}: 녹화 스레드 종료")  # 추가
         if out is not None:
             out.release()
             time.sleep(1)
             upload_file(
                 current_record_filename,
-                f"videos/{now_day_local}/{camera_name_safe}/{camera_name_safe}_{timestamp}.mp4",
+                s3_file_path,
             )
             print(
                 f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(종료)"

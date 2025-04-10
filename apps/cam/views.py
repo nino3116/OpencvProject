@@ -29,7 +29,7 @@ from pathlib import Path
 from datetime import datetime, date, time
 from collections import defaultdict
 import os
-import threading
+from threading import Thread
 import boto3
 
 # from threading import Event
@@ -45,6 +45,19 @@ cam = Blueprint(
     static_folder="static",
     template_folder="templates",
 )
+
+
+@cam.context_processor
+def inject_camera_counts():
+    num_total_cams = Cams.query.count()
+    num_active_cams = Cams.query.filter_by(is_active=True).count()
+    num_recording_cams = Cams.query.filter_by(is_recording=True).count()
+
+    return dict(
+        num_total_cams=num_total_cams,
+        num_active_cams=num_active_cams,
+        num_recording_cams=num_recording_cams,
+    )
 
 
 @cam.route("/")

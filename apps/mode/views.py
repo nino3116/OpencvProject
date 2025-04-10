@@ -11,7 +11,7 @@ import pymysql
 
 # from Process.dbconfig import dbconnect
 from apps.app import db
-from apps.mode.forms import ScheduleForm
+from apps.mode.forms import ScheduleForm, DeleteScheduleForm
 from apps.mode.models import ModeSchedule
 
 from apps.kakao.kakao_client import CLIENT_ID, CLIENT_SECRET
@@ -37,8 +37,9 @@ def index():
     # cur.execute("select * from mode_schedule")
     # schedules = cur.fetchall()#
     schedules = ModeSchedule.query.all()
+    delete_form = DeleteScheduleForm()
     print(f"가져온 스케줄 목록: {schedules}")  # 추가
-    return render_template("mode/index.html", schedules=schedules)
+    return render_template("mode/index.html", schedules=schedules, form=delete_form)
 
 
 @mode.route("/schedule", methods=["GET", "POST"])
@@ -106,3 +107,18 @@ def schedule():
         # redirect
         return redirect(next_)
     return render_template("mode/schedule.html", form=form)
+
+
+@mode.route("/schedule/delete/<int:schedule_id>", methods=["POST"])
+def delete_schedule(schedule_id):
+    schedule_to_delete = ModeSchedule.query.get_or_404(schedule_id)
+    db.session.delete(schedule_to_delete)
+    db.session.commit()
+    return redirect(url_for("mode.index"))
+
+
+@mode.route("/schedules/<int:schedule_id>")
+@login_required
+def mode_logs(schedule_id):
+    schedule = ModeSchedule.query.get_or_404(schedule_id)
+    return render_template("mode/modeLogs.html", schedule=schedule)
