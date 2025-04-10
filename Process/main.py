@@ -112,7 +112,7 @@ if __name__ == "__main__":
                         process = multiprocessing.Process(
                             target=ProcessVideo,
                             args=(camera_url, cid, q, child_pipe),
-                            daemon=True,  # 데몬 프로세스로 설정
+                            daemon=True,  # 데몬 프로세스로 설q정
                         )
                         
                         ProcessDic[cid] = process
