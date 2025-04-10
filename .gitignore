@@ -214,7 +214,6 @@ Process/dbconfig.py
 Process/email_config.py
 Process/S3Upload
 Process/S3Upload/s3_config.py
-
 # jpg, jpeg, png, gif, bmp, tif, tiff, svg, eps, webp
 *.jpg
 
