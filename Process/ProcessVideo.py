@@ -231,7 +231,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             camera_recording_folder, output_filename
                         )
                         now_day_local = now.strftime("%Y-%m-%d")
-                        s3_file_path = f"videos/{now_day_local}/{camera_idx}/{camera_idx}_{safe_timestamp}.mp4"
+                        s3_file_path = f"videos/{now_day_local}/{camera_idx}/{camera_idx}_{safe_timestamp}_AD.mp4"
                         record_start_time = datetime.now().time()  # 최초 녹화 시작 시간 기록
                         record_start_time_sec = time.time()
                         

@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # Multiprocessing 설정
     q = multiprocessing.Queue()
-    ProcessArr = []
+    ProcessDic = {}
     ppipes = {}
 
     for row in camera_list:
@@ -61,26 +61,32 @@ if __name__ == "__main__":
             args=(camera_url, camera_id, q, child_pipe),
             daemon=True,  # 데몬 프로세스로 설정
         )
-        ProcessArr.append(process)
+        ProcessDic[camera_id] = process
         ppipes[camera_id] = parent_pipe  # 카메라 ID를 키로 부모 파이프 저장
 
-    logging.info(f"Created {len(ProcessArr)} processes.")
+    logging.info(f"Created {len(ProcessDic)} processes.")
 
     # 프로세스 시작
-    for p in ProcessArr:
-        p.start()
+    for camera_id in ProcessDic:
+        ProcessDic[camera_id].start()
     logging.info("All processes started.")
 
     # 로그 처리 및 모드 확인 로직
     cflag = False
     current_batch = [] 
     batch_start_time = None  # 배치 시작 시간
-
+    
+    # define variables
+    should_record = False
+    record_flag_before = False
+    md_idx = 0
+    max_person_detected = 0
+    
     main_loop_active = True
     while main_loop_active:
         try:
             # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
-            if not any(p.is_alive() for p in ProcessArr):
+            if not any(ProcessDic[cid].is_alive() for cid in ProcessDic):
                 logging.info("All child processes have terminated. Exiting main loop.")
                 main_loop_active = False
                 continue
@@ -148,6 +154,7 @@ if __name__ == "__main__":
                             )  # executemany 사용
                             conn.commit()
                             # logging.info(f"Inserted {len(log_entries)} entries into Camera_Logs for plog_idx={plog_idx}")
+                            
 
                             # 3. 현재 모드 확인 및 처리
                             sql_mode = "SELECT * FROM mode_schedule WHERE end_time >= NOW() AND start_time <= NOW()"
@@ -156,7 +163,9 @@ if __name__ == "__main__":
                                 cur.fetchall()
                             )  # 여러 모드가 겹칠 수 있으므로 fetchall 사용
 
+                            record_flag_before = should_record
                             should_record = False  # 녹화 시작 플래그
+                                                        
                             if active_modes:
                                 for (
                                     mode
@@ -177,73 +186,71 @@ if __name__ == "__main__":
                                     ):
                                         if total_persons > people_cnt_limit:
                                             logging.warning(
-                                                f"[{log_timestamp}] Exceeded person limit! Detected: {total_persons}, Limit: {people_cnt_limit} (Mode ID: {mode_id})"
+                                                f"[{log_timestamp}] Person detected during Running mode! Detected: {total_persons}, Limit: {people_cnt_limit} (Mode ID: {mode_id})"
                                             )
                                             should_record = True
-                                            # Mode_Detected 테이블에 기록
-                                            sql_mode_detected = "INSERT INTO Mode_Detected (mode_type, person_reserved, person_detected, detected_time, mode_schedule_id) VALUES (%s, %s, %s, %s, %s)"
-                                            cur.execute(
-                                                sql_mode_detected,
-                                                (
-                                                    mode_type,
-                                                    people_cnt_limit,
-                                                    total_persons,
-                                                    log_timestamp,
-                                                    mode_id,
-                                                ),
-                                            )
-                                            conn.commit()
-
                                     elif mode_type == "Secure":
                                         if total_persons > 0:
                                             logging.warning(
                                                 f"[{log_timestamp}] Person detected during Secure mode! Detected: {total_persons} (Mode ID: {mode_id})"
                                             )
                                             should_record = True
-                                            # Mode_Detected 테이블에 기록
-                                            sql_mode_detected = "INSERT INTO Mode_Detected (mode_type, person_reserved, person_detected, detected_time, mode_schedule_id) VALUES (%s, %s, %s, %s, %s)"
-                                            # Secure 모드는 예약 인원 개념이 없으므로 NULL 또는 0 처리 (DB 스키마에 따라)
-                                            cur.execute(
-                                                sql_mode_detected,
-                                                (
-                                                    mode_type,
-                                                    0,
-                                                    total_persons,
-                                                    log_timestamp,
-                                                    mode_id,
-                                                ),
-                                            )
-                                            conn.commit()
-
+                                    
+                                    if total_persons > max_person_detected:
+                                        max_person_detected = total_persons
+                                
+                                if should_record != record_flag_before:
+                                    # 녹화 제어 메시지 전송
+                                    # should_record 플래그를 기반으로 모든 활성 카메라 프로세스에 메시지 전송
+                                    message_to_send = "REC ON" if should_record else "REC OFF"
+                                        
+                                    for cid in ProcessDic:
+                                        if ProcessDic[cid].is_alive():  # 간단히 모든 활성 프로세스에 전송
+                                            try:
+                                                ppipes[cid].send(message_to_send)
+                                                # logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cid}") # 디버그 로그
+                                            except (BrokenPipeError, EOFError):
+                                                logging.warning(
+                                                    f"Pipe for Cam ID {cid} seems broken. Removing."
+                                                )
+                                                ppipes[cid].close()
+                                                del ppipes[cid]  # 고장난 파이프 제거
+                                            except Exception as e:
+                                                logging.error(
+                                                    f"Error sending message to pipe for Cam ID {cid}: {e}"
+                                                )
+                                    # 녹화 종료: mode_detected 테이블 업데이트
+                                    if should_record == False and record_flag_before == True:
+                                        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected where idx = %s"
+                                        cur.execute(
+                                            sql_mode_detected,
+                                            (
+                                            log_timestamp,
+                                            max_person_detected,
+                                            md_idx
+                                            ),
+                                        )
+                                    # 녹화 시작: mode_detected 테이블 인서트
+                                    elif should_record == True and record_flag_before == False:
+                                        # Mode_Detected 테이블에 기록
+                                        max_person_detected = total_persons # 현재 인원으로 최대 감지 인원 초기화
+                                        sql_mode_detected = "INSERT INTO Mode_Detected (mode_type, person_reserved, detected_time, mode_schedule_id) VALUES (%s, %s, %s, %s)"
+                                        cur.execute(
+                                            sql_mode_detected,
+                                            (
+                                                mode_type,
+                                                people_cnt_limit if mode_type=='Running' else 0,
+                                                log_timestamp,
+                                                mode_id,
+                                            ),
+                                        )
+                                        conn.commit()
+                                        md_idx = cur.lastrowid
+                                
                             else:  # 활성화된 모드가 없을 때
                                 logging.debug(
                                     f"[{log_timestamp}] No active mode schedule found."
                                 )
-
-                            # 녹화 제어 메시지 전송
-                            # should_record 플래그를 기반으로 모든 활성 카메라 프로세스에 메시지 전송
-                            message_to_send = "REC ON" if should_record else "REC OFF"
-                            active_pipes = []
-                            for cam_id, pipe_conn in list(
-                                ppipes.items()
-                            ):  # list()로 복사본 순회 (삭제 대비)
-                                process_alive = False
-                                for p in ProcessArr:
-                                    if p.is_alive():  # 간단히 모든 활성 프로세스에 전송
-                                        process_alive = True  # 실제로는 특정 cam_id에 해당하는 프로세스만 확인해야 함
-                                        try:
-                                            pipe_conn.send(message_to_send)
-                                            # logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cam_id}") # 디버그 로그
-                                        except (BrokenPipeError, EOFError):
-                                            logging.warning(
-                                                f"Pipe for Cam ID {cam_id} seems broken. Removing."
-                                            )
-                                            pipe_conn.close()
-                                            del ppipes[cam_id]  # 고장난 파이프 제거
-                                        except Exception as e:
-                                            logging.error(
-                                                f"Error sending message to pipe for Cam ID {cam_id}: {e}"
-                                            )
 
                         except pymysql.Error as db_err:
                             logging.error(
@@ -277,17 +284,17 @@ if __name__ == "__main__":
 
     # 모든 자식 프로세스가 종료될 때까지 대기 (join)
     logging.info("Waiting for child processes to terminate...")
-    for p in ProcessArr:
+    for cid in ProcessDic:
         try:
-            p.join(timeout=10)  # 최대 10초 대기
-            if p.is_alive():
+            ProcessDic[cid].join(timeout=10)  # 최대 10초 대기
+            if ProcessDic[cid].is_alive():
                 logging.warning(
-                    f"Process {p.pid} did not terminate gracefully. Forcing termination."
+                    f"Process {ProcessDic[cid].pid} did not terminate gracefully. Forcing termination."
                 )
-                p.terminate()  # 강제 종료
-                p.join()  # 강제 종료 후 대기
+                ProcessDic[cid].terminate()  # 강제 종료
+                ProcessDic[cid].join()  # 강제 종료 후 대기
         except Exception as e:
-            logging.error(f"Error joining process {p.pid}: {e}")
+            logging.error(f"Error joining process {ProcessDic[cid].pid}: {e}")
 
     q.close()
     q.join_thread()
