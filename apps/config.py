@@ -10,10 +10,11 @@ class BaseConfig:
     SECRET_KEY = "DM5Fq1G9XtMzWAeqYWNR"
     WTF_CSRF_SECRET_KEY = "El1oD921KMdGKONsydDa"
     WTF_CSRF_ENABLED = True
-    VIDEO_FOLDER = baseDir / "apps" / "static" / "videos"
+    VIDEO_FOLDER = baseDir / "apps" / "videos"
     DT_VIDEO_FOLDER = baseDir / "apps" / "dt_videos"
-    SNAPSHOT_FOLDER = baseDir / "apps" / "static" / "snapshots"
-    LOG_FOLDER = baseDir / "apps" / "static" / "logs"
+    SNAPSHOT_FOLDER = baseDir / "apps" / "snapshots"
+    LOG_FOLDER = baseDir / "apps" / "logs"
+    VIDEO_FPS = 30
 
 
 # 상황데  따른 환경 설정 작업 (BaseConfig 클래스 각 상황별로 상속하여 처리)
@@ -41,4 +42,3 @@ class DeployConfig(BaseConfig):
 
 # config 사전 매핑 작업
 config = {"testing": TestingConfig, "local": LocalConfig, "deploy": DeployConfig}
-

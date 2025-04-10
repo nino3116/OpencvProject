@@ -1,47 +1,54 @@
-{% extends "cam/base.html" %}{% block title %} 카메라 정보 편집 {% endblock
+{% extends "cam/base.html" %} {% block title %} 카메라 정보 편집{% endblock
 title %} {% block content%}
-<body class="d-flex h-100 text-center bg-dark text-white">
+
+<div class="cover-container w-100 h-100 p-3 m-auto">
   {% include "cam/header.html"%}
-  <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
-    <div class="my-auto">
-      <div class="card">
-        <h1 class = "h3 mb-3 mt-3 fw-normal">Edit Camera</h1>
-        <form
-          action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
-          method="POST"
-          novalidate="novalidate"
-          class="form-camadd"
-        >
-          {{ form.csrf_token }}
+  <div class="my-auto">
+    <div class="card">
+      <h1 class="h3 mb-3 mt-3 fw-normal">Edit Camera</h1>
+      <form
+        action="{{ url_for('cam.edit_camera', camera_id=cam.id) }}"
+        method="POST"
+        novalidate="novalidate"
+        class="form-camadd"
+      >
+        {{ form.csrf_token }}
 
-          <div class="form-floating mb-3">
-            {{ form.cam_name(class = "form-control dt-auth-input", id="floatingInput" , placeholder="Camera Name", value=cam.cam_name) }}
-            <label for="floatingInput">Camera Name</label>
-          </div>
+        <div class="form-floating mb-3">
+          {{ form.cam_name(class = "form-control dt-auth-input",
+          id="floatingInput" , placeholder="Camera Name", value=cam.cam_name) }}
+          <label for="floatingInput">Camera Name</label>
+        </div>
 
-          {% for error in form.cam_name.errors %}
-          <span style="color: red">{{ error }} </span>
-          {% endfor %}
+        {% for error in form.cam_name.errors %}
+        <span style="color: red">{{ error }} </span>
+        {% endfor %}
 
-          <div class="form-floating mb-3">
-            {{ form.cam_url(class = "form-control dt-auth-input", id="floatingInput" ,placeholder="Video server address", value=cam.cam_url) }}
-            <label for="floatingInput">Video server address</label>
-          </div>
+        <div class="form-floating mb-3">
+          {{ form.cam_url(class = "form-control dt-auth-input",
+          id="floatingInput" ,placeholder="Video server address",
+          value=cam.cam_url) }}
+          <label for="floatingInput">Video server address</label>
+        </div>
 
-          <div class="form-floating mb-3">
+        <div class="form-floating mb-3">
           {% for error in form.cam_url.errors %}
           <span style="color: red">{{ error }} </span>
           {% endfor %}
-          <p>{{ form.submit(class = "btn btn-md btn-primary btn-block dt-auth-btn" , value='갱신') }}</p>
-          </div>
-        </form>
+          <p>
+            {{ form.submit(class = "btn btn-md btn-primary btn-block
+            dt-auth-btn" , value='갱신') }}
+          </p>
+        </div>
+      </form>
 
-    <!-- <form
+      <!-- <form
       action="{{ url_for('cam.delete_camera', camera_id=cam.id) }}"
       method="POST">
       {{ form.csrf_token }}
       <input type="submit" value="삭제" />
     </form> -->
-    {% endblock %}
+      {% endblock %}
+    </div>
   </div>
-</body>
+</div>

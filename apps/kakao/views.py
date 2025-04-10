@@ -85,7 +85,7 @@ def callback():
             db.session.commit()
             login_user(user)
             message = "카카오 계정으로 로그인에 성공하였습니다."
-            # 카카오톡 메시지 보내기 (기존 코드 유지)
+            # 카카오톡 메시지 보내기
             message_url = "https://kapi.kakao.com/v2/api/talk/memo/default/send"
             headers = {
                 "Authorization": f"Bearer {access_token}",
