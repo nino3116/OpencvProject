@@ -36,6 +36,10 @@ import boto3
 
 from S3upload.s3client import delete_file, generate_presigned_url
 from S3upload.s3_config import BUCKET
+import tempfile
+import zipfile
+from werkzeug.utils import secure_filename
+from flask import send_file
 
 
 # Blueprint로 crud 앱을 생성한다.
@@ -458,6 +462,43 @@ def download_video(video_id):
         return redirect(url_for("cam.list_videos"))
 
 
+@cam.route("/download_selected_videos", methods=["POST"])
+@login_required
+def download_selected_videos():
+    """ 선택된 ID의 비디오 파일을 압축파일로 다운로드 합니다."""
+    video_ids =request.form.getlist("video_ids")
+    
+    # 아무것도 선택 안 하면 warning flash 후 redirect
+    if not video_ids:
+        flash("선택된 비디오가 없습니다.", "warning")
+        return redirect(url_for("cam.list_videos"))
+    
+    s3 = boto3.client("s3")
+    bucket_name = BUCKET
+    
+    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip:
+        with zipfile.ZipFile(tmp_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for vid in video_ids:
+                video = Videos.query.get(vid)
+                if not video:
+                    continue
+                s3_key = video.video_path
+                filename = secure_filename(s3_key.split("/")[-1])
+                
+                # s3 객체 다운로드 -> 메모리에 저장
+                obj = s3.get_object(Bucket=bucket_name, Key=s3_key)
+                zipf.writestr(filename, obj["Body"].read())
+        
+        tmp_zip_path = tmp_zip.name
+    
+    # send_file로 zip 전송 (다운로드 시작)    
+    
+    return send_file(tmp_zip_path,
+                     mimetype="application/zip",
+                     as_attachment=True,
+                     download_name="selected_videos.zip")
+                
+                
 @cam.route("/update_videos")
 @login_required
 def update_videos():
