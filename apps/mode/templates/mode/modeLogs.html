@@ -107,6 +107,7 @@ block content %}
                             aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
+                          {% if detailed_logs_map[log.idx] %}
                           <div class="table-responsive">
                             <table
                               class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
@@ -121,8 +122,7 @@ block content %}
                                 </tr>
                               </thead>
                               <tbody>
-                                {% if detailed_logs_map[log.idx] %} {% for item
-                                in detailed_logs_map[log.idx] %}
+                                {% for item in detailed_logs_map[log.idx] %}
                                 <tr>
                                   <td>{{ item.place_log.dt_time }}</td>
                                   <td>{{ item.place_log.tp_cnt }}</td>
@@ -131,12 +131,15 @@ block content %}
                                   <td>{{ item.camera_counts.camera3_cnt }}</td>
                                   <td>{{ item.camera_counts.camera4_cnt }}</td>
                                 </tr>
-                                {% endfor %} {% else %}
-                                <p>표시할 로그가 존재하지 않습니다</p>
-                                {% endif %}
+                                {% endfor %}
                               </tbody>
                             </table>
                           </div>
+                          {% else %}
+                          <p class="text-dark">
+                            표시할 로그가 존재하지 않습니다
+                          </p>
+                          {% endif %}
                         </div>
                         <div class="modal-footer">
                           <button
