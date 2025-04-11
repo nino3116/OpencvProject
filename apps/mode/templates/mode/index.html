@@ -34,7 +34,8 @@
         <td>{{ schedule.end_time }}</td>
         <td>{{ schedule.rep_name }}</td>
         <td><a title="{{ schedule.memo }}">메모</a></td>
-        <td> <a href="{{ url_for('mode.mode_logs', schedule_id=schedule.id) }}">상세보기</a></td>
+        <td> <a href="{{ url_for('mode.mode_logs', schedule_id=schedule.id) }}">
+          <button type="button" class="btn btn-info btn-sm">상세보기</button></a></td>
         <td>
          <form method="POST" action="{{ url_for('mode.delete_schedule', schedule_id=schedule.id) }}">
           {{form.csrf_token}}

@@ -12,7 +12,7 @@ import pymysql
 # from Process.dbconfig import dbconnect
 from apps.app import db
 from apps.mode.forms import ScheduleForm, DeleteScheduleForm
-from apps.mode.models import ModeSchedule
+from apps.mode.models import ModeSchedule, ModeDetected, PlaceLogs, CameraLogs
 
 from apps.kakao.kakao_client import CLIENT_ID, CLIENT_SECRET
 from apps.kakao.kakao_controller import Oauth
@@ -121,4 +121,101 @@ def delete_schedule(schedule_id):
 @login_required
 def mode_logs(schedule_id):
     schedule = ModeSchedule.query.get_or_404(schedule_id)
-    return render_template("mode/modeLogs.html", schedule=schedule)
+    detected_logs = ModeDetected.query.filter_by(mode_schedule_id=schedule_id).all()
+
+    detailed_logs_map = {}
+    for detected_log in detected_logs:
+        if detected_log.dend_time is not None:
+            place_logs_data = (
+                PlaceLogs.query.filter(
+                    PlaceLogs.dt_time >= detected_log.detected_time,
+                    PlaceLogs.dt_time <= detected_log.dend_time,
+                )
+                .order_by(PlaceLogs.dt_time)
+                .all()
+            )
+
+        detailed_logs = []
+        for place_log in place_logs_data:
+            camera_logs_data = CameraLogs.query.filter_by(plog_idx=place_log.idx).all()
+
+            camera_counts = {
+                "camera1_cnt": 0,
+                "camera2_cnt": 0,
+                "camera3_cnt": 0,
+                "camera4_cnt": 0,
+            }
+            for log in camera_logs_data:
+                if log.camera_idx == 1:
+                    camera_counts["camera1_cnt"] = log.dp_cnt
+                elif log.camera_idx == 2:
+                    camera_counts["camera2_cnt"] = log.dp_cnt
+                elif log.camera_idx == 3:
+                    camera_counts["camera3_cnt"] = log.dp_cnt
+                elif log.camera_idx == 4:
+                    camera_counts["camera4_cnt"] = log.dp_cnt
+
+            detailed_logs.append(
+                {"place_log": place_log, "camera_counts": camera_counts}
+            )
+
+        detailed_logs_map[detected_log.idx] = detailed_logs
+
+    return render_template(
+        "mode/modeLogs.html",
+        schedule=schedule,
+        detected_logs=detected_logs,
+        detailed_logs_map=detailed_logs_map,
+    )
+
+
+# @mode.route("/schedules/<int:schedule_id>")
+# @login_required
+# def mode_logs(schedule_id):
+#     schedule = ModeSchedule.query.get_or_404(schedule_id)
+#     detected_logs = ModeDetected.query.filter_by(mode_schedule_id=schedule_id).all()
+#     return render_template(
+#         "mode/modeLogs.html", schedule=schedule, detected_logs=detected_logs
+#     )
+
+
+# @mode.route("/log_details/<int:log_id>")
+# @login_required
+# def log_details(log_id):
+#     detected_log = ModeDetected.query.get_or_404(log_id)
+#     place_logs_data = (
+#         PlaceLogs.query.filter(
+#             PlaceLogs.dt_time >= detected_log.detected_time,
+#             PlaceLogs.dt_time <= detected_log.dend_time,
+#         )
+#         .order_by(PlaceLogs.dt_time)
+#         .all()
+#     )
+
+#     detailed_logs = []
+#     for place_log in place_logs_data:
+#         camera_logs_data = CameraLogs.query.filter_by(plog_idx=place_log.idx).all()
+
+#         camera_counts = {
+#             "camera1_cnt": 0,
+#             "camera2_cnt": 0,
+#             "camera3_cnt": 0,
+#             "camera4_cnt": 0,
+#         }
+#         for log in camera_logs_data:
+#             if log.camera_idx == 1:
+#                 camera_counts["camera1_cnt"] = log.dp_cnt
+#             elif log.camera_idx == 2:
+#                 camera_counts["camera2_cnt"] = log.dp_cnt
+#             elif log.camera_idx == 3:
+#                 camera_counts["camera3_cnt"] = log.dp_cnt
+#             elif log.camera_idx == 4:
+#                 camera_counts["camera4_cnt"] = log.dp_cnt
+
+#         detailed_logs.append({"place_log": place_log, "camera_counts": camera_counts})
+
+#     return render_template(
+#         "mode/logDetails.html",
+#         detailed_logs=detailed_logs,
+#         detected_log=detected_log,
+#     )

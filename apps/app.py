@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from apps import create_app, db
-from apps.cam.models import Cams, Camera_logs, Videos
+from apps.cam.models import Cams, Videos
 from datetime import datetime
 from pathlib import Path
 from threading import Thread
