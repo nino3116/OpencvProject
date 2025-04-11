@@ -12,15 +12,68 @@ from dbconfig import dbconnect
 import traceback, logging
 import os
 from pathlib import Path
+import smtplib  # Import for email functionality
+from email.mime.text import MIMEText  # Import for email message creation
+from email.mime.multipart import MIMEMultipart
+from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
 
 # 로그 설정
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
 baseDir = Path(__file__).parent.parent  # 추가
 VIDEO_FOLDER = baseDir / "apps" / "dt_videos"  # 추가
+
+
+def send_email(subject, body):
+    """Sends an email with the given subject and body."""
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_SENDER
+        msg["To"] = EMAIL_RECEIVER
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:  # Use Gmail SMTP
+            smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        logging.info("Email sent successfully!")
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        traceback.print_exc()
+
+
+def send_html_email(info, to_email):
+
+    # # 다운로드 링크 생성
+    # download_url = f"http://yourserver.com/videos/{info['filename']}"
+
+    # HTML 템플릿에 데이터 삽입
+    html_template = open("./Process/email_template.html", "r", encoding="utf-8").read()
+    html_content = (
+        html_template.replace("{{event}}", info["event"]).replace(
+            "{{timestamp}}", info["timestamp"]
+        )
+        # .replace("{{filename}}", info["filename"])
+        # .replace("{{download_url}}", download_url)
+    )
+
+    # 이메일 구성
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"[경고] {info['event']} - {info['timestamp']}"
+    msg["From"] = EMAIL_SENDER
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.send_message(msg)
+            print("이메일 전송 성공")
+    except Exception as e:
+        print("이메일 전송 실패:", e)
+
 
 def ProcessVideo(camera_url, camera_idx, q, pipe):
     # 영상 녹화 저장 경로 설정
@@ -37,11 +90,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         )
         pass
 
-<<<<<<< HEAD
-=======
-
-def ProcessVideo(camera_url, camera_idx, q, pipe):
->>>>>>> origin/main
     # YOLO 모델 불러오기
     try:
         model = YOLO("yolo11n.pt")  # 모델 파일 경로 확인
@@ -54,18 +102,13 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
     cap = cv.VideoCapture(camera_url)
 
     if not cap.isOpened():
-<<<<<<< HEAD
         logging.error(f"[Cam {camera_idx}] Cannot open camera stream: {camera_url}")
         sys.exit(f"Cannot open camera {camera_idx}")  # 구체적인 에러 메시지와 함께 종료
-=======
-        sys.exit("Cannot open camera")
->>>>>>> origin/main
 
     # 비디오 저장을 위한 변수
     fps = int(cap.get(cv.CAP_PROP_FPS))
     width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-<<<<<<< HEAD
 
     # 코덱 설정
     fourcc = cv.VideoWriter.fourcc(*"avc1")  # 또는 "mp4v", "h264" 등 시도
@@ -78,9 +121,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         logging.warning(
             f"[Cam {camera_idx}] Invalid video properties obtained from camera. Recording might fail. W:{width}, H:{height}, FPS:{fps}"
         )
-=======
-    fourcc = cv.VideoWriter.fourcc(*"avc1")
->>>>>>> origin/main
 
     # 사람별 색상 저장 딕셔너리
     person_colors = {}
@@ -107,7 +147,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             "[Cam {camera_idx}] 'person' class ID not set. Person detection might not work as expected."
         )
 
-<<<<<<< HEAD
     # 타이머 설정 (30초마다 DB 전송용)
     log_interval = 30  # 초
     last_log_time = time.time()
@@ -115,11 +154,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
     # 녹화 관련 변수
     is_recording = False
     video_writer = None  # 명시적으로 None으로 초기화
-=======
-    # 타이머 설정
-    start_time = time.time()
-    is_recording = False
->>>>>>> origin/main
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -197,26 +231,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             color,
                             2,
                         )
-<<<<<<< HEAD
-=======
-                    color = person_colors[track_id]
-
-                    cv.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-
-                    confidence = results[0].boxes.conf[i].cpu().item()
-                    label = f"ID: {track_id}"
-                    cv.putText(
-                        frame,
-                        label,
-                        (x1, y1 - 10),
-                        cv.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        color,
-                        2,
-                    )
-
-                    person_count += 1
->>>>>>> origin/main
 
         # 현재 시간 표시
         current_timestamp_display = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -231,7 +245,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             cv.LINE_AA,
         )  # 흰색, 외곽선 추가
 
-<<<<<<< HEAD
         # 인원 수 표시
         person_count_text = f"Persons: {person_count}"
         cv.putText(
@@ -251,96 +264,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
         )  # 창 제목에 카메라 ID 추가
 
         # Pipe 메시지 처리 (녹화 제어)
-=======
-        cv.imshow("Person Tracking by ByteTrack", frame)
-
-        current_time = time.time()
-        this_moment = datetime.now()
-
-        try:
-            if pipe.poll() == True:
-                msg = pipe.recv()
-                if msg == "REC ON":
-                    if is_recording == False:
-                        is_recording = True
-                        output_path = f"{this_moment}_{camera_idx}.mp4"
-                        video_writer = cv.VideoWriter(
-                            output_path, fourcc, fps, (width, height)
-                        )
-                        print(video_writer.isOpened())
-                elif msg == "REC OFF":
-                    if is_recording == True:
-                        is_recording = False
-                        video_writer.release()
-        except:
-            pass
-
-        if is_recording == True:
-            video_writer.write(frame)
-
-        if current_time - start_time >= 30:
-            # print(f"Camera{camera_idx} Detected {person_count} persons at {this_moment}.")
-            q.put([camera_idx, person_count, this_moment])
-
-            start_time = current_time
-
-        key = cv.waitKey(1)
-        if key == ord("q"):
-            break
-
-    try:
-        video_writer.release()
-    except:
-        pass
-
-    cap.release()
-    cv.destroyAllWindows()
-
-
-if __name__ == "__main__":
-    import multiprocessing
-
-    # freeze_support()
-
-    # Load Camera List from Database
-    conn = dbconnect()
-    cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute("select * from cams")
-    camera_list = cur.fetchall()
-    # print(camera_list)
-
-    parent_conn, child_conn = multiprocessing.Pipe()
-
-    ProcessArr = []
-    q = multiprocessing.Queue()
-    ppipes = []
-
-    for row in camera_list:
-        ppipe, cpipe = multiprocessing.Pipe()
-        ProcessArr.append(
-            multiprocessing.Process(
-                target=ProcessVideo, args=(row["cam_url"], int(row["id"]), q, cpipe)
-            )
-        )
-        ppipes.append(ppipe)
-
-    # print(ProcessArr)
-
-    for p in ProcessArr:
-        p.start()
-
-    camera_idxs = []
-    for row in camera_list:
-        camera_idxs.append(row["id"])
-    logs = []
-    for i in camera_idxs:
-        logs.append([])
-
-    cflag = False
-    current = []
-
-    while True:
->>>>>>> origin/main
         try:
             if pipe.poll():
                 msg = pipe.recv()
@@ -371,7 +294,6 @@ if __name__ == "__main__":
                             )
                             video_writer = None  # 실패 시 None으로 유지
                     else:
-<<<<<<< HEAD
                         logging.warning(
                             f"[Cam {camera_idx}] Received 'REC ON' but already recording."
                         )
@@ -379,20 +301,23 @@ if __name__ == "__main__":
                     if is_recording and video_writer is not None:
                         is_recording = False
                         video_writer.release()  # 파일 저장 완료
-                        
+
                         try:
                             conn = dbconnect()
                             cur = conn.cursor(pymysql.cursors.DictCursor)
-                            sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%d, %s, %s, %s, %s, %d)"
+                            sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%s, %s, %s, %s, %s, %d)"
                             cur.execute(
                                 sql_video,
                                 (
                                     camera_idx,
-                                    "Camera "+str(camera_idx),
-                                    safe_timestamp[0:safe_timestamp.find('_')],
-                                    safe_timestamp[safe_timestamp.find('_')+1:len(safe_timestamp)],
+                                    "Camera " + str(camera_idx),
+                                    safe_timestamp[0 : safe_timestamp.find("_")],
+                                    safe_timestamp[
+                                        safe_timestamp.find("_")
+                                        + 1 : len(safe_timestamp)
+                                    ],
                                     output_path,
-                                    1
+                                    1,
                                 ),
                             )  # 시간 포맷 맞춰주기
                             conn.commit()
@@ -403,10 +328,12 @@ if __name__ == "__main__":
                             logging.error(f"Database connection error: {e}")
                             sys.exit(1)
                         except Exception as e:  # 예상치 못한 다른 오류
-                            logging.error(f"An unexpected error occurred during DB setup: {e}")
+                            logging.error(
+                                f"An unexpected error occurred during DB setup: {e}"
+                            )
                             traceback.print_exc()
                             sys.exit(1)
-                        
+
                         logging.info(
                             f"[Cam {camera_idx}] Stopped recording. File saved."
                         )
@@ -421,105 +348,6 @@ if __name__ == "__main__":
                 f"[Cam {camera_idx}] Pipe connection error: {e}. Stopping process."
             )
             break  # 파이프 오류 시 루프 종료
-=======
-                        flag = False
-                if flag == False:
-                    break
-            else:
-                pd = q.get(block=False)
-
-                if cflag == False:
-                    cflag = True
-                    start_time = pd[2]
-                    current.append(pd)
-                elif (pd[2] - start_time).seconds < 3:
-                    # 시작 시점 기준으로 3초 이내의 데이터 함께 처리
-                    current.append(pd)
-                else:
-                    tmp = []
-                    for i in current:  # 카메라 중복 확인
-                        tmp.append(i[0])
-
-                    if len(tmp) != len(set(tmp)):
-                        print("ERROR: duplicated camera logs")
-                    else:
-                        total = 0
-                        for obj in current:
-                            total += obj[1]
-                        sql = (
-                            "insert into Place_Logs (tp_cnt, dt_time) values("
-                            + str(total)
-                            + ",'"
-                            + str(start_time)
-                            + "')"
-                        )
-                        cur.execute(sql)
-                        conn.commit()
-                        idx = cur.lastrowid
-                        for obj in current:
-                            sql = (
-                                "insert into Camera_Logs (camera_idx, dp_cnt, detected_time, plog_idx) values("
-                                + str(obj[0])
-                                + ","
-                                + str(obj[1])
-                                + ",'"
-                                + str(obj[2])
-                                + "',"
-                                + str(idx)
-                                + ")"
-                            )
-                            cur.execute(sql)
-                            conn.commit()
-                        cur.execute(
-                            "select * from mode_schedule where end_time >= now() and start_time <= now();"
-                        )
-                        mode_now = cur.fetchall()
-
-                        if mode_now[0]["mode_type"] == "Running":
-                            if total > mode_now[0]["people_cnt"]:
-                                print(
-                                    str(start_time)
-                                    + ": 예약 인원 초과 감지: 총 "
-                                    + str(total)
-                                    + "명 감지 / 예약 인원 "
-                                    + str(mode_now[0]["people_cnt"])
-                                    + "명"
-                                )
-                                sql = (
-                                    "insert into Mode_Detected (mode_type, person_reserved, person_detected, detected_time) values('"
-                                    + str(mode_now[0]["mode_type"])
-                                    + "',"
-                                    + str(mode_now[0]["people_cnt"])
-                                    + ","
-                                    + str(total)
-                                    + ",'"
-                                    + str(start_time)
-                                    + "')"
-                                )
-                                for p in ppipes:
-                                    try:
-                                        p.send("REC ON")
-                                    except:
-                                        ppipes.remove(p)
-                                cur.execute(sql)
-                                conn.commit()
-                            else:
-                                for p in ppipes:
-                                    p.send("REC OFF")
-                        elif mode_now[0]["mode_type"] == "Secure":
-                            if total > 0:
-                                print(
-                                    str(start_time)
-                                    + ": 방범 모드 중 인물 감지: 총"
-                                    + str(total)
-                                    + "명 감지"
-                                )
-
-                    # 처리한 뒤 초기화: 이후 데이터는 새로운 row로 처리
-                    current = []
-                    start_time = pd[2]
-                    current.append(pd)
->>>>>>> origin/main
         except Exception as e:
             logging.error(f"[Cam {camera_idx}] Error processing pipe message: {e}")
             traceback.print_exc()  # 상세 오류 출력
@@ -543,9 +371,7 @@ if __name__ == "__main__":
             log_time = datetime.now()  # 로그 시점의 정확한 시간 기록
             # logging.info(f"[Cam {camera_idx}] Sending log: Count={person_count} at {log_time}")
             try:
-                q.put(
-                    [camera_idx, person_count, log_time], block=False
-                )
+                q.put([camera_idx, person_count, log_time], block=False)
             except Full:  # Queue가 가득 찼을 경우 (메인 프로세스 처리 지연)
                 logging.warning(
                     f"[Cam {camera_idx}] Queue is full. Log data might be lost."
@@ -573,16 +399,20 @@ if __name__ == "__main__":
                 try:
                     conn = dbconnect()
                     cur = conn.cursor(pymysql.cursors.DictCursor)
-                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%s, %s, %s, %s, %s, %s)"
+                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt) VALUES (%d, %s, %s, %s, %s, %s)"
                     cur.execute(
                         sql_video,
                         (
                             camera_idx,
-                            "Camera "+str(camera_idx),
-                            safe_timestamp[0:safe_timestamp.find('_')],
-                            safe_timestamp[safe_timestamp.find('_')+1:len(safe_timestamp)],
-                            f"cam_{camera_idx}"+"/"+f"{safe_timestamp}_cam{camera_idx}.mp4",
-                            1
+                            "Camera " + str(camera_idx),
+                            safe_timestamp[0 : safe_timestamp.find("_")],
+                            safe_timestamp[
+                                safe_timestamp.find("_") + 1 : len(safe_timestamp)
+                            ],
+                            f"cam_{camera_idx}"
+                            + "/"
+                            + f"{safe_timestamp}_cam{camera_idx}.mp4",
+                            1,
                         ),
                     )  # 시간 포맷 맞춰주기
                     conn.commit()
@@ -615,6 +445,7 @@ if __name__ == "__main__":
 
     # Load Camera List from Database
     conn = None
+    cur = None
     try:
         conn = dbconnect()
         if conn is None:
@@ -642,6 +473,17 @@ if __name__ == "__main__":
     ProcessArr = []
     ppipes = {}
 
+    # Initialize email sent flag for each camera
+    email_sent_flags = {}
+    for row in camera_list:
+        if "id" not in row or "cam_url" not in row:
+            logging.warning(
+                f"Skipping camera entry due to missing 'id' or 'cam_url': {row}"
+            )
+            continue
+        camera_id = int(row["id"])
+        email_sent_flags[camera_id] = False
+
     for row in camera_list:
         if "id" not in row or "cam_url" not in row:
             logging.warning(
@@ -668,16 +510,16 @@ if __name__ == "__main__":
 
     # 프로세스 시작
     for p in ProcessArr:
-<<<<<<< HEAD
         p.start()
     logging.info("All processes started.")
 
     # 로그 처리 및 모드 확인 로직
     cflag = False
-    current_batch = [] 
+    current_batch = []
     batch_start_time = None  # 배치 시작 시간
 
     main_loop_active = True
+
     while main_loop_active:
         try:
             # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
@@ -776,6 +618,11 @@ if __name__ == "__main__":
                                         mode_type == "Running"
                                         and people_cnt_limit is not None
                                     ):
+                                        # Access the camera ID from the current batch
+                                        camera_id_batch = current_batch[0][
+                                            0
+                                        ]  # Get camera ID from batch
+
                                         if total_persons > people_cnt_limit:
                                             logging.warning(
                                                 f"[{log_timestamp}] Exceeded person limit! Detected: {total_persons}, Limit: {people_cnt_limit} (Mode ID: {mode_id})"
@@ -795,6 +642,20 @@ if __name__ == "__main__":
                                             )
                                             conn.commit()
 
+                                            # SEND EMAIL
+                                            if not email_sent_flags[camera_id_batch]:
+                                                # email_subject = "Person Limit Exceeded"
+                                                # email_body = f"The person limit of {people_cnt_limit} has been exceeded.  Currently {total_persons} persons are detected. Camera : {camera_id_batch} time {log_timestamp}"
+                                                # send_email(email_subject, email_body)
+                                                # email_sent_flags[camera_id_batch] = True
+                                                info = {
+                                                    "event": "Person Limit Exceeded",
+                                                    "timestamp": str(log_timestamp),
+                                                }
+                                                send_html_email(
+                                                    info, to_email=EMAIL_RECEIVER
+                                                )
+                                                email_sent_flags[camera_id_batch] = True
                                     elif mode_type == "Secure":
                                         if total_persons > 0:
                                             logging.warning(
@@ -815,7 +676,14 @@ if __name__ == "__main__":
                                                 ),
                                             )
                                             conn.commit()
-
+                                            # SEND EMAIL
+                                            if not email_sent_flags[camera_id_batch]:
+                                                email_subject = (
+                                                    "Person Detected during Secure Mode"
+                                                )
+                                                email_body = f"Person Detected During Secure Mode.  Currently {total_persons} persons are detected. Camera : {camera_id_batch} time {log_timestamp}"
+                                                send_email(email_subject, email_body)
+                                                email_sent_flags[camera_id_batch] = True
                             else:  # 활성화된 모드가 없을 때
                                 logging.debug(
                                     f"[{log_timestamp}] No active mode schedule found."
@@ -857,6 +725,9 @@ if __name__ == "__main__":
                             )
                             traceback.print_exc()
                             conn.rollback()
+                # Reset the flag for sending email, a new evaluation of mode starts
+                for camera_id in email_sent_flags:
+                    email_sent_flags[camera_id] = False
 
                 # 현재 데이터로 새 배치 시작
                 current_batch = [pd]
@@ -899,10 +770,3 @@ if __name__ == "__main__":
     if conn:
         conn.close()
     logging.info("Main process finished.")
-=======
-        p.join()
-
-    q.put("finish")
-
-    conn.close()
->>>>>>> origin/main

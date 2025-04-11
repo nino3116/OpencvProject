@@ -2,29 +2,59 @@
 {% block title %} New Users {% endblock %}
 {% block content %}
 <div class="cover-container p-5 m-auto">
-  <div class = "my-auto">
+  <div class="m-auto">
     <div class="card">
-      <h3 class ="mt-4">모드 스케줄 추가</h3>
+      <h3 class="mt-4">모드 스케줄 추가</h3>
       <form
-      method="post"  
-      action="{{ url_for('mode.schedule', next = request.args.get('next')) }}"
-      class="form-schedule"
-      >
-        {{ form.csrf_token }}
-        {% for message in get_flashed_messages() %}
+        method="post"
+        action="{{ url_for('mode.schedule', next = request.args.get('next')) }}"
+        class="form-schedule">
+        {{ form.csrf_token }} {% for message in get_flashed_messages() %}
         <div class="dt-auth-flash">{{ message }}</div>
-        {% endfor %}
-
-        {{ form.mode_type(class="form-control", placeholder="모드") }}
-        {{ form.people_cnt(class="form-control", placeholder="인원") }}
-        {{ form.rep_name(class="form-control ", placeholder="대표자") }}
-        {{ form.start_time(class="form-control ", placeholder="시작 시각") }}
-        {{ form.end_time(class="form-control", placeholder="종료 시각") }}
-        {{ form.memo(class="form-control", placeholder="메모") }}
+        {% endfor %} {{ form.mode_type(class="form-control", placeholder="모드",
+        id="mode_type") }} {{ form.people_cnt(class="form-control",
+        placeholder="인원", id="people_cnt") }} {{
+        form.rep_name(class="form-control ", placeholder="대표자", id="rep_name")
+        }} {{ form.start_time(class="form-control ", placeholder="시작 시각") }}
+        {{ form.end_time(class="form-control", placeholder="종료 시각") }} {{
+        form.memo(class="form-control", placeholder="메모") }}
         <p></p>
         {{ form.submit(class="btn btn-md btn-primary btn-block") }}
       </form>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const modeTypeSelect = document.getElementById("mode_type");
+    const peopleCntInput = document.getElementById("people_cnt");
+    const repNameInput = document.getElementById("rep_name");
+
+    function updateFieldState() {
+      const selectedMode = modeTypeSelect.value;
+
+      if (selectedMode === "Running") {
+        peopleCntInput.disabled = false;
+        repNameInput.disabled = false;
+      } else if (selectedMode === "Secure") {
+        peopleCntInput.disabled = true;
+        repNameInput.disabled = true;
+      } else if (selectedMode === "Cleaning") {
+        peopleCntInput.disabled = true;
+        repNameInput.disabled = false;
+      } else {
+        // 기본적으로 활성화 (혹은 다른 상태 설정)
+        peopleCntInput.disabled = false;
+        repNameInput.disabled = false;
+      }
+    }
+
+    // 초기 로딩 시 상태 설정
+    updateFieldState();
+
+    // 모드 선택이 변경될 때마다 상태 업데이트
+    modeTypeSelect.addEventListener("change", updateFieldState);
+  });
+</script>
 {% endblock %}
