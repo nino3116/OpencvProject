@@ -44,7 +44,24 @@ def create_app(config_key):
     app.register_blueprint(kakao_views.kakao, url_prefix="/oauth/kakao")
 
     @app.route("/")
+    
     def to_index():
+        
+        
         return redirect(url_for("cam.index"))
 
+    @app.context_processor
+    def inject_camera_counts():
+        from apps.cam.models import Cams
+        num_total_cams = Cams.query.count()
+        num_active_cams = Cams.query.filter_by(is_active=True).count()
+        num_recording_cams = Cams.query.filter_by(is_recording=True).count()
+
+        return dict(
+            num_total_cams=num_total_cams,
+            num_active_cams=num_active_cams,
+            num_recording_cams=num_recording_cams,
+        )
+    
     return app
+
