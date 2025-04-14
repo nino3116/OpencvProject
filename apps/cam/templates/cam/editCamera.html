@@ -1,7 +1,7 @@
 {% extends "cam/base.html" %} {% block title %} 카메라 정보 편집{% endblock
 title %} {% block content%}
 
-<div class="cover-container w-100 h-100 p-3 m-auto">
+<div class="cover-container p-3 m-auto">
   {% include "cam/header.html"%}
   <div class="my-auto">
     <div class="card">
@@ -48,7 +48,7 @@ title %} {% block content%}
       {{ form.csrf_token }}
       <input type="submit" value="삭제" />
     </form> -->
-      {% endblock %}
     </div>
   </div>
+  {% include "cam/footer.html" %} {% endblock %}
 </div>

@@ -44,7 +44,10 @@ def create_app(config_key):
     app.register_blueprint(kakao_views.kakao, url_prefix="/oauth/kakao")
 
     @app.route("/")
+    
     def to_index():
+        
+        
         return redirect(url_for("cam.index"))
 
     @app.context_processor
@@ -59,6 +62,7 @@ def create_app(config_key):
             num_total_cams=num_total_cams,
             num_active_cams=num_active_cams,
             num_recording_cams=num_recording_cams,
-        )
 
-    return app
+   
+   return app
+

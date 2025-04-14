@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" class="h-100" data-bs-theme="auto">
+<html lang="ko" data-bs-theme="auto">
   <head>
     <meta charset="UTF-8"/>
     <meta name = "viewport" content = "width=device-width, initial-scale=1"/>
@@ -9,8 +9,8 @@
     <title>{% block title %}{% endblock %}</title>
   </head>
   
-  <body class="d-flex w-100 h-100 text-center bg-dark text-white">
-    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+  <body class="text-center bg-dark text-white">
+  
     {% block content %}{% endblock %}
   </body>
   <script src= " {{url_for('auth.static', filename='js/passWd.js') }} "></script>
