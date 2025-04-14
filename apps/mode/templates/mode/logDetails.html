@@ -1,0 +1,52 @@
+{% extends "cam/base.html"%} {% block title %}상세 로그 {% endblock %} {% block
+content %}
+
+<div class="cover-container p-3 mx-auto n">
+  {% include "cam/header.html" %}
+
+  <main>
+    <h2>상세 로그</h2>
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
+        {% if detailed_logs %}
+        <thead>
+          <tr>
+            <th>감지시간</th>
+            <th>전체 감지인원</th>
+            <th>카메라 1 감지인원</th>
+            <th>카메라 2 감지인원</th>
+            <th>카메라 3 감지인원</th>
+            <th>카메라 4 감지인원</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in detailed_logs %}
+          <tr>
+            <td>{{ item.place_log.dt_time }}</td>
+            <td>{{ item.place_log.tp_cnt }}</td>
+            <td>{{ item.camera_counts.camera1_cnt }}</td>
+            <td>{{ item.camera_counts.camera2_cnt }}</td>
+            <td>{{ item.camera_counts.camera3_cnt }}</td>
+            <td>{{ item.camera_counts.camera4_cnt }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% else %}
+        <p>표시할 로그가 존재하지 않습니다</p>
+        {% endif %}
+      </table>
+      <p>
+        <a
+          href="{{ url_for('mode.mode_logs', schedule_id=detected_log.mode_schedule_id) }}"
+          class="btn btn-secondary"
+          >돌아가기</a
+        >
+      </p>
+    </div>
+  </main>
+
+  {% include "cam/footer.html" %}
+</div>
+
+{%endblock%}
