@@ -13,15 +13,15 @@
             <div class="card-body">
               <div class="card-header d-flex flex-row mb-3 justify-content-between fw-bold fs-5">{{ cam.cam_name }}
                 <div>
-                  <a href="{{url_for("cam.cam_status")}}" class = "link-danger link-offset-2 link-underline link-underline-opacity-0">
+                  <a href="{{url_for("cam.cam_status")}}" class = "link-danger link-offset-2 link-underline link-underline-opacity-0 fs-6">
                     {% if cam.cam_name in recording_status and recording_status[cam.cam_name] %}
-                    <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+                    <svg class = "mb-1" viewBox="0 0 14 14"width="14" height="14"  xmlns="http://www.w3.org/2000/svg">
                       <circle cx="7" cy="7" r="6" class="recording-dot" fill="red" />
                     </svg> 녹화 중
                   </a> 
                     {% else %}
-                  <a href="{{url_for("cam.cam_status")}}" class = "link-primary link-offset-2 link-underline link-underline-opacity-0">
-                    <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+                  <a href="{{url_for("cam.cam_status")}}" class = "link-primary link-offset-2 link-underline link-underline-opacity-0 fs-6">
+                    <svg class = "mb-1" viewBox="0 0 14 14" width="14" height="14"  xmlns="http://www.w3.org/2000/svg">
                       <circle cx="7" cy="7" r="6" class="waiting-dot" />
                     </svg> 대기 중
                   </a>
@@ -30,18 +30,18 @@
                     {% if not cam.is_recording %}
                     <a 
                       href="{{ url_for('cam.start_record', camera_id=cam.id) }}"
-                      class="link-offset-2 link-underline link-underline-opacity-0 text-primary-emphasis fw-bold fs-5"
+                      class="link-offset-2 link-underline link-underline-opacity-0 text-primary-emphasis fw-bold fs-6"
                     >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="15px" height ="15px">
+                    <svg class = "mb-1" viewBox="0 0 384 512" width="15px" height ="15px" xmlns="http://www.w3.org/2000/svg">
                     <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg>
                       녹화 시작
                     </a>
                     {% else %}
                     <a
                       href="{{ url_for('cam.stop_record_route', camera_id=cam.id) }}"
-                      class ="link-offset-2 link-underline link-underline-opacity-0 text-danger fw-bold fs-5"
+                      class ="link-offset-2 link-underline link-underline-opacity-0 text-danger fw-bold fs-6"
                     >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="15px" height ="15px">
+                    <svg class = "mb-1" viewBox="0 0 384 512" width="15px" height ="15px" xmlns="http://www.w3.org/2000/svg">
                       <path d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/></svg>  
                     녹화 중지
                     </a>
