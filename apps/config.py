@@ -14,7 +14,7 @@ class BaseConfig:
     DT_VIDEO_FOLDER = baseDir / "apps" / "dt_videos"
     SNAPSHOT_FOLDER = baseDir / "apps" / "snapshots"
     LOG_FOLDER = baseDir / "apps" / "logs"
-    VIDEO_FPS = 30
+    VIDEO_FPS = 60
 
 
 # 상황데  따른 환경 설정 작업 (BaseConfig 클래스 각 상황별로 상속하여 처리)

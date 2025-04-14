@@ -17,15 +17,17 @@
                         <a class="nav-link fw-bold py-1 px-3" href="{{ url_for ("cam.list_videos") }}">Video List</a>
                     </li>
                     <li class ="nav-item">
+
                         <a class ="nav-link fw-bold py-1 px-3" href="{{ url_for ("mode.index") }}">mode schedule</a>
+
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-bold py-1 px-3" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Cam Management
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for ('cam.cam_status') }}">camera status </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for ('cam.cameras') }}">camera list</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for ('cam.cam_status') }}">Camera Status </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for ('cam.cameras') }}">Camera List</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -42,9 +44,6 @@
                 <button type="button" class="btn btn-primary me-2 fw-bold">
                     <a href="{{ url_for ("auth.login")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그인" role = "button" alt= "로그인 버튼">login</a>
                 </button>
-                <!-- <button type="button" class="btn btn-outline-light">
-                    <a href="{{ url_for ("auth.signup")}}" title = "사용자 신규 등록" role = "button" alt= "사용자 신규 등록">sign in</a>
-                </button> -->
                 {% endif %}
             </div>
         </nav>

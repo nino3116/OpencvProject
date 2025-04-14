@@ -53,6 +53,7 @@ def create_app(config_key):
     @app.context_processor
     def inject_camera_counts():
         from apps.cam.models import Cams
+
         num_total_cams = Cams.query.count()
         num_active_cams = Cams.query.filter_by(is_active=True).count()
         num_recording_cams = Cams.query.filter_by(is_recording=True).count()
@@ -61,7 +62,7 @@ def create_app(config_key):
             num_total_cams=num_total_cams,
             num_active_cams=num_active_cams,
             num_recording_cams=num_recording_cams,
-        )
-    
-    return app
+
+   
+   return app
 

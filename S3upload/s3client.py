@@ -21,17 +21,6 @@ def upload_file(file_name, key):
         print(f"S3 업로드 오류: {e}")
 
 
-def download_file(key, file_name):
-    try:
-        s3client.download_file(bucket, key, file_name)
-        print(f"S3 버킷 '{BUCKET}'에서 {key}를 {file_name}로 다운로드했습니다.")
-    except FileNotFoundError:
-        print(f"Error: 파일 '{file_name}'을 찾을 수 없습니다.")
-
-    except Exception as e:
-        print(f"S3 다운로드 오류: {e}")
-
-
 def delete_file(key):
     try:
         s3client.delete_object(Bucket=BUCKET, Key=key)
