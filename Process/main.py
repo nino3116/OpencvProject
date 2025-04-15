@@ -12,14 +12,17 @@ from ProcessVideo import ProcessVideo
 def status_listener():
     """인식 모듈 상태 확인 리스너 (추가됨)"""
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.settimeout(1.0)  # 추가
     server_socket.bind(("localhost", 8002))
     server_socket.listen(1)
     logging.info("Status listener started on port 8002.")
     while main_loop_active:
-        conn, addr = server_socket.accept()
-        with conn:
-            logging.debug(f"Status check connection from {addr}")
-            conn.sendall(b"OK")  # 간단한 응답
+        try:
+            conn, addr = server_socket.accept()
+            with conn:
+                conn.sendall(b"OK")
+        except socket.timeout:
+            continue  # 1초마다 main_loop_active 다시 확인
     server_socket.close()
     logging.info("Status listener stopped.")
 
@@ -345,6 +348,7 @@ if __name__ == "__main__":
     logging.info("Waiting for child processes to terminate...")
     for cid in ProcessDic:
         try:
+            ppipes[cid].send("EXIT")
             ProcessDic[cid].join(timeout=10)  # 최대 10초 대기
             if ProcessDic[cid].is_alive():
                 logging.warning(

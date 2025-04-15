@@ -53,8 +53,6 @@ import socket
 import logging
 
 
- 
-
 # Blueprint로 crud 앱을 생성한다.
 cam = Blueprint(
     "cam",
@@ -104,39 +102,33 @@ def start_status_check_thread():
 start_status_check_thread()
 
 
+@cam.route("/check_status")
+def check_status():
+    return {"running": recognition_module_running}
+
+
 @cam.route("/shutdown", methods=["POST"])
 def shutdown_module():
-    import time
-
     form = ShutdownForm()
     if form.validate_on_submit():
         if not recognition_module_running:
             logging.warning(
                 "인식 모듈이 실행 중이 아닙니다. 종료 신호 전송을 건너뜁니다."
             )
-            return "인식 모듈이 실행 중이 아닙니다.", 200  # 또는 다른 적절한 응답
+            return "인식 모듈이 실행 중이 아닙니다.", 200
 
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client_socket.settimeout(5)  # 연결 시도에 타임아웃 설정
+            client_socket.settimeout(5)
             client_socket.connect((RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_PORT))
             client_socket.sendall(b"shutdown")
             client_socket.close()
             logging.info("인식 모듈 종료 신호 전송 성공")
             return "인식 모듈에 종료 신호를 보냈습니다.", 200
-        except ConnectionRefusedError:
-            logging.error("인식 모듈의 종료 리스너에 연결할 수 없습니다.")
-            return "인식 모듈의 종료 리스너에 연결할 수 없습니다.", 500
-        except socket.timeout:
-            logging.error("인식 모듈의 종료 리스너 연결 시간 초과.")
-            return "인식 모듈의 종료 리스너 연결 시간 초과.", 500
         except Exception as e:
             logging.error(f"인식 모듈 종료 신호 전송 중 오류 발생: {e}")
-            return f"인식 모듈 종료 신호 전송 중 오류 발생: {e}", 500
-        finally:
-            time.sleep(3)
-            return redirect(url_for("cam.index"))
-    return redirect(url_for("index"))  # 폼 유효성 검사 실패 시 리디렉션
+            return f"오류: {e}", 500
+    return redirect(url_for("cam.index"))
 
 
 @cam.route("/", methods=["GET", "POST"])
@@ -437,19 +429,21 @@ def list_videos():
     # 카메라 이름 목록을 가져와 choices 설정
     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
-    
+
     # POST 요청으로 검색을 보냈을 경우 -> redirect
     if form.validate_on_submit():
-        return redirect(url_for(
-            "cam.list_videos",
-            camera_name=form.camera_name.data,
-            start_date=form.start_date.data,
-            end_date=form.end_date.data,
-            per_page=form.per_page.data,
-            page=1
-        ))
-    
-    # GET 요청처리 
+        return redirect(
+            url_for(
+                "cam.list_videos",
+                camera_name=form.camera_name.data,
+                start_date=form.start_date.data,
+                end_date=form.end_date.data,
+                per_page=form.per_page.data,
+                page=1,
+            )
+        )
+
+    # GET 요청처리
     camera_name = request.args.get("camera_name", "")
     start_date_str = request.args.get("start_date")
     end_date_str = request.args.get("end_date")
@@ -457,18 +451,21 @@ def list_videos():
     page = request.args.get(get_page_parameter(), type=int, default=1)
 
     # 문자열을 → date 객체 변환
-    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
-    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
+    start_date = (
+        datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
+    )
+    end_date = (
+        datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
+    )
 
     form.camera_name.data = camera_name
     form.start_date.data = start_date
     form.end_date.data = end_date
     form.per_page.data = str(per_page)
-    
-    
+
     # 기본 쿼리 구성
     # query = Videos.query.order_by(Videos.recorded_date.desc(), Videos.recorded_time)
-    
+
     query = Videos.query
     if camera_name and camera_name != "전체":
         query = query.filter(Videos.camera_name.ilike(f"%{camera_name}%"))
@@ -476,13 +473,17 @@ def list_videos():
         query = query.filter(Videos.recorded_date >= start_date)
     if end_date:
         query = query.filter(Videos.recorded_date <= end_date)
-        
-    # 총 비디오 개수  
-    total = query.count()
-    
-    #  페이지네이션 처리
-    videos = query.order_by(Videos.recorded_date.desc(), Videos.recorded_time).offset((page - 1) * per_page).limit(per_page).all()
 
+    # 총 비디오 개수
+    total = query.count()
+
+    #  페이지네이션 처리
+    videos = (
+        query.order_by(Videos.recorded_date.desc(), Videos.recorded_time)
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
 
     grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
     for video in videos:
@@ -492,10 +493,15 @@ def list_videos():
         else:
             date_str = "알 수 없는 날짜"
         grouped_videos[date_str].append(video)
-        
-    pagination = Pagination(page=page, total=total, per_page=per_page,
-                            record_name='videos', css_framework='bootstrap5')
-    
+
+    pagination = Pagination(
+        page=page,
+        total=total,
+        per_page=per_page,
+        record_name="videos",
+        css_framework="bootstrap5",
+    )
+
     return render_template(
         "cam/videoList.html",
         grouped_videos=grouped_videos,
