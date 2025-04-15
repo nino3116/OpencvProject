@@ -1,5 +1,5 @@
-{% extends "cam/base.html" %} {% block title %} camera 관리 {% endblock %} {%
-block content %}
+{% extends "cam/base.html" %} {% block title %} Home {% endblock %} {% block
+content %}
 <div class="cover-container w-100 h-100 p-3 mx-auto">
   {% include "cam/header.html" %}
   <main class="m-auto px-5">
@@ -23,10 +23,6 @@ block content %}
       {{ form.csrf_token }} {{ form.submit(class="btn btn-danger", disabled=not
       recognition_running) }}
     </form>
-
-    <p class="lead mt-3">
-      <a href="#" class="btn btn-lg btn-light fw-bold bg-white">Learn more</a>
-    </p>
   </main>
 </div>
 {% endblock %} {% include "cam/footer.html" %}{% block script %}
@@ -56,7 +52,7 @@ block content %}
   }
 
   // 3초마다 상태 체크
-  setInterval(checkStatus, 3000);
+  setInterval(checkStatus, 5000);
 
   // 폼 제출 후 상태 자동 갱신
   $("#shutdown-form").on("submit", function (e) {
