@@ -37,15 +37,23 @@ import boto3
 
 from S3upload.s3client import delete_file, generate_presigned_url
 from S3upload.s3_config import BUCKET
+
+# 압축 다운로드 기능을 위한 라이브러리
 import tempfile
 import zipfile
 from werkzeug.utils import secure_filename
 from flask import send_file
+
+# 페이징처리를 위한 import
 from flask_paginate import Pagination, get_page_parameter
-from sqlalchemy import and_
+
+# 소켓통신을 위해
 import threading
 import socket
 import logging
+
+
+ 
 
 # Blueprint로 crud 앱을 생성한다.
 cam = Blueprint(
@@ -429,50 +437,65 @@ def list_videos():
     # 카메라 이름 목록을 가져와 choices 설정
     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
-
-    page = request.args.get(get_page_parameter(), type=int, default=1)
-    per_page = 20  # 한 페이지에 보여줄 개수
-
-    # 기본 쿼리 구성
-    query = Videos.query.order_by(Videos.recorded_date.desc(), Videos.recorded_time)
-
+    
+    # POST 요청으로 검색을 보냈을 경우 -> redirect
     if form.validate_on_submit():
-        conditions = []
+        return redirect(url_for(
+            "cam.list_videos",
+            camera_name=form.camera_name.data,
+            start_date=form.start_date.data,
+            end_date=form.end_date.data,
+            per_page=form.per_page.data,
+            page=1
+        ))
+    
+    # GET 요청처리 
+    camera_name = request.args.get("camera_name", "")
+    start_date_str = request.args.get("start_date")
+    end_date_str = request.args.get("end_date")
+    per_page = int(request.args.get("per_page", 20))
+    page = request.args.get(get_page_parameter(), type=int, default=1)
 
-        # 카메라 이름으로 필터링
-        if form.camera_name.data and form.camera_name.data != "전체":
-            query = query.filter(Videos.camera_name.ilike(f"%{form.camera_name.data}%"))
+    # 문자열을 → date 객체 변환
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
 
-        # 날짜 범위로 필터링
-        start_date = form.start_date.data
-        end_date = form.end_date.data
-
-        if start_date and end_date:
-            query = query.filter(Videos.recorded_date.between(start_date, end_date))
-        elif start_date:
-            query = query.filter(Videos.recorded_date >= start_date)
-        elif end_date:
-            query = query.filter(Videos.recorded_date <= end_date)
-
-    # 페이지네이션 적용 (필터링된 쿼리 사용)
+    form.camera_name.data = camera_name
+    form.start_date.data = start_date
+    form.end_date.data = end_date
+    form.per_page.data = str(per_page)
+    
+    
+    # 기본 쿼리 구성
+    # query = Videos.query.order_by(Videos.recorded_date.desc(), Videos.recorded_time)
+    
+    query = Videos.query
+    if camera_name and camera_name != "전체":
+        query = query.filter(Videos.camera_name.ilike(f"%{camera_name}%"))
+    if start_date:
+        query = query.filter(Videos.recorded_date >= start_date)
+    if end_date:
+        query = query.filter(Videos.recorded_date <= end_date)
+        
+    # 총 비디오 개수  
     total = query.count()
-    videos = query.offset((page - 1) * per_page).limit(per_page).all()
-    pagination = Pagination(
-        page=page,
-        total=total,
-        per_page=per_page,
-        record_name="videos",
-        css_framework="bootstrap5",
-    )
+    
+    #  페이지네이션 처리
+    videos = query.order_by(Videos.recorded_date.desc(), Videos.recorded_time).offset((page - 1) * per_page).limit(per_page).all()
 
-    grouped_videos = defaultdict(list)
+
+    grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
     for video in videos:
         if video.recorded_date:
             date_str = video.recorded_date.strftime("%Y-%m-%d")
+
         else:
             date_str = "알 수 없는 날짜"
         grouped_videos[date_str].append(video)
-
+        
+    pagination = Pagination(page=page, total=total, per_page=per_page,
+                            record_name='videos', css_framework='bootstrap5')
+    
     return render_template(
         "cam/videoList.html",
         grouped_videos=grouped_videos,

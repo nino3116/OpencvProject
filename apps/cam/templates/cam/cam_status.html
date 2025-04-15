@@ -33,13 +33,13 @@
               </td>
               <td class="td">
                 {% if not cam.is_recording %}
-                <button class = "btn btn-sm btn-light bg-success">
-                <a class="btn btn-sm" 
+                <button class = "btn btn-sm btn-dark bg-success fw-bold">
+                <a class="link-dark link-offset-2 link-underline link-underline-opacity-0" 
                 href="{{ url_for('cam.start_record', camera_id=cam.id) }}">녹화 시작</a>
                 </button>
                 {% else %}
-                <button class = "btn btn-sm btn-light bg-danger">
-                <a class="btn btn-sm"
+                <button class = "btn btn-sm btn-dark bg-danger fw-bold">
+                <a class="link-dark link-offset-2 link-underline link-underline-opacity-0"
                 href="{{ url_for('cam.stop_record_route', camera_id=cam.id) }}">녹화 중지</a>
                 </button>
                 {% endif %}
@@ -50,14 +50,14 @@
         </table>
         
         <div>
-          <button class = "btn btn-sm btn-light bg-success">
-            <a class="btn btn-sm" href="{{ url_for('cam.start_all_records_route')}}"> 모든 녹화 시작</a>
+          <button class = "btn btn-sm btn-dark bg-success fw-bold">
+            <a class="link-light link-offset-2 link-underline link-underline-opacity-0" href="{{ url_for('cam.start_all_records_route')}}" alt="모든 녹화 시작 버튼">모든 녹화 시작</a>
           </button>
-          <button class = "btn btn-sm btn-light bg-danger">
-            <a class="btn btn-sm" href="{{ url_for('cam.stop_all_records_route') }}">모든 녹화 중지</a>
+          <button class = "btn btn-sm btn-dark bg-danger fw-bold">
+            <a class="link-light link-offset-2 link-underline link-underline-opacity-0" href="{{ url_for('cam.stop_all_records_route') }}" alt="모든 녹화 중지 버튼">모든 녹화 중지</a>
           </button>
-          <button class = "btn btn-sm btn-light bg-white">
-            <a class="btn btn-sm" href="{{ url_for('cam.live') }}">라이브 화면으로</a>
+          <button class = "btn btn-sm btn-dark bg-white fw-bold">
+            <a class="link-dark link-offset-2 link-underline link-underline-opacity-0" href="{{ url_for('cam.live') }}" alt="라이브 화면 버튼">라이브 화면</a>
           </button>
         </div>
       </main>
