@@ -34,15 +34,15 @@
             
                 {% if current_user.is_authenticated %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
-                    <a href="{{ url_for ("auth.logout")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
+                    <a href="{{ url_for ("auth.logout")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그아웃" role = "button">Logout</a>
                 </button>
                 {% elif current_user.is_authenticated and user.is_kakao %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
-                    <a href="{{ url_for ("kakao.sign_out")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그아웃" role = "button" alt= "로그아웃 버튼">Logout</a>
+                    <a href="{{ url_for ("kakao.sign_out")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그아웃" role = "button">Logout</a>
                 </button>
                 {% else %}
                 <button type="button" class="btn btn-primary me-2 fw-bold">
-                    <a href="{{ url_for ("auth.login")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그인" role = "button" alt= "로그인 버튼">login</a>
+                    <a href="{{ url_for ("auth.login")}}" class="link-light link-offset-2 link-underline link-underline-opacity-0" title = "로그인" role = "button">login</a>
                 </button>
                 {% endif %}
             </div>
