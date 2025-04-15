@@ -29,3 +29,8 @@ class VideoSearchForm(FlaskForm):
     end_date = DateField("끝 날짜", validators=[Optional()])
     per_page = SelectField("표시 개수", choices=[("20", "20개"), ("30", "30개"), ("40", "40개")], default="20")
     submit = SubmitField("검색")
+
+
+class ShutdownForm(FlaskForm):
+    submit = SubmitField("인식 모듈 종료")
+

@@ -23,10 +23,11 @@ from apps.app import (
     start_recording_all,
 )
 from apps.cam.models import Cams, Videos
-from apps.cam.forms import CameraForm, DeleteCameraForm, VideoSearchForm
+from apps.cam.forms import CameraForm, DeleteCameraForm, VideoSearchForm, ShutdownForm
 from flask_login import login_required  # type: ignore
 from pathlib import Path
 from datetime import datetime, date, time
+
 from collections import defaultdict
 import os
 from threading import Thread
@@ -43,9 +44,16 @@ import zipfile
 from werkzeug.utils import secure_filename
 from flask import send_file
 
-# 페이징처리를 위한 import 
+# 페이징처리를 위한 import
 from flask_paginate import Pagination, get_page_parameter
 
+# 소켓통신을 위해
+import threading
+import socket
+import logging
+
+
+ 
 
 # Blueprint로 crud 앱을 생성한다.
 cam = Blueprint(
@@ -56,11 +64,90 @@ cam = Blueprint(
 )
 
 
-@cam.route("/")
+RECOGNITION_MODULE_HOST = "localhost"
+RECOGNITION_MODULE_PORT = 8001
+RECOGNITION_MODULE_STATUS_PORT = 8002  # 상태 확인용 새 포트
+
+recognition_module_running = False
+
+
+def check_recognition_module_status():
+    """주기적으로 인식 모듈 상태를 확인하는 함수 (수정됨)"""
+    global recognition_module_running
+    import time
+
+    while True:
+        try:
+            with socket.create_connection(
+                (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
+            ):
+                recognition_module_running = True
+                logging.info("인식 모듈 연결됨 (상태 확인)")
+        except (ConnectionRefusedError, TimeoutError):
+            recognition_module_running = False
+            logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
+        time.sleep(5)  # 5초마다 상태 확인
+
+
+def start_status_check_thread():
+    """인식 모듈 상태 확인 스레드 시작 (수정됨)"""
+    import time
+
+    time.sleep(2)  # 플라스크 앱 시작 후 2초 정도 대기
+    status_check_thread = threading.Thread(
+        target=check_recognition_module_status, daemon=True
+    )
+    status_check_thread.start()
+
+
+# 플라스크 앱 시작 시 상태 확인 스레드 시작
+start_status_check_thread()
+
+
+@cam.route("/shutdown", methods=["POST"])
+def shutdown_module():
+    import time
+
+    form = ShutdownForm()
+    if form.validate_on_submit():
+        if not recognition_module_running:
+            logging.warning(
+                "인식 모듈이 실행 중이 아닙니다. 종료 신호 전송을 건너뜁니다."
+            )
+            return "인식 모듈이 실행 중이 아닙니다.", 200  # 또는 다른 적절한 응답
+
+        try:
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.settimeout(5)  # 연결 시도에 타임아웃 설정
+            client_socket.connect((RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_PORT))
+            client_socket.sendall(b"shutdown")
+            client_socket.close()
+            logging.info("인식 모듈 종료 신호 전송 성공")
+            return "인식 모듈에 종료 신호를 보냈습니다.", 200
+        except ConnectionRefusedError:
+            logging.error("인식 모듈의 종료 리스너에 연결할 수 없습니다.")
+            return "인식 모듈의 종료 리스너에 연결할 수 없습니다.", 500
+        except socket.timeout:
+            logging.error("인식 모듈의 종료 리스너 연결 시간 초과.")
+            return "인식 모듈의 종료 리스너 연결 시간 초과.", 500
+        except Exception as e:
+            logging.error(f"인식 모듈 종료 신호 전송 중 오류 발생: {e}")
+            return f"인식 모듈 종료 신호 전송 중 오류 발생: {e}", 500
+        finally:
+            time.sleep(3)
+            return redirect(url_for("cam.index"))
+    return redirect(url_for("index"))  # 폼 유효성 검사 실패 시 리디렉션
+
+
+@cam.route("/", methods=["GET", "POST"])
 @login_required
 def index():
-    cams = Cams.query.all()
-    return render_template("cam/index.html", cams=cams)
+    form = ShutdownForm()
+    return render_template(
+        "cam/index.html",
+        recognition_running=recognition_module_running,
+        form=form,
+    )
 
 
 # 새로운 데이터 추가 (AJAX)
@@ -276,6 +363,71 @@ def play_origin_video(video_id):
         return redirect(url_for("cam.list_videos"))
 
 
+# @cam.route("/videos", methods=["GET", "POST"])
+# @login_required
+# def list_videos():
+#     """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
+#     form = VideoSearchForm(request.form)
+
+#     # 카메라 이름 목록을 가져와 choices 설정
+#     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
+#     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
+
+#     # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
+#     videos = Videos.query.order_by(
+#         Videos.recorded_date.desc(), Videos.recorded_time
+#     ).all()
+
+#     if form.validate_on_submit():
+#         search_camera_name = form.camera_name.data
+#         search_date = form.date.data
+
+#         filtered_videos = []
+#         for video in videos:
+#             match_camera = True
+#             if search_camera_name and search_camera_name != "전체":
+#                 if search_camera_name.lower() not in video.camera_name.lower():
+#                     match_camera = False
+
+#             match_date = True
+#             if search_date:
+#                 if isinstance(search_date, str):
+#                     try:
+#                         search_date_obj = datetime.strptime(
+#                             search_date, "%Y-%m-%d"
+#                         ).date()
+#                         if (
+#                             not video.recorded_date
+#                             or video.recorded_date.date() != search_date_obj
+#                         ):
+#                             match_date = False
+#                     except ValueError:
+#                         flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
+#                         match_date = False
+#                 elif isinstance(search_date, date):
+#                     if not video.recorded_date or video.recorded_date != search_date:
+#                         match_date = False
+
+#             if match_camera and match_date:
+#                 filtered_videos.append(video)
+
+#         videos = filtered_videos
+
+#     grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
+#     for video in videos:
+#         if video.recorded_date:
+#             date_str = video.recorded_date.strftime("%Y-%m-%d")
+#             grouped_videos[date_str].append(video)
+
+#         else:
+#             grouped_videos["알 수 없는 날짜"].append(video)
+
+
+#     return render_template(
+#         "cam/videoList.html",
+#         grouped_videos=grouped_videos,
+#         form=form,
+#     )
 @cam.route("/videos", methods=["GET", "POST"])
 @login_required
 def list_videos():
@@ -343,7 +495,7 @@ def list_videos():
         
     pagination = Pagination(page=page, total=total, per_page=per_page,
                             record_name='videos', css_framework='bootstrap5')
-
+    
     return render_template(
         "cam/videoList.html",
         grouped_videos=grouped_videos,
@@ -452,37 +604,37 @@ def download_video(video_id):
 @cam.route("/download_selected_videos", methods=["POST"])
 @login_required
 def download_selected_videos():
-    """ 선택된 ID의 비디오 파일을 압축파일로 다운로드 합니다."""
-    video_ids =request.form.getlist("video_ids")
-    
+    """선택된 ID의 비디오 파일을 압축파일로 다운로드 합니다."""
+    video_ids = request.form.getlist("video_ids")
+
     # 아무것도 선택 안 하면 warning flash 후 redirect
     if not video_ids:
         flash("선택된 비디오가 없습니다.", "warning")
         return redirect(url_for("cam.list_videos"))
-    
+
     s3 = boto3.client("s3")
     bucket_name = BUCKET
-    
+
     with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmp_zip:
-        with zipfile.ZipFile(tmp_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(tmp_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
             for vid in video_ids:
                 video = Videos.query.get(vid)
                 if not video:
                     continue
                 s3_key = video.video_path
                 filename = secure_filename(s3_key.split("/")[-1])
-                
+
                 # s3 객체 다운로드 -> 메모리에 저장
                 obj = s3.get_object(Bucket=bucket_name, Key=s3_key)
                 zipf.writestr(filename, obj["Body"].read())
-        
+
         tmp_zip_path = tmp_zip.name
-    
-    # send_file로 zip 전송 (다운로드 시작)    
-    
-    return send_file(tmp_zip_path,
-                     mimetype="application/zip",
-                     as_attachment=True,
-                     download_name="selected_videos.zip")
-                
-                
+
+    # send_file로 zip 전송 (다운로드 시작)
+
+    return send_file(
+        tmp_zip_path,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="selected_videos.zip",
+    )
