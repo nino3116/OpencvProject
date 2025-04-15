@@ -1,4 +1,4 @@
-{% extends "cam/base.html" %} {% block title %} camera 관리 {% endblock %} {%
+{% extends "cam/base.html" %} {% block title %} Home {% endblock %} {%
 block content %}
 <div class="cover-container w-100 h-100 p-3 mx-auto">
   {% include "cam/header.html" %}
@@ -23,10 +23,6 @@ block content %}
       {{ form.csrf_token }} {{ form.submit(class="btn btn-danger", disabled=not
       recognition_running) }}
     </form>
-
-    <p class="lead mt-3">
-      <a href="#" class="btn btn-lg btn-light fw-bold bg-white">Learn more</a>
-    </p>
   </main>
 </div>
 {% endblock %} {% include "cam/footer.html" %}{% block script %}

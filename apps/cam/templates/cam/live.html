@@ -14,7 +14,7 @@
               <div class="card-header d-flex flex-row mb-3 justify-content-between fw-bold fs-5">{{ cam.cam_name }}
                 <div>
                   <a href="{{url_for("cam.cam_status")}}" class = "link-danger link-offset-2 link-underline link-underline-opacity-0 fs-6">
-                    {% if cam.cam_name in recording_status and recording_status[cam.cam_name] %}
+                    {% if cam.is_recording %}
                     <svg class = "mb-1" viewBox="0 0 14 14"width="14" height="14"  xmlns="http://www.w3.org/2000/svg">
                       <circle cx="7" cy="7" r="6" class="recording-dot" fill="red" />
                     </svg> 녹화 중

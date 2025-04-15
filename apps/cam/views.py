@@ -215,7 +215,6 @@ def cam_status():
     from apps.app import camera_streams  # 순환 참조 방지
 
     cams = Cams.query.all()
-    # recording_status = {cam.cam_name: cam.cam_name in camera_streams for cam in cams}
     return render_template("cam/cam_status.html", cams=cams)
 
 
@@ -463,9 +462,7 @@ def list_videos():
     form.end_date.data = end_date
     form.per_page.data = str(per_page)
 
-    # 기본 쿼리 구성
-    # query = Videos.query.order_by(Videos.recorded_date.desc(), Videos.recorded_time)
-
+    # 기본 쿼리 구성   
     query = Videos.query
     if camera_name and camera_name != "전체":
         query = query.filter(Videos.camera_name.ilike(f"%{camera_name}%"))
