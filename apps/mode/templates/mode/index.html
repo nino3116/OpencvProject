@@ -1,17 +1,9 @@
-<<<<<<< HEAD
 {% extends "mode/base.html"%}
 {% block title %}모드 스케줄 관리 {% endblock %}
 {% block content %}
 
   <div class="cover-container p-3 m-auto">
    {% include "cam/header.html" %}
-=======
-{% extends "cam/base.html"%} {% block title %}모드 스케줄 관리 {% endblock %} {%
-block content %}
-
-<div class="cover-container p-3 mx-auto">
-  {% include "cam/header.html" %}
->>>>>>> 5337b5f197422488fa78f73822feda4a2b264b59
 
   <div class="table-responsive">
     <h2>모드 스케줄 목록</h2>
@@ -33,7 +25,7 @@ block content %}
         </tr>
       </thead>
       <tbody>
-<<<<<<< HEAD
+
        {% for schedule in schedules %}
        <tr>
         <td>{{ schedule.mode_type }}</td>
@@ -69,41 +61,3 @@ block content %}
 </div>
 {%endblock%}
 {% include "cam/footer.html" %}
-
-=======
-        {% for schedule in schedules %}
-        <tr>
-          <td>{{ schedule.mode_type }}</td>
-          <td>{{ schedule.people_cnt }}</td>
-          <td>{{ schedule.start_time }}</td>
-          <td>{{ schedule.end_time }}</td>
-          <td>{{ schedule.rep_name }}</td>
-          <td><a title="{{ schedule.memo }}">메모</a></td>
-          <td>
-            <a href="{{ url_for('mode.mode_logs', schedule_id=schedule.id) }}">
-              <button type="button" class="btn btn-info btn-sm">
-                상세보기
-              </button></a
-            >
-          </td>
-          <td>
-            <form
-              method="POST"
-              action="{{ url_for('mode.delete_schedule', schedule_id=schedule.id) }}">
-              {{form.csrf_token}}
-              <input type="hidden" name="_method" value="DELETE" />
-              <button type="submit" class="btn btn-danger btn-sm">삭제</button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="7">등록된 스케줄이 없습니다.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% include "cam/footer.html" %}{%endblock%}
-</div>
->>>>>>> 5337b5f197422488fa78f73822feda4a2b264b59
