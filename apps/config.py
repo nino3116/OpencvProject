@@ -14,7 +14,7 @@ class BaseConfig:
     DT_VIDEO_FOLDER = baseDir / "apps" / "dt_videos"
     SNAPSHOT_FOLDER = baseDir / "apps" / "snapshots"
     LOG_FOLDER = baseDir / "apps" / "logs"
-    VIDEO_FPS = 30
+    VIDEO_FPS = 60
 
 
 # 상황데  따른 환경 설정 작업 (BaseConfig 클래스 각 상황별로 상속하여 처리)
@@ -36,7 +36,7 @@ class TestingConfig(BaseConfig):
 
 # 실제 상황
 class DeployConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{baseDir / 'deploy.sqlite'}"
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://user:user@192.168.0.122/project_dp"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 

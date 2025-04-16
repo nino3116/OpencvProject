@@ -225,7 +225,7 @@ Process/email_config.py
 *.jpg
 
 # Migrations
-migrations*/
+migrations_sqlite/
 
 *.sqlite
 

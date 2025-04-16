@@ -1,36 +1,56 @@
 {% extends "cam/base.html" %} {% block title %}Live{% endblock %}
 
-<body class="d-flex text-center bg-dark text-white">
+
   {% block content %}
   <div class="cover-container d-flex w-100 p-3 mx-auto flex-column">
     {% include "cam/header.html" %}
 
     <main>
-      <h3 class= "mt-4">Live page</h3>
       <div class="row">
         {% for cam in cams %}
-        <div class="col-md-6 mb-4">
-          <div class="card">
+        <div class="col-md-6 md-4">
+          <div class="card m-1">
             <div class="card-body">
-              <h5 class="card-title">{{ cam.cam_name }}</h5>
-              <div id="camera-{{ cam.id }}-stream" class="mt-2">
-                <img src="{{cam.cam_url}}" style="width: 100%" />
-                <p class="cam-recording-status">
-                  <a href="{{url_for("cam.cam_status")}}">{% if cam.is_recording %} 녹화 중 {% else %} 대기 중 {%
-                    endif %}</a>
-                </p>
-                {% if not cam.is_recording %}
-                  <a
-                    href="{{ url_for('cam.start_record', camera_id=cam.id) }}"
-                    >녹화 시작</a
-                  >
-                  {% else %}
-                  <a
-                    href="{{ url_for('cam.stop_record_route', camera_id=cam.id) }}"
-                    >녹화 중지</a
-                  >
-                  {% endif %}
+              <div class="card-header d-flex flex-row mb-3 justify-content-between fw-bold fs-5">{{ cam.cam_name }}
+                <div>
+                  <a href="{{url_for("cam.cam_status")}}" class = "link-danger link-offset-2 link-underline link-underline-opacity-0 fs-6">
+                    {% if cam.is_recording %}
+                    <svg class = "mb-1" viewBox="0 0 14 14"width="14" height="14"  xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="7" cy="7" r="6" class="recording-dot" fill="red" />
+                    </svg> 녹화 중
+                  </a> 
+                    {% else %}
+                  <a href="{{url_for("cam.cam_status")}}" class = "link-primary link-offset-2 link-underline link-underline-opacity-0 fs-6">
+                    <svg class = "mb-1" viewBox="0 0 14 14" width="14" height="14"  xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="7" cy="7" r="6" class="waiting-dot" />
+                    </svg> 대기 중
+                  </a>
+                    {% endif %}
+                  <div class ="vr"></div>
+                    {% if not cam.is_recording %}
+                    <a 
+                      href="{{ url_for('cam.start_record', camera_id=cam.id) }}"
+                      class="link-offset-2 link-underline link-underline-opacity-0 text-primary-emphasis fw-bold fs-6"
+                    >
+                    <svg class = "mb-1" viewBox="0 0 384 512" width="15px" height ="15px" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg>
+                      녹화 시작
+                    </a>
+                    {% else %}
+                    <a
+                      href="{{ url_for('cam.stop_record_route', camera_id=cam.id) }}"
+                      class ="link-offset-2 link-underline link-underline-opacity-0 text-danger fw-bold fs-6"
+                    >
+                    <svg class = "mb-1" viewBox="0 0 384 512" width="15px" height ="15px" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/></svg>  
+                    녹화 중지
+                    </a>
+                    {% endif %}
+                </div>
               </div>
+                <div id="camera-{{ cam.id }}-stream" class="mt-2">
+                  <img src="{{cam.cam_url}}" style="width: 100%" />
+                </div>
             </div>
           </div>
         </div>
@@ -41,7 +61,6 @@
     {% include "cam/footer.html" %} 
     {% endblock %}
   </div>
-</body>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>

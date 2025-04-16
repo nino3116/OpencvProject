@@ -37,7 +37,7 @@ class Cams(db.Model):
     )  # 활성화 상태를 나타내는 속성 추가, 기본값은 True
     is_recording = db.Column(
         db.Boolean, default=False
-    )  # 녹화상태를 나타내는 속성 추가 기본값은 False
+    )
     videos = db.relationship("Videos", backref="cam", foreign_keys="Videos.camera_id")
     videos_by_name = db.relationship(
         "Videos", backref="cam_by_name", foreign_keys="Videos.camera_name"
@@ -54,19 +54,11 @@ class Videos(db.Model):
     __tablename__ = "videos"
     id = db.Column(db.Integer, primary_key=True)
     camera_id = db.Column(db.Integer, db.ForeignKey(Cams.id))
-    camera_name = db.Column(db.String, db.ForeignKey(Cams.cam_name))
+    camera_name = db.Column(db.String(256), db.ForeignKey(Cams.cam_name))
     recorded_date = db.Column(db.DateTime)
     recorded_time = db.Column(db.Time)
-    video_path = db.Column(db.String, unique=True)
+    video_path = db.Column(db.String(256), unique=True)
     is_dt = db.Column(db.Boolean)
-
-
-class Camera_logs(db.Model):
-    __tablename__ = "camera_log_tmp"  # camera_logs => camera_log_tmp 수정flask
-    id = db.Column(db.Integer, primary_key=True)
-    camera_id = db.Column(db.Integer, db.ForeignKey(Cams.id))
-    camera_name = db.Column(db.String, db.ForeignKey(Cams.cam_name))
-    recorded_date = db.Column(db.DateTime)
-    recorded_time = db.Column(db.Time)
-    video_path = db.Column(db.String, unique=True)
-    is_dt = db.Column(db.Boolean)
+    dt_log_idx = db.Column(db.Integer)
+    rend_date = db.Column(db.Date)
+    rend_time = db.Column(db.Time)
