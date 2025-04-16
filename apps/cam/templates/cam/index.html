@@ -1,5 +1,5 @@
-{% extends "cam/base.html" %} {% block title %} Home {% endblock %} {%
-block content %}
+{% extends "cam/base.html" %} {% block title %} Home {% endblock %} {% block
+content %}
 <div class="cover-container w-100 h-100 p-3 mx-auto">
   {% include "cam/header.html" %}
   <main class="m-auto px-5">
@@ -21,7 +21,7 @@ block content %}
       method="POST"
       action="{{ url_for('cam.shutdown_module') }}">
       {{ form.csrf_token }} {{ form.submit(class="btn btn-danger", disabled=not
-      recognition_running) }}
+      recognition_running) }} {##}
     </form>
   </main>
 </div>
@@ -33,6 +33,7 @@ block content %}
 <script>
   function checkStatus() {
     $.get("{{ url_for('cam.check_status') }}", function (data) {
+      console.log("Status Data:", data); // 추가된 부분
       const statusText = $("#status-text");
       const submitBtn = $("#shutdown-form button[type='submit']");
       if (data.running) {
@@ -52,7 +53,7 @@ block content %}
   }
 
   // 3초마다 상태 체크
-  setInterval(checkStatus, 3000);
+  setInterval(checkStatus, 5000);
 
   // 폼 제출 후 상태 자동 갱신
   $("#shutdown-form").on("submit", function (e) {
@@ -60,11 +61,18 @@ block content %}
     const form = $(this);
     $.post(form.attr("action"), form.serialize())
       .done(function (response) {
-        console.log("Shutdown success:", response);
-        setTimeout(checkStatus, 2000); // 2초 뒤 상태 체크
+        console.log("Shutdown response:", response);
+        if (response.status === "success") {
+          alert(response.message); // 성공 메시지 표시
+        } else if (response.status === "info") {
+          alert(response.message); // 정보 메시지 표시
+        }
+        setTimeout(function () {
+          window.location.reload(); // 페이지 새로고침
+        }, 1000); // 1초 뒤 새로고침
       })
       .fail(function (err) {
-        alert("종료 실패: " + err.responseText);
+        alert("종료 실패: " + err.responseJSON.message); // 실패 메시지 표시
       });
   });
 </script>

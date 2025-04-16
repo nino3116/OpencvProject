@@ -36,7 +36,7 @@ class TestingConfig(BaseConfig):
 
 # 실제 상황
 class DeployConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{baseDir / 'deploy.sqlite'}"
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://user:user@192.168.0.122/project_dp"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
