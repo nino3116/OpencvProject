@@ -47,7 +47,7 @@
       get_flashed_messages(category_filter=["success","error","warning"]) %}
       <span>{{message}}</span> {%endfor%} 
     </p>
-  
+
     {% for date_str, videos in grouped_videos.items()|sort(reverse=True, attribute='recorded_time') %}
     <form method="POST" action="{{url_for ('cam.download_selected_videos')}} ">
       {{ form.csrf_token }}
@@ -67,7 +67,6 @@
         <button 
           type="submit"
           class="btn btn-secondary btn-sm">
-
           선택 파일 다운로드 (Zip)
         </button>
       </h2>
@@ -243,12 +242,8 @@
     });
   });
 </script>
-
 <script src=" {{ url_for('cam.static', filename='js/script.js')}}"></script>
-
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
-
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 {% endblock %}

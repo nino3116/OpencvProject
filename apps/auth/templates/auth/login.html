@@ -10,8 +10,9 @@
           class="form-login">
           <h1 class="h3 mb-3 mt-3 fw-normal">Please sign in</h1>
           <div class="form-floating mb-3">
-            {{ form.csrf_token }} {{ form.user_id(class ="form-control", id=
-            "floatingInput", placeholder="UserID") }}
+            {{ form.csrf_token }}
+            {{ form.user_id(class ="form-control", id="floatingInput",
+             placeholder="UserID") }}
             <label for="floatingInput">UserID</label>
           </div>
           <div class="form-floating mb-3">
