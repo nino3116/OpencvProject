@@ -245,3 +245,5 @@ S3upload/s3_config.py
 
 # backup copys
 */*copy*.*
+
+# Dokcerfile
