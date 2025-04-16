@@ -7,6 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 from dotenv import load_dotenv
 
+
 db = SQLAlchemy()
 csrf = CSRFProtect()
 login_manager = LoginManager()
@@ -61,5 +62,10 @@ def create_app(config_key):
             num_active_cams=num_active_cams,
             num_recording_cams=num_recording_cams,
         )
+
+    with app.app_context():
+        from apps.cam.views import start_status_check_thread
+
+        start_status_check_thread()
 
     return app
