@@ -8,6 +8,10 @@ import threading
 from dbconfig import dbconnect
 from ProcessVideo import ProcessVideo
 
+from send_email import send_email, send_html_email
+from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
+from detect_process import load_process
+
 
 def status_listener():
     """인식 모듈 상태 확인 리스너 (추가됨)"""
@@ -103,8 +107,8 @@ if __name__ == "__main__":
     logging.info(f"Created {len(ProcessDic)} processes.")
 
     # 프로세스 시작
-    for camera_id in ProcessDic:
-        ProcessDic[camera_id].start()
+    for cid in ProcessDic:
+        ProcessDic[cid].start()
     logging.info("All processes started.")
 
     # 로그 처리 및 모드 확인 로직
@@ -133,6 +137,32 @@ if __name__ == "__main__":
                 logging.info("All child processes have terminated. Exiting main loop.")
                 main_loop_active = False
                 continue
+            else:
+                for cid in ProcessDic:
+                    if ProcessDic[cid].is_alive():
+                        continue
+                    else:
+                        logging.info(
+                            f"camera {cid} process have terminated. try to reload."
+                        )
+                        cur.execute("SELECT * FROM cams where id=%s", (cid))
+                        camera_list = cur.fetchall()
+                        camera_url = camera_list[0]["cam_url"]
+
+                        # 부모-자식 파이프 생성
+                        parent_pipe, child_pipe = multiprocessing.Pipe()
+
+                        # 프로세스 생성
+                        process = multiprocessing.Process(
+                            target=ProcessVideo,
+                            args=(camera_url, cid, q, child_pipe),
+                            daemon=True,  # 데몬 프로세스로 설정
+                        )
+
+                        ProcessDic[cid] = process
+                        ppipes[cid] = parent_pipe  # 카메라 ID를 키로 부모 파이프 저장
+                        ProcessDic[cid].start()
+                        time.sleep(0.1)
 
             # 큐에서 데이터 가져오기 (Non-blocking)
             try:
@@ -309,6 +339,18 @@ if __name__ == "__main__":
                                         conn.commit()
                                         md_idx = cur.lastrowid
 
+                                        # SEND EMAIL
+                                        info = {"timestamp": str(log_timestamp)}
+
+                                        if mode_type == "Running":
+                                            info["event"] = "Person Limit Exceeded"
+                                        elif mode_type == "Secure":
+                                            info["event"] = (
+                                                "Person Detected during Secure Mode"
+                                            )
+
+                                        send_html_email(info, to_email=EMAIL_RECEIVER)
+
                             else:  # 활성화된 모드가 없을 때
                                 logging.debug(
                                     f"[{log_timestamp}] No active mode schedule found."
@@ -366,7 +408,7 @@ if __name__ == "__main__":
         logging.info(
             f"Update Mode_detected dend_time={log_timestamp} and max_person_detected = {max_person_detected}"
         )
-        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s where idx = %s"
+        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s, info = '프로세스 강제 종료' where idx = %s"
         cur.execute(
             sql_mode_detected,
             (log_timestamp, max_person_detected, md_idx),

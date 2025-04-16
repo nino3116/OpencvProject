@@ -125,6 +125,7 @@ def mode_logs(schedule_id):
 
     detailed_logs_map = {}
     for detected_log in detected_logs:
+        place_logs_data = []
         if detected_log.dend_time is not None:
             place_logs_data = (
                 PlaceLogs.query.filter(
