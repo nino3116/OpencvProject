@@ -8,8 +8,6 @@ from ProcessVideo import ProcessVideo
 from send_email import send_email, send_html_email
 from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
 
-from detect_process import load_process
-
 if __name__ == "__main__":
     import multiprocessing
     from queue import Full, Empty
@@ -337,7 +335,7 @@ if __name__ == "__main__":
                 logging.warning(
                     f"Process {ProcessDic[cid].pid} did not terminate gracefully. Forcing termination."
                 )
-                ProcessDic[cid].terminate()  # 강제 종료
+                # ProcessDic[cid].terminate()  # 강제 종료
                 ProcessDic[cid].join()  # 강제 종료 후 대기
         except Exception as e:
             logging.error(f"Error joining process {ProcessDic[cid].pid}: {e}")
