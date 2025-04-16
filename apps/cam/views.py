@@ -88,6 +88,7 @@ def check_status():
 
 @cam.route("/shutdown", methods=["POST"])
 def shutdown_module():
+    global recognition_module_running
     form = ShutdownForm()
     if form.validate_on_submit():
         if not check_status()['running']:
@@ -103,6 +104,7 @@ def shutdown_module():
             client_socket.sendall(b"shutdown")
             client_socket.close()
             logging.info("인식 모듈 종료 신호 전송 성공")
+            recognition_module_running = False
             return "인식 모듈에 종료 신호를 보냈습니다.", 200
         except Exception as e:
             logging.error(f"인식 모듈 종료 신호 전송 중 오류 발생: {e}")
