@@ -7,6 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 from dotenv import load_dotenv
 
+
 db = SQLAlchemy()
 csrf = CSRFProtect()
 login_manager = LoginManager()

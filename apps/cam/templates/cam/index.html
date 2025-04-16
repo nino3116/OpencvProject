@@ -61,7 +61,7 @@ content %}
     $.post(form.attr("action"), form.serialize())
       .done(function (response) {
         console.log("Shutdown success:", response);
-        setTimeout(checkStatus, 2000); // 2초 뒤 상태 체크
+        setTimeout(checkStatus, 5000); // 2초 뒤 상태 체크
       })
       .fail(function (err) {
         alert("종료 실패: " + err.responseText);
