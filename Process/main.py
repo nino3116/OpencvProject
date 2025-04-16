@@ -84,6 +84,7 @@ if __name__ == "__main__":
     md_idx = 0
     max_person_detected = 0
     log_timestamp = None
+    current_mode_schedule_id = None
     
     main_loop_active = True
     while main_loop_active:
@@ -189,9 +190,47 @@ if __name__ == "__main__":
                             active_modes = (
                                 cur.fetchall()
                             )  # 여러 모드가 겹칠 수 있으므로 fetchall 사용
-
+                            
                             record_flag_before = should_record
                             should_record = False  # 녹화 시작 플래그
+                            
+                            if len(active_modes) == 0 or (current_mode_schedule_id != active_modes[0].get("id","N/A")):
+                                    if record_flag_before == True: # 모드가 끝날 때 녹화중이었다면 DB 업데이트 및 녹화 종료
+                                        logging.info(f"Update Mode_detected dend_time={log_timestamp} and max_person_detected = {max_person_detected}")
+                                        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s where idx = %s"
+                                        cur.execute(
+                                            sql_mode_detected,
+                                            (
+                                            log_timestamp,
+                                            max_person_detected,
+                                            md_idx
+                                            ),
+                                        )
+                                        conn.commit()
+                                        
+                                        # 녹화 제어 메시지 전송
+                                        # should_record 플래그를 기반으로 모든 활성 카메라 프로세스에 메시지 전송
+                                        message_to_send = "REC OFF"
+                                            
+                                        for cid in ProcessDic:
+                                            if ProcessDic[cid].is_alive():  # 간단히 모든 활성 프로세스에 전송
+                                                try:
+                                                    ppipes[cid].send(message_to_send)
+                                                    logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cid}") # 디버그 로그
+                                                except (BrokenPipeError, EOFError):
+                                                    logging.warning(
+                                                        f"Pipe for Cam ID {cid} seems broken. Removing."
+                                                    )
+                                                    ppipes[cid].close()
+                                                    del ppipes[cid]  # 고장난 파이프 제거
+                                                except Exception as e:
+                                                    logging.error(
+                                                        f"Error sending message to pipe for Cam ID {cid}: {e}"
+                                                    )
+                                    if active_modes:
+                                        current_mode_schedule_id = active_modes[0].get("id","N/A")
+                                    else:
+                                        current_mode_schedule_id = None
                                                         
                             if active_modes:
                                 for (
@@ -316,6 +355,7 @@ if __name__ == "__main__":
             time.sleep(0.1)  # 잠시 대기
         except KeyboardInterrupt:  # Ctrl+C 처리
             logging.info("KeyboardInterrupt received. Shutting down...")
+            ppipes[cid].send("QUIT")
             main_loop_active = False  # 메인 루프 종료 플래그 설정
         except Exception as e:
             logging.error(f"An error occurred in the main loop: {e}")
@@ -335,7 +375,7 @@ if __name__ == "__main__":
                 logging.warning(
                     f"Process {ProcessDic[cid].pid} did not terminate gracefully. Forcing termination."
                 )
-                # ProcessDic[cid].terminate()  # 강제 종료
+                ProcessDic[cid].terminate()  # 강제 종료
                 ProcessDic[cid].join()  # 강제 종료 후 대기
         except Exception as e:
             logging.error(f"Error joining process {ProcessDic[cid].pid}: {e}")

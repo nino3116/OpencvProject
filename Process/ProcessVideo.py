@@ -315,6 +315,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             f"[Cam {camera_idx}] Received 'REC OFF' but not recording or writer is invalid."
                         )
                 if msg == "QUIT":
+                    print("QUIT")
                     break
 
         except (EOFError, BrokenPipeError) as e:
