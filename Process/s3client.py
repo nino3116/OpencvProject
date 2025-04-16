@@ -2,7 +2,6 @@ import os
 import boto3
 from datetime import datetime
 
-# from s3_config import ACCESS_KEY_ID, SECRET_ACCESS_KEY, DEFAULT_REGION, BUCKET
 from s3_config import ACCESS_KEY_ID, SECRET_ACCESS_KEY, DEFAULT_REGION, BUCKET
 
 s3client = boto3.client(

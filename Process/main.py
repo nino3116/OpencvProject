@@ -7,9 +7,8 @@ import threading
 
 from dbconfig import dbconnect
 from ProcessVideo import ProcessVideo
-from send_email import send_email, send_html_email
-from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
-from detect_process import load_process
+from send_email import send_html_email
+from email_config import EMAIL_RECEIVER
 
 
 def status_listener():
@@ -19,11 +18,14 @@ def status_listener():
     server_socket.bind(("localhost", 8002))
     server_socket.listen(1)
     logging.info("Status listener started on port 8002.")
+    global main_loop_active
     while main_loop_active:
         try:
+            logging.info("Status listener loop check")
             conn, addr = server_socket.accept()
             with conn:
                 conn.sendall(b"OK")
+                logging.info("Status listener loop send msg")
         except socket.timeout:
             continue  # 1초마다 main_loop_active 다시 확인
     server_socket.close()
@@ -128,9 +130,26 @@ if __name__ == "__main__":
     shutdown_thread = threading.Thread(target=shutdown_listener, daemon=True)
     shutdown_thread.start()
     
+    global main_loop_active
     main_loop_active = True
     while main_loop_active:
         try:
+            # 스레드 상태 확인 (status)
+            if status_thread!= None and status_thread.is_alive():
+                continue
+            else:
+                logging.info("Status Listener Thread is not alive. try to restart...")
+                status_thread = threading.Thread(target=status_listener, daemon=True)
+                status_thread.start()
+            
+            # 스레드 상태 확인 (shutdown)
+            if shutdown_thread!= None and shutdown_thread.is_alive():
+                continue
+            else:
+                logging.info("Shutdown Thread Listener is not alive. try to restart...")
+                shutdown_thread = threading.Thread(target=shutdown_listener, daemon=True)
+                shutdown_thread.start()
+            
             # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
             if not any(ProcessDic[cid].is_alive() for cid in ProcessDic):
                 logging.info("All child processes have terminated. Exiting main loop.")
@@ -439,6 +458,10 @@ if __name__ == "__main__":
                 ProcessDic[cid].join()  # 강제 종료 후 대기
         except Exception as e:
             logging.error(f"Error joining process {ProcessDic[cid].pid}: {e}")
+    
+    # 스레드가 종료될 때 까지 대기
+    logging.info("Waiting for status thread to terminate...")
+    status_thread.join()
 
     q.close()
     q.join_thread()
