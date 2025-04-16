@@ -8,7 +8,7 @@
         <div class="card-header bg-white">
           <div class="card-title fs-2">카카오 계정 사용자 등록</div>
         </div>
-        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        {% with messages = get_flashed_messages(with_categories=["kakao_success","kakao_danger","kakao_warning"]) %} {% if
         messages %} {% for category, message in messages %}
         <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
         {% endfor %} {% endif %} {% endwith %}
