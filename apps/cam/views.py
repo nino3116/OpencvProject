@@ -48,9 +48,9 @@ from flask import send_file
 from flask_paginate import Pagination, get_page_parameter
 
 # 소켓통신을 위해
-import threading
 import socket
 import logging
+import json
 
 
 # Blueprint로 crud 앱을 생성한다.
@@ -68,51 +68,34 @@ RECOGNITION_MODULE_STATUS_PORT = 8002  # 상태 확인용 새 포트
 
 recognition_module_running = False
 
-
-def check_recognition_module_status():
-    """주기적으로 인식 모듈 상태를 확인하는 함수 (수정됨)"""
-    global recognition_module_running
-    import time
-
-    while True:
-        try:
-            with socket.create_connection(
-                (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
-            ):
-                recognition_module_running = True
-                logging.info("인식 모듈 연결됨 (상태 확인)")
-        except (ConnectionRefusedError, TimeoutError):
-            recognition_module_running = False
-            logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
-        time.sleep(5)  # 5초마다 상태 확인
-
-
-def start_status_check_thread():
-    """인식 모듈 상태 확인 스레드 시작 (수정됨)"""
-    import time
-
-    time.sleep(2)  # 플라스크 앱 시작 후 2초 정도 대기
-    status_check_thread = threading.Thread(
-        target=check_recognition_module_status, daemon=True
-    )
-    status_check_thread.start()
-
-
-# 플라스크 앱 시작 시 상태 확인 스레드 시작
-# start_status_check_thread()
-
-
 @cam.route("/check_status")
 def check_status():
-    return {"running": recognition_module_running}
-
+    global recognition_module_running
+    data = None
+    try:
+        with socket.create_connection(
+            (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
+        ) as sock:
+            recognition_module_running = True
+            logging.info("인식 모듈 연결됨 (상태 확인)")
+            data = sock.recv(2048).decode('utf-8')
+            data = json.loads(data)
+            
+    except (ConnectionRefusedError, TimeoutError):
+        recognition_module_running = False
+        logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
+    except:
+        recognition_module_running = False
+        pass
+    
+    return {"running": recognition_module_running , "cam_data": data}
 
 @cam.route("/shutdown", methods=["POST"])
 def shutdown_module():
     global recognition_module_running
     form = ShutdownForm()
     if form.validate_on_submit():
-        if not recognition_module_running:
+        if not check_status()['running']:
             logging.warning(
                 "인식 모듈이 실행 중이 아닙니다. 종료 신호 전송을 건너뜁니다."
             )
@@ -137,10 +120,12 @@ def shutdown_module():
 @login_required
 def index():
     form = ShutdownForm()
+    
     return render_template(
         "cam/index.html",
-        recognition_running=recognition_module_running,
-        form=form,
+        recognition_running = check_status()['running'],
+        form = form,
+        cam_data = check_status()['cam_data']
     )
 
 

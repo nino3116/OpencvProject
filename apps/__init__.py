@@ -63,9 +63,4 @@ def create_app(config_key):
             num_recording_cams=num_recording_cams,
         )
 
-    with app.app_context():
-        from apps.cam.views import start_status_check_thread
-
-        start_status_check_thread()
-
     return app

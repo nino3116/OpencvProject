@@ -1,16 +1,16 @@
 import pymysql
 import sys
 import traceback, logging
+import math
 import time
 import socket
 import threading
+import json
 
 from dbconfig import dbconnect
 from ProcessVideo import ProcessVideo
-from send_email import send_email, send_html_email
-from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
-from detect_process import load_process
-
+from send_email import send_html_email
+from email_config import EMAIL_RECEIVER
 
 def status_listener():
     """인식 모듈 상태 확인 리스너 (추가됨)"""
@@ -19,11 +19,33 @@ def status_listener():
     server_socket.bind(("localhost", 8002))
     server_socket.listen(1)
     logging.info("Status listener started on port 8002.")
+    global main_loop_active
+    global ppipes
+    
+    data = {}
+    for row in camera_list:
+        cid = int(row["id"])
+        data[cid] = {}
+        data[cid]["cam_name"] = row["cam_name"]
+        data[cid]["dt_active"] = False
+        
     while main_loop_active:
         try:
             conn, addr = server_socket.accept()
             with conn:
-                conn.sendall(b"OK")
+                for cid in data:
+                    try:
+                        if cid in ppipes:
+                            data[cid]["dt_active"] = True
+                        else:
+                            data[cid]["dt_active"] = False
+                    except Exception as e:
+                        traceback.print_exc(e)
+                        pass
+                print(data)
+                encoded_data = json.dumps(data).encode('utf-8')
+                conn.sendall(encoded_data)
+                logging.info("Status listener loop send msg")
         except socket.timeout:
             continue  # 1초마다 main_loop_active 다시 확인
     server_socket.close()
@@ -59,6 +81,7 @@ if __name__ == "__main__":
             raise ConnectionError("Failed to establish database connection.")
         cur = conn.cursor(pymysql.cursors.DictCursor)
         cur.execute("SELECT * FROM cams")
+        global camera_list
         camera_list = cur.fetchall()
         logging.info(f"Loaded {len(camera_list)} cameras from database.")
         if not camera_list:
@@ -78,6 +101,7 @@ if __name__ == "__main__":
     # Multiprocessing 설정
     q = multiprocessing.Queue()
     ProcessDic = {}
+    global ppipes
     ppipes = {}
 
     for row in camera_list:
@@ -118,10 +142,16 @@ if __name__ == "__main__":
     # define variables
     should_record = False
     record_flag_before = False
+    current_mode_schedule_id = 0
     md_idx = 0
     max_person_detected = 0
     log_timestamp = None
+    thr_timestamp = time.time()
+    pipe_timestamp = time.time()
 
+    global main_loop_active
+    main_loop_active = False
+    
     status_thread = threading.Thread(target=status_listener, daemon=True)
     status_thread.start()
 
@@ -129,41 +159,79 @@ if __name__ == "__main__":
     shutdown_thread.start()
     
     main_loop_active = True
+    
     while main_loop_active:
         try:
-            # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
-            if not any(ProcessDic[cid].is_alive() for cid in ProcessDic):
-                logging.info("All child processes have terminated. Exiting main loop.")
-                main_loop_active = False
-                continue
+            # 스레드 상태 확인 (status)
+            if status_thread!= None and status_thread.is_alive():
+                pass
             else:
+                logging.info("Status Listener Thread is not alive. try to restart...")
+                status_thread = threading.Thread(target=status_listener, daemon=True)
+                status_thread.start()
+            
+            # 스레드 상태 확인 (shutdown)
+            if shutdown_thread!= None and shutdown_thread.is_alive():
+                pass
+            else:
+                logging.info("Shutdown Thread Listener is not alive. try to restart...")
+                shutdown_thread = threading.Thread(target=shutdown_listener, daemon=True)
+                shutdown_thread.start()
+        except Exception as e:
+            traceback.print_exc(e)
+            
+        try:
+            if math.trunc(time.time() - pipe_timestamp) == 3 :
+                pipe_timestamp = time.time()
                 for cid in ProcessDic:
-                    if ProcessDic[cid].is_alive():
-                        continue
-                    else:
+                    if cid in ppipes:
+                        if ProcessDic[cid].is_alive():
+                            continue
+                        else:
+                            logging.info(f"Delete Pipe for Process {cid}")
+                            del ppipes[cid]
+        except Exception as e:
+            traceback.print_exc(e)
+        
+        try:            
+            # 자식 프로세스 상태 확인 (모든 자식 프로세스가 종료되었는지)
+            if math.trunc(time.time() - thr_timestamp) == 60:
+                thr_timestamp = time.time()
+                if not any(ProcessDic[cid].is_alive() for cid in ProcessDic):
+                    logging.info("All child processes have terminated. Exiting main loop.")
+                    main_loop_active = False
+                    pass
+                else:
+                    for cid in ProcessDic:
+                        if ProcessDic[cid].is_alive():
+                            continue
+                        else:
 
-                        logging.info(
-                            f"camera {cid} process have terminated. try to reload."
-                        )
-                        cur.execute("SELECT * FROM cams where id=%s", (cid))
-                        camera_list = cur.fetchall()
-                        camera_url = camera_list[0]["cam_url"]
+                            logging.info(
+                                f"camera {cid} process have terminated. try to reload."
+                            )
+                            cur.execute("SELECT * FROM cams where id=%s", (cid))
+                            camera = cur.fetchall()
+                            camera_url = camera[0]["cam_url"]
 
-                        # 부모-자식 파이프 생성
-                        parent_pipe, child_pipe = multiprocessing.Pipe()
+                            # 부모-자식 파이프 생성
+                            parent_pipe, child_pipe = multiprocessing.Pipe()
 
-                        # 프로세스 생성
-                        process = multiprocessing.Process(
-                            target=ProcessVideo,
-                            args=(camera_url, cid, q, child_pipe),
-                            daemon=True,  # 데몬 프로세스로 설정
-                        )
-                        
-                        ProcessDic[cid] = process
-                        ppipes[cid] = parent_pipe  # 카메라 ID를 키로 부모 파이프 저장
-                        ProcessDic[cid].start()
-                        time.sleep(0.1)
-
+                            # 프로세스 생성
+                            process = multiprocessing.Process(
+                                target=ProcessVideo,
+                                args=(camera_url, cid, q, child_pipe),
+                                daemon=True,  # 데몬 프로세스로 설정
+                            )
+                            
+                            ProcessDic[cid] = process
+                            ppipes[cid] = parent_pipe  # 카메라 ID를 키로 부모 파이프 저장
+                            ProcessDic[cid].start()
+                            time.sleep(0.1)
+        except Exception as e:
+            traceback.print_exc(e)
+            
+        try:
             # 큐에서 데이터 가져오기 (Non-blocking)
             try:
                 pd = q.get(block=False)
@@ -239,42 +307,42 @@ if __name__ == "__main__":
                             should_record = False  # 녹화 시작 플래그
                             
                             if len(active_modes) == 0 or (current_mode_schedule_id != active_modes[0].get("id","N/A")):
-                                    if record_flag_before == True: # 모드가 끝날 때 녹화중이었다면 DB 업데이트 및 녹화 종료
-                                        logging.info(f"Update Mode_detected dend_time={log_timestamp} and max_person_detected = {max_person_detected}")
-                                        sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s where idx = %s"
-                                        cur.execute(
-                                            sql_mode_detected,
-                                            (
-                                            log_timestamp,
-                                            max_person_detected,
-                                            md_idx
-                                            ),
-                                        )
-                                        conn.commit()
+                                if record_flag_before == True: # 모드가 끝날 때 녹화중이었다면 DB 업데이트 및 녹화 종료
+                                    logging.info(f"Update Mode_detected dend_time={log_timestamp} and max_person_detected = {max_person_detected}")
+                                    sql_mode_detected = "UPDATE mode_detected set dend_time = %s, max_person_detected = %s where idx = %s"
+                                    cur.execute(
+                                        sql_mode_detected,
+                                        (
+                                        log_timestamp,
+                                        max_person_detected,
+                                        md_idx
+                                        ),
+                                    )
+                                    conn.commit()
+                                    
+                                    # 녹화 제어 메시지 전송
+                                    # should_record 플래그를 기반으로 모든 활성 카메라 프로세스에 메시지 전송
+                                    message_to_send = "REC OFF"
                                         
-                                        # 녹화 제어 메시지 전송
-                                        # should_record 플래그를 기반으로 모든 활성 카메라 프로세스에 메시지 전송
-                                        message_to_send = "REC OFF"
-                                            
-                                        for cid in ProcessDic:
-                                            if ProcessDic[cid].is_alive():  # 간단히 모든 활성 프로세스에 전송
-                                                try:
-                                                    ppipes[cid].send(message_to_send)
-                                                    logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cid}") # 디버그 로그
-                                                except (BrokenPipeError, EOFError):
-                                                    logging.warning(
-                                                        f"Pipe for Cam ID {cid} seems broken. Removing."
-                                                    )
-                                                    ppipes[cid].close()
-                                                    del ppipes[cid]  # 고장난 파이프 제거
-                                                except Exception as e:
-                                                    logging.error(
-                                                        f"Error sending message to pipe for Cam ID {cid}: {e}"
-                                                    )
-                                    if active_modes:
-                                        current_mode_schedule_id = active_modes[0].get("id","N/A")
-                                    else:
-                                        current_mode_schedule_id = None
+                                    for cid in ProcessDic:
+                                        if ProcessDic[cid].is_alive():  # 간단히 모든 활성 프로세스에 전송
+                                            try:
+                                                ppipes[cid].send(message_to_send)
+                                                logging.debug(f"Sent '{message_to_send}' to pipe for cam_id {cid}") # 디버그 로그
+                                            except (BrokenPipeError, EOFError):
+                                                logging.warning(
+                                                    f"Pipe for Cam ID {cid} seems broken. Removing."
+                                                )
+                                                ppipes[cid].close()
+                                                del ppipes[cid]  # 고장난 파이프 제거
+                                            except Exception as e:
+                                                logging.error(
+                                                    f"Error sending message to pipe for Cam ID {cid}: {e}"
+                                                )
+                                if active_modes:
+                                    current_mode_schedule_id = active_modes[0].get("id","N/A")
+                                else:
+                                    current_mode_schedule_id = None
                                                         
                             if active_modes:
                                 for (
@@ -439,6 +507,10 @@ if __name__ == "__main__":
                 ProcessDic[cid].join()  # 강제 종료 후 대기
         except Exception as e:
             logging.error(f"Error joining process {ProcessDic[cid].pid}: {e}")
+    
+    # 스레드가 종료될 때 까지 대기
+    logging.info("Waiting for status thread to terminate...")
+    status_thread.join()
 
     q.close()
     q.join_thread()
