@@ -48,9 +48,9 @@ from flask import send_file
 from flask_paginate import Pagination, get_page_parameter
 
 # 소켓통신을 위해
-import threading
 import socket
 import logging
+import json
 
 
 # Blueprint로 crud 앱을 생성한다.
@@ -70,12 +70,17 @@ recognition_module_running = False
 
 @cam.route("/check_status")
 def check_status():
+    global recognition_module_running
+    data = None
     try:
         with socket.create_connection(
             (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
-        ):
+        ) as sock:
             recognition_module_running = True
             logging.info("인식 모듈 연결됨 (상태 확인)")
+            data = sock.recv(2048).decode('utf-8')
+            data = json.loads(data)
+            
     except (ConnectionRefusedError, TimeoutError):
         recognition_module_running = False
         logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
@@ -83,8 +88,7 @@ def check_status():
         recognition_module_running = False
         pass
     
-    return {"running": recognition_module_running}
-
+    return {"running": recognition_module_running , "cam_data": data}
 
 @cam.route("/shutdown", methods=["POST"])
 def shutdown_module():
@@ -119,8 +123,9 @@ def index():
     
     return render_template(
         "cam/index.html",
-        recognition_running=check_status()['running'],
-        form=form,
+        recognition_running = check_status()['running'],
+        form = form,
+        cam_data = check_status()['cam_data']
     )
 
 

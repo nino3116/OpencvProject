@@ -15,6 +15,14 @@ content %}
       class="lead {% if recognition_running %}text-success{% else %}text-danger{% endif %}">
       {% if recognition_running %} 실행 중 {% else %} 중지됨 {% endif %}
     </p>
+    <div id="status-detail">
+      {% if recognition_running %} 
+        {% for key in cam_data %}
+        <div> {{ cam_data[key]['cam_name'] }} </div>
+        <div> {% if cam_data[key]['dt_active'] == True %} 작동 중 {% else %} 작동 불가 {% endif %} </div>
+        {% endfor %}
+      {% endif %}
+    </div>
 
     <form
       id="shutdown-form"
@@ -25,7 +33,7 @@ content %}
     </form>
   </main>
 </div>
-{% endblock %} {% include "cam/footer.html" %} {% block scripts %}
+{% endblock %} {% include "cam/footer.html" %}{% block scripts %}
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
@@ -52,7 +60,7 @@ content %}
     });
   }
 
-  // 3초마다 상태 체크
+  // 5초마다 상태 체크
   setInterval(checkStatus, 5000);
 
   // 폼 제출 후 상태 자동 갱신
