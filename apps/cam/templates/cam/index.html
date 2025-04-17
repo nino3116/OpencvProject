@@ -49,9 +49,9 @@ content %}
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
 <script>
-  function checkStatus() {
+
+  function checkCurrentStatus() {
     $.get("{{ url_for('cam.check_status') }}", function (data) {
-      console.log("Status Data:", data); // 추가된 부분
       const statusText = $("#status-text");
       const submitBtn = $("#shutdown-form button[type='submit']");
       if (data.running) {
@@ -71,7 +71,7 @@ content %}
   }
 
   // 5초마다 상태 체크
-  setInterval(checkStatus, 5000);
+  setInterval(checkCurrentStatus, 5000);
 
   // 폼 제출 후 상태 자동 갱신
   $("#shutdown-form").on("submit", function (e) {

@@ -15,10 +15,28 @@
 
         <div class = "vr mx-1"></div>
         <div><strong class ="text-success"> 녹화 중 {{ num_recording_cams }}</strong></div>
+
+        <div class = "vr mx-1"></div>
+        <div><strong class ="text-info"> 인식 모듈 {{ num_dt_cams }}</strong></div>
+
         <a class = "ms-auto mb-2 px-2 link-light link-offset-2 link-underline-opacity-0 fw-bold" href ="#">Top</a>
 
       </div>
     </div>
   </div>
 </footer>
+
+{% block scripts %}
+<script>
+  function checkCamStatus() {
+    $.get("{{ url_for('cam.check_cam_status') }}", function (data) {
+      console.log(data)
+    });
+  }
+
+  // 5초마다 상태 체크
+  setInterval(checkCamStatus, 5000);
+
+</script>
+{% endblock %}
 
