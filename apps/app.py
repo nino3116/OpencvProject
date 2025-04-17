@@ -266,3 +266,25 @@ def stop_recording_all():
                 if camera.id in camera_streams:
                     del camera_streams[camera.id]
                     print(f"카메라 ID '{camera.id}' 녹화 스레드 제거됨.")
+
+
+def check_cam_periodically():
+    while True:
+        with app.app_context():
+            cams = Cams.query.all()
+            for cam in cams:
+                try:
+                    cap = cv.VideoCapture(cam.url)
+                    if not cap.isOpened():
+                        logging.warning(
+                            f"Camera {cam.id} ({cam.url})을 열 수 없습니다."
+                        )
+                        cam.is_active = False
+                    else:
+                        cam.is_active = True
+                        cap.release()
+                except Exception as e:
+                    logging.error(f"카메라 상태 확인 중 오류 발생: {e}")
+            db.session.commit()
+            logging.info("카메라 상태 확인 완료 (스레드)")
+        time.sleep(60)  # 60초마다 실행

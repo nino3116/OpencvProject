@@ -6,6 +6,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 import os
 from dotenv import load_dotenv
+import threading
 
 
 db = SQLAlchemy()
@@ -62,5 +63,11 @@ def create_app(config_key):
             num_active_cams=num_active_cams,
             num_recording_cams=num_recording_cams,
         )
+
+        from apps.app import check_cam_periodically
+
+        cam_check_thread = threading.Thread(target=check_cam_periodically)
+        cam_check_thread.daemon = True
+        cam_check_thread.start()
 
     return app
