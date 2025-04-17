@@ -1,85 +1,81 @@
 {% extends "cam/base.html" %} {% block title %}비디오 목록{% endblock %} {%
+block content %}
 
-  block content %}
+<div class="cover-container d-flex p-3 m-auto flex-column">
+  <style>
+    .table thead,
+    .table tbody {
+      text-align: center;
+    }
+  </style>
+  {% include "cam/header.html" %}
 
-  <div class="cover-container d-flex p-3 m-auto flex-column">
-
-    <style>
-      .table thead, .table tbody { 
-        text-align: center;
-      }
-    </style>
-    {% include "cam/header.html" %}
-  
-     
-    <form method="POST" class="mt-5 mb-3 d-flax justify-content-center">
-      {{ form.csrf_token }}
-      <div class="row row-cols-auto g-2 align-items-end d-flax justify-content-center ">
-    
-        <div class="col">
-          {{ form.camera_name.label(class="form-label small") }}
-          {{ form.camera_name(class="form-select form-select-md") }}
-        </div>
-    
-        <div class="col">
-          {{ form.start_date.label(class="form-label small") }}
-          {{ form.start_date(class="form-control form-control-md") }}
-        </div>
-    
-        <div class="col">
-          {{ form.end_date.label(class="form-label small") }}
-          {{ form.end_date(class="form-control form-control-md") }}
-        </div>
-    
-        <div class="col">
-          {{ form.per_page.label(class="form-label small") }}
-          {{ form.per_page(class="form-select form-select-md") }}
-        </div>
-    
-        <div class="col">
-          {{ form.submit(class="btn btn-sm btn-primary") }}
-        </div>
-    
+  <form method="POST" class="mt-5 mb-3 d-flax justify-content-center">
+    {{ form.csrf_token }}
+    <div
+      class="row row-cols-auto g-2 align-items-end d-flax justify-content-center">
+      <div class="col">
+        {{ form.camera_name.label(class="form-label small") }} {{
+        form.camera_name(class="form-select form-select-md") }}
       </div>
-    </form>
-    <p>
-      {% for message in
-      get_flashed_messages(category_filter=["success","error","warning"]) %}
-      <span>{{message}}</span> {%endfor%} 
-    </p>
-  
-    {% for date_str, videos in grouped_videos.items()|sort(reverse=True, attribute='recorded_time') %}
-    <form method="POST" action="{{url_for ('cam.download_selected_videos')}} ">
-      {{ form.csrf_token }}
-      <input type="hidden" name="date" value="{{ date_str }}">
-      <div class="my-auto">
-        <h4 class="mt-3 mb-4">
 
+      <div class="col">
+        {{ form.start_date.label(class="form-label small") }} {{
+        form.start_date(class="form-control form-control-md") }}
+      </div>
+
+      <div class="col">
+        {{ form.end_date.label(class="form-label small") }} {{
+        form.end_date(class="form-control form-control-md") }}
+      </div>
+
+      <div class="col">
+        {{ form.per_page.label(class="form-label small") }} {{
+        form.per_page(class="form-select form-select-md") }}
+      </div>
+
+      <div class="col">{{ form.submit(class="btn btn-sm btn-primary") }}</div>
+    </div>
+  </form>
+  <p>
+    {% for message in
+    get_flashed_messages(category_filter=["success","error","warning"]) %}
+    <span>{{message}}</span> {%endfor%}
+  </p>
+
+  {% for date_str, videos in grouped_videos.items()|sort(reverse=True,
+  attribute='recorded_time') %}
+  <form method="POST">
+    {{ form.csrf_token }}
+    <input type="hidden" name="date" value="{{ date_str }}" />
+    <div class="my-auto">
+      <h4 class="mt-3 mb-4">
         {{ date_str }}
         <button
           type="submit"
           formaction="{{ url_for('cam.delete_selected_videos') }}"
-
           class="btn btn-danger btn-sm"
-          onclick="return confirm('삭제하면 복구할 수 없습니다. 정말로 삭제하시겠습니까? ')" >
+          onclick="return confirm('삭제하면 복구할 수 없습니다. 정말로 삭제하시겠습니까? ')">
           선택 삭제
         </button>
-        <button 
+        <button
           type="submit"
-          class="btn btn-secondary btn-sm">
-
+          class="btn btn-secondary btn-sm"
+          formaction="{{url_for ('cam.download_selected_videos')}} ">
           선택 파일 다운로드 (Zip)
         </button>
-      </h2>
+      </h4>
+    </form>
 
       <div class="table-responsive">
         <table class="table table-bordered table-striped table-dark fw-bold">
           <thead>
             <tr>
               <th>
-
-                <input type="checkbox" class="select-all-checkbox mb-1" data-date="{{ date_str }}" /> 
-
+                <input
+                  type="checkbox"
+                  class="select-all-checkbox mb-1"
+                  data-date="{{ date_str }}" />
               </th>
 
               <th>카메라 이름</th>
@@ -95,9 +91,11 @@
             %}
             <tr>
               <td>
-
-                <input type="checkbox" class="video-checkbox{{ date_str }} mt-2" name="video_ids" value="{{ video.id }}" />
-
+                <input
+                  type="checkbox"
+                  class="video-checkbox{{ date_str }} mt-2"
+                  name="video_ids"
+                  value="{{ video.id }}" />
               </td>
 
               <td>
@@ -112,22 +110,6 @@
               </td>
 
               <td>
-                {#{% if video.is_dt %}
-                <a
-                  href="{{ url_for('cam.play_video', video_id=video.id) }}"
-                  class="btn btn-sm btn-success"
-                  data-bs-toggle="tooltip"
-                  data-bs-title="Play">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 384 512"
-                    width="12px"
-                    heigth="12px">
-                    <path
-                      d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z" />
-                  </svg>
-                </a>
-                {% else %} #}
                 <a
                   href="{{ url_for('cam.play_origin_video', video_id=video.id) }}"
                   class="btn btn-sm btn-success"
@@ -142,7 +124,6 @@
                       d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z" />
                   </svg>
                 </a>
-                {#{% endif %}#}
                 <a
                   href="{{ url_for('cam.download_video', video_id=video.id) }}"
                   class="btn btn-sm btn-light"
@@ -186,11 +167,11 @@
         </table>
       </div>
     </div>
-  </form>
 
-  {% endfor %}  
 
-  <div class="pagination justify-content-center mt-4 fw-bold " >
+  {% endfor %}
+
+  <div class="pagination justify-content-center mt-4 fw-bold">
     {{ pagination.links }}
   </div>
 

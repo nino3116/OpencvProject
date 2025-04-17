@@ -63,7 +63,4 @@ def create_app(config_key):
             num_recording_cams=num_recording_cams,
         )
 
-    # with app.app_context():
-
-
     return app
