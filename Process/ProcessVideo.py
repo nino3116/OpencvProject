@@ -92,7 +92,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
     # 녹화 관련 변수
     is_recording = False
     video_writer = None  # 명시적으로 None으로 초기화
-    
+
     # 프로세스 관련 변수
     msg = None
 
@@ -398,7 +398,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                     conn = dbconnect()
                     cur = conn.cursor(pymysql.cursors.DictCursor)
                     rend_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt, rend_date, rend_time, info) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                    sql_video = "INSERT INTO videos (camera_id, camera_name, recorded_date, recorded_time, video_path, is_dt, rend_date, rend_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
                     cur.execute(
                         sql_video,
                         (
@@ -410,7 +410,6 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                             ],
                             s3_file_path,
                             1,
-
                             rend_timestamp[0 : safe_timestamp.find("_")],
                             rend_timestamp[
                                 safe_timestamp.find("_") + 1 : len(safe_timestamp)

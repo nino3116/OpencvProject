@@ -5,6 +5,7 @@ from email_config import EMAIL_PASSWORD, EMAIL_RECEIVER, EMAIL_SENDER
 
 import traceback, logging
 
+
 def send_email(subject, body):
     """Sends an email with the given subject and body."""
     try:

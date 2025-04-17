@@ -108,7 +108,7 @@ def record_original_video(camera_url, camera_id):
             elapsed_time = (
                 current_time_sec - record_start_time.timestamp()
             )  # datetime 객체로 비교
-            if elapsed_time >= 600:
+            if elapsed_time >= 30:
                 # 10분이 경과하면 현재 파일을 저장하고 새로운 파일로 전환
                 if out is not None:
                     out.release()
