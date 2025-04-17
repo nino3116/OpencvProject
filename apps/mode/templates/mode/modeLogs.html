@@ -1,5 +1,5 @@
-{% extends "mode/base.html"%} {% block title %}모드 스케줄 상세 {% endblock %} {%
-block content %}
+{% extends "mode/base.html"%} {% block title %}모드 스케줄 상세 {% endblock %}
+{% block content %}
 
 <div class="cover-container p-3 mx-auto">
   {% include "cam/header.html" %}
@@ -8,7 +8,8 @@ block content %}
     <h2>모드 스케줄 상세</h2>
     <div class="table-responsive">
       <table
-        class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
+        class="table table-bordered table-dark table-striped table-hover align-middle fw-bold"
+      >
         <tbody>
           <tr>
             <th>모드</th>
@@ -52,14 +53,16 @@ block content %}
         data-bs-toggle="collapse"
         data-bs-target="#detectedLogsCollapse"
         aria-expanded="false"
-        aria-controls="detectedLogsCollapse">
+        aria-controls="detectedLogsCollapse"
+      >
         로그 보기/숨기기
       </button>
       <p></p>
       <div class="collapse show" id="detectedLogsCollapse">
         <div class="table-responsive">
           <table
-            class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
+            class="table table-bordered table-dark table-striped table-hover align-middle fw-bold"
+          >
             <thead>
               <tr>
                 <th>감지시간</th>
@@ -81,7 +84,8 @@ block content %}
                     class="btn btn-primary btn-sm"
                     type="button"
                     data-bs-toggle="modal"
-                    data-bs-target="#detailedLogModal{{ log.idx }}">
+                    data-bs-target="#detailedLogModal{{ log.idx }}"
+                  >
                     상세보기
                   </button>
                   <div
@@ -89,14 +93,17 @@ block content %}
                     id="detailedLogModal{{ log.idx }}"
                     tabindex="-1"
                     aria-labelledby="detailedLogModalLabel{{ log.idx }}"
-                    aria-hidden="true">
+                    aria-hidden="true"
+                  >
                     <div
-                      class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                      class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+                    >
                       <div class="modal-content">
                         <div class="modal-header">
                           <h5
                             class="modal-title text-dark text-center"
-                            id="detailedLogModalLabel{{ log.idx }}">
+                            id="detailedLogModalLabel{{ log.idx }}"
+                          >
                             상세로그 ({{ log.detected_time }} ~ {{ log.dend_time
                             }})
                           </h5>
@@ -104,13 +111,15 @@ block content %}
                             type="button"
                             class="btn-close"
                             data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                            aria-label="Close"
+                          ></button>
                         </div>
                         <div class="modal-body">
                           {% if detailed_logs_map[log.idx] %}
                           <div class="table-responsive">
                             <table
-                              class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
+                              class="table table-bordered table-dark table-striped table-hover align-middle fw-bold"
+                            >
                               <thead>
                                 <tr>
                                   <th>감지시간</th>
@@ -145,7 +154,8 @@ block content %}
                           <button
                             type="button"
                             class="btn btn-secondary"
-                            data-bs-dismiss="modal">
+                            data-bs-dismiss="modal"
+                          >
                             닫기
                           </button>
                         </div>

@@ -1,87 +1,85 @@
 {% extends "cam/base.html" %} {% block title %}비디오 목록{% endblock %} {%
 block content %}
 
-<div class="cover-container d-flex p-3 m-auto flex-column">
-  <style>
-    .table thead,
-    .table tbody {
-      text-align: center;
-    }
-  </style>
-  {% include "cam/header.html" %}
+  <div class="cover-container d-flex p-3 m-auto flex-column">
 
-  <form method="POST" class="mt-5 mb-3 d-flax justify-content-center">
-    {{ form.csrf_token }}
-    <div
-      class="row row-cols-auto g-2 align-items-end d-flax justify-content-center">
-      <div class="col">
-        {{ form.camera_name.label(class="form-label small") }} {{
-        form.camera_name(class="form-select form-select-md") }}
+    <style>
+      .table thead, .table tbody { 
+        text-align: center;
+      }
+    </style>
+    {% include "cam/header.html" %}
+  
+     
+    <form method="POST" class="mt-5 mb-3 d-flax justify-content-center">
+      {{ form.csrf_token }}
+      <div class="row row-cols-auto g-2 align-items-end d-flax justify-content-center ">
+    
+        <div class="col">
+          {{ form.camera_name.label(class="form-label small") }}
+          {{ form.camera_name(class="form-select form-select-md") }}
+        </div>
+    
+        <div class="col">
+          {{ form.start_date.label(class="form-label small") }}
+          {{ form.start_date(class="form-control form-control-md") }}
+        </div>
+    
+        <div class="col">
+          {{ form.end_date.label(class="form-label small") }}
+          {{ form.end_date(class="form-control form-control-md") }}
+        </div>
+    
+        <div class="col">
+          {{ form.per_page.label(class="form-label small") }}
+          {{ form.per_page(class="form-select form-select-md") }}
+        </div>
+    
+        <div class="col">
+          {{ form.submit(class="btn btn-sm btn-primary") }}
+        </div>
+    
       </div>
-
-      <div class="col">
-        {{ form.start_date.label(class="form-label small") }} {{
-        form.start_date(class="form-control form-control-md") }}
-      </div>
-
-      <div class="col">
-        {{ form.end_date.label(class="form-label small") }} {{
-        form.end_date(class="form-control form-control-md") }}
-      </div>
-
-      <div class="col">
-        {{ form.per_page.label(class="form-label small") }} {{
-        form.per_page(class="form-select form-select-md") }}
-      </div>
-
-      <div class="col">{{ form.submit(class="btn btn-sm btn-primary") }}</div>
-    </div>
-  </form>
-  <p>
-    {% for message in
-    get_flashed_messages(category_filter=["success","error","warning"]) %}
-    <span>{{message}}</span> {%endfor%}
-  </p>
-
-  {% for date_str, videos in grouped_videos.items()|sort(reverse=True,
-  attribute='recorded_time') %}
-  <form method="POST">
-    {{ form.csrf_token }}
-    <input type="hidden" name="date" value="{{ date_str }}" />
-    <div class="my-auto">
-      <h4 class="mt-3 mb-4">
-        {{ date_str }}
-        <button
-          type="submit"
-          formaction="{{ url_for('cam.delete_selected_videos') }}"
-          class="btn btn-danger btn-sm"
-          onclick="return confirm('삭제하면 복구할 수 없습니다. 정말로 삭제하시겠습니까? ')">
-          선택 삭제
-        </button>
-        <button
-          type="submit"
-          class="btn btn-secondary btn-sm"
-          formaction="{{url_for ('cam.download_selected_videos')}} ">
-          선택 파일 다운로드 (Zip)
-        </button>
-      </h4>
     </form>
+    <p>
+      {% for message in
+      get_flashed_messages(category_filter=["success","error","warning"]) %}
+      <span>{{message}}</span> {%endfor%} 
+    </p>
+
+    {% for date_str, videos in grouped_videos.items()|sort(reverse=True, attribute='recorded_time') %}
+    <form method="POST" action="{{url_for ('cam.download_selected_videos')}} ">
+      {{ form.csrf_token }}
+      <input type="hidden" name="date" value="{{ date_str }}">
+        <div class="my-auto">
+          <h4 class="mt-3 mb-4">
+
+            {{ date_str }}
+            <button
+              type="submit"
+              formaction="{{ url_for('cam.delete_selected_videos') }}"
+              formmethod="POST"
+              class="btn btn-danger btn-sm"
+              onclick="return confirm('삭제하면 복구할 수 없습니다. 정말로 삭제하시겠습니까? ')" >
+              선택 삭제
+            </button>
+            <button 
+              type="submit"
+              class="btn btn-secondary btn-sm">
+              선택 파일 다운로드 (Zip)
+            </button>
+          </h4>
+      </form>
 
       <div class="table-responsive">
         <table class="table table-bordered table-striped table-dark fw-bold">
           <thead>
             <tr>
               <th>
-                <input
-                  type="checkbox"
-                  class="select-all-checkbox mb-1"
-                  data-date="{{ date_str }}" />
+                <input type="checkbox" class="select-all-checkbox mb-1" data-date="{{ date_str }}" /> 
               </th>
-
               <th>카메라 이름</th>
-
               <th>녹화 시작시간</th>
-
               <th>액션</th>
             </tr>
           </thead>
@@ -91,22 +89,14 @@ block content %}
             %}
             <tr>
               <td>
-                <input
-                  type="checkbox"
-                  class="video-checkbox{{ date_str }} mt-2"
-                  name="video_ids"
-                  value="{{ video.id }}" />
+                <input type="checkbox" class="video-checkbox{{ date_str }} mt-2" name="video_ids" value="{{ video.id }}" />
               </td>
-
               <td>
-                {{ video.camera_name }}{% if video.is_dt == True %} (Auto) {%
-                endif %}
+                {{ video.camera_name }}{% if video.is_dt == True %} (Auto) {% endif %}
               </td>
-
               <td>
                 {% if video.recorded_time %} {{
-                video.recorded_time.strftime('%H:%M:%S') }} {% else %} - {%
-                endif %}
+                video.recorded_time.strftime('%H:%M:%S') }} {% else %} - {% endif %}
               </td>
 
               <td>
@@ -138,7 +128,6 @@ block content %}
                       d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 242.7-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7 288 32zM64 352c-35.3 0-64 28.7-64 64l0 32c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-32c0-35.3-28.7-64-64-64l-101.5 0-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352 64 352zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z" />
                   </svg>
                 </a>
-
                 <form
                   method="POST"
                   action="{{ url_for('cam.delete_video', video_id=video.id) }}"
@@ -167,7 +156,6 @@ block content %}
         </table>
       </div>
     </div>
-
 
   {% endfor %}
 
@@ -224,12 +212,8 @@ block content %}
     });
   });
 </script>
-
 <script src=" {{ url_for('cam.static', filename='js/script.js')}}"></script>
-
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
-
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 {% endblock %}
