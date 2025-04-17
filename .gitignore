@@ -211,16 +211,11 @@ pip-selfcheck.json
 Process/log.txt
 Process/yolo11n.pt
 Process/dbconfig.py
-<<<<<<< HEAD
 Process/email_config.py
 Process/S3Upload
 Process/S3Upload/s3_config.py
-=======
-Process/S3Upload
-Process/S3Upload/s3_config.py
-Process/email_config.py
+Process/s3_config.py
 
->>>>>>> 42e28b4dc83a1ce4b4d338afd350e69d77151a11
 # jpg, jpeg, png, gif, bmp, tif, tiff, svg, eps, webp
 *.jpg
 
