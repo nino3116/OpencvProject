@@ -1,14 +1,14 @@
 {% extends "mode/base.html"%} {% block title %}상세 로그 {% endblock %} {% block
 content %}
 
-<div class="cover-container p-3 mx-auto n">
+<div class="cover-container mx-auto">
   {% include "cam/header.html" %}
 
   <main>
     <h2>상세 로그</h2>
     <div class="table-responsive">
       <table
-        class="table table-bordered table-dark table-striped table-hover align-middle fw-bold">
+        class="table table-bordered table-striped table-hover align-middle fw-bold">
         {% if detailed_logs %}
         <thead>
           <tr>
