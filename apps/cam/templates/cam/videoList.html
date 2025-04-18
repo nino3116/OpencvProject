@@ -1,7 +1,7 @@
 {% extends "cam/base.html" %} {% block title %}비디오 목록{% endblock %} {%
 block content %}
 
-  <div class="cover-container d-flex p-3 m-auto flex-column">
+  <div class="cover-container d-flex m-auto flex-column">
 
     <style>
       .table thead, .table tbody { 
@@ -72,8 +72,8 @@ block content %}
       </form>
 
       <div class="table-responsive">
-        <table class="table table-bordered table-striped table-dark fw-bold">
-          <thead>
+        <table class="table table-bordered table-striped fw-bold ">
+          <thead >
             <tr>
               <th>
                 <input type="checkbox" class="select-all-checkbox mb-1" data-date="{{ date_str }}" /> 

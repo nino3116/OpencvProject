@@ -2,12 +2,10 @@ html,
 body {
   height: 100%;
   font-family: sans-serif;
-  /* box-shadow: inset 0 0 5rem rgba(0, 0, 0, 0.5); */
-
 }
 
 .cover-container {
-  max-width: 58em;
+  max-width: 61em;
   min-height: 100%; /* 또는 min-height: 100%; */
   display: flex;
   flex-direction: column;
@@ -42,4 +40,56 @@ main {
 
  .footer-blank {
   padding-bottom: 80px; 
+}
+
+[data-bs-theme="dark"] .custom-footer {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    var(--bs-dark) 100%
+  );
+  color: #f1f1f1;
+}
+
+[data-bs-theme="light"] .custom-footer {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    var(--bs-light) 100%
+  );
+  color: #212529;
+}
+
+
+/*------------------theme---------------------*/
+
+.bi {
+  vertical-align: -.125em;
+  fill: currentColor;
+}
+
+
+.btn-bd-primary {
+  --bd-violet-bg: #712cf9;
+  --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+
+  --bs-btn-font-weight: 600;
+  --bs-btn-color: var(--bs-white);
+  --bs-btn-bg: var(--bd-violet-bg);
+  --bs-btn-border-color: var(--bd-violet-bg);
+  --bs-btn-hover-color: var(--bs-white);
+  --bs-btn-hover-bg: #6528e0;
+  --bs-btn-hover-border-color: #6528e0;
+  --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+  --bs-btn-active-color: var(--bs-btn-hover-color);
+  --bs-btn-active-bg: #5a23c8;
+  --bs-btn-active-border-color: #5a23c8;
+}
+
+.bd-mode-toggle {
+  z-index: 1500;
+}
+
+.bd-mode-toggle .dropdown-menu .active .bi {
+  display: block !important;
 }

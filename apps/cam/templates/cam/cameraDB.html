@@ -8,7 +8,7 @@
 	<main>
 		<div class="table-responsive">
 			<h2>카메라 목록</h2>
-			<table class="table table-dark table-striped table-hover align-middle">
+			<table class="table table-striped table-hover align-middle fw-bold">
 				<thead>
 					<tr>
 						<th>ID</th>
@@ -20,9 +20,9 @@
 				<tbody>
 					{% for cam in cams %}
 					<tr>
-						<td class = "td">{{ cam.id }}</td>
-						<td class = "td">{{ cam.cam_name }}</td>
-						<td class = "td text-break">{{ cam.cam_url }}</td>
+						<td >{{ cam.id }}</td>
+						<td >{{ cam.cam_name }}</td>
+						<td class = "text-break">{{ cam.cam_url }}</td>
 						<td>
 							<a
 								class="btn btn-info btn-sm"
