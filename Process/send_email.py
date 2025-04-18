@@ -25,17 +25,10 @@ def send_email(subject, body):
 
 def send_html_email(info, to_email):
 
-    # # 다운로드 링크 생성
-    # download_url = f"http://yourserver.com/videos/{info['filename']}"
-
     # HTML 템플릿에 데이터 삽입
     html_template = open("./email_template.html", "r", encoding="utf-8").read()
-    html_content = (
-        html_template.replace("{{event}}", info["event"]).replace(
-            "{{timestamp}}", info["timestamp"]
-        )
-        # .replace("{{filename}}", info["filename"])
-        # .replace("{{download_url}}", download_url)
+    html_content = html_template.replace("{{event}}", info["event"]).replace(
+        "{{timestamp}}", info["timestamp"]
     )
 
     # 이메일 구성
