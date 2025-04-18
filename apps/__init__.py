@@ -71,12 +71,12 @@ def create_app(config_key):
             with socket.create_connection(
                 (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
             ) as sock:
-                data = sock.recv(2048).decode('utf-8')
+                data = sock.recv(2048).decode("utf-8")
                 data = json.loads(data)
                 for v in data:
-                    if data[v]['dt_active'] == True:
+                    if data[v]["dt_active"] == True:
                         num_dt_cams += 1
-                
+
         except (ConnectionRefusedError, TimeoutError):
             logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
         except:
@@ -86,13 +86,15 @@ def create_app(config_key):
             num_total_cams=num_total_cams,
             num_active_cams=num_active_cams,
             num_recording_cams=num_recording_cams,
-            num_dt_cams=num_dt_cams
+            num_dt_cams=num_dt_cams,
         )
 
-        from apps.app import check_cam_periodically
+    # 백그라운드 스레드 시작
+    from apps.app import check_cam_periodically
 
-        cam_check_thread = threading.Thread(target=check_cam_periodically)
-        cam_check_thread.daemon = True
-        cam_check_thread.start()
+    thread = threading.Thread(target=check_cam_periodically, args=(app,))
+    thread.daemon = True  # 메인 프로세스 종료 시 함께 종료
+    thread.start()
+    logging.info("카메라 상태 확인 스레드 시작")
 
     return app

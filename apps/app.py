@@ -10,6 +10,7 @@ from flask import current_app
 import cv2 as cv
 import time
 import random
+import logging
 from S3upload.s3client import upload_file
 from S3upload.s3_config import BUCKET
 
@@ -268,23 +269,41 @@ def stop_recording_all():
                     print(f"카메라 ID '{camera.id}' 녹화 스레드 제거됨.")
 
 
-def check_cam_periodically():
+def check_cam_periodically(app):  # Keep the 'app' argument
+    import logging
+
     while True:
-        with app.app_context():
-            cams = Cams.query.all()
-            for cam in cams:
-                try:
-                    cap = cv.VideoCapture(cam.url)
-                    if not cap.isOpened():
-                        logging.warning(
-                            f"Camera {cam.id} ({cam.url})을 열 수 없습니다."
+        # Use the passed 'app' object to create the context
+        with app.app_context():  # <--- FIX HERE
+            try:  # Add try...except for robustness within the loop
+                cams = Cams.query.all()
+                for cam in cams:
+                    cap = None  # Ensure cap is defined before try block
+                    try:
+                        # Use cam.cam_url instead of cam.url (based on your Cams model)
+                        cap = cv.VideoCapture(cam.cam_url)
+                        if not cap.isOpened():
+                            logging.warning(
+                                f"Camera {cam.id} ({cam.cam_url}) cannot be opened."
+                            )
+                            cam.is_active = False
+                        else:
+                            cam.is_active = True
+                            # logging.debug(f"Camera {cam.id} ({cam.cam_url}) is active.") # Optional debug log
+                    except Exception as e:
+                        logging.error(
+                            f"Error checking camera {cam.id} ({cam.cam_url}): {e}"
                         )
-                        cam.is_active = False
-                    else:
-                        cam.is_active = True
-                        cap.release()
-                except Exception as e:
-                    logging.error(f"카메라 상태 확인 중 오류 발생: {e}")
-            db.session.commit()
-            logging.info("카메라 상태 확인 완료 (스레드)")
+                        cam.is_active = False  # Mark as inactive on error
+                    finally:
+                        if cap is not None:
+                            cap.release()  # Ensure release even if opened successfully
+
+                db.session.commit()
+                logging.info("Camera status check complete (thread)")
+            except Exception as e:
+                logging.error(f"Error during periodic camera check loop: {e}")
+                # Optional: Rollback session if an error occurs during the DB operations
+                db.session.rollback()
+
         time.sleep(60)  # 60초마다 실행
