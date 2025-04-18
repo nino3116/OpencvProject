@@ -87,8 +87,13 @@ def check_status():
     except:
         recognition_module_running = False
         pass
+
+    cam_list = {}
     
-    return {"running": recognition_module_running , "cam_data": data}
+    for i in Cams.query.all():
+        cam_list[i.id] = i.cam_name
+    
+    return {"running": recognition_module_running , "cam_data": data, "cam_list": cam_list}
 
 @cam.route("/check_cam_status")
 def check_cam_status():
@@ -143,12 +148,13 @@ def shutdown_module():
 @login_required
 def index():
     form = ShutdownForm()
-    
+    data = check_status()
     return render_template(
         "cam/index.html",
-        recognition_running = check_status()['running'],
+        recognition_running = data['running'],
         form = form,
-        cam_data = check_status()['cam_data']
+        cam_data = data['cam_data'],
+        cam_list = data['cam_list']
     )
 
 

@@ -23,8 +23,8 @@ def status_listener():
     global ppipes
     
     data = {}
-    for row in camera_list:
-        cid = int(row["id"])
+    for row in camera_list: # 전체 카메라 정보를 받아와서 Dict 생성
+        cid = int(row["id"]) # Camera id로 확인
         data[cid] = {}
         data[cid]["cam_name"] = row["cam_name"]
         data[cid]["dt_active"] = False
@@ -33,16 +33,16 @@ def status_listener():
         try:
             conn, addr = server_socket.accept()
             with conn:
-                for cid in data:
+                for cid in data: # Flask에 보내줄 데이터 확인
                     try:
-                        if cid in ppipes:
+                        # 카메라가 동작하고있는지를 데이터 전송용 Pipe가 살아있는지로 확인
+                        if cid in ppipes: 
                             data[cid]["dt_active"] = True
                         else:
                             data[cid]["dt_active"] = False
                     except Exception as e:
                         traceback.print_exc(e)
                         pass
-                print(data)
                 encoded_data = json.dumps(data).encode('utf-8')
                 conn.sendall(encoded_data)
                 logging.info("Status listener loop send msg")
