@@ -68,6 +68,7 @@ RECOGNITION_MODULE_STATUS_PORT = 8002  # 상태 확인용 새 포트
 
 recognition_module_running = False
 
+
 @cam.route("/check_status")
 def check_status():
     global recognition_module_running
@@ -78,17 +79,18 @@ def check_status():
         ) as sock:
             recognition_module_running = True
             logging.info("인식 모듈 연결됨 (상태 확인)")
-            data = sock.recv(2048).decode('utf-8')
+            data = sock.recv(2048).decode("utf-8")
             data = json.loads(data)
-            
+
     except (ConnectionRefusedError, TimeoutError):
         recognition_module_running = False
         logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
     except:
         recognition_module_running = False
         pass
-    
-    return {"running": recognition_module_running , "cam_data": data}
+
+    return {"running": recognition_module_running, "cam_data": data}
+
 
 @cam.route("/check_cam_status")
 def check_cam_status():
@@ -100,25 +102,31 @@ def check_cam_status():
         with socket.create_connection(
             (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
         ) as sock:
-            data = sock.recv(2048).decode('utf-8')
+            data = sock.recv(2048).decode("utf-8")
             data = json.loads(data)
             for v in data:
-                if data[v]['dt_active'] == True:
+                if data[v]["dt_active"] == True:
                     num_dt_cams += 1
-            
+
     except (ConnectionRefusedError, TimeoutError):
         logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
     except:
         pass
-    
-    return {"total_cams": num_total_cams, "active_cams":num_active_cams, "rec_cams":num_recording_cams, "dt_cams": num_dt_cams}
+
+    return {
+        "total_cams": num_total_cams,
+        "active_cams": num_active_cams,
+        "rec_cams": num_recording_cams,
+        "dt_cams": num_dt_cams,
+    }
+
 
 @cam.route("/shutdown", methods=["POST"])
 def shutdown_module():
     global recognition_module_running
     form = ShutdownForm()
     if form.validate_on_submit():
-        if not check_status()['running']:
+        if not check_status()["running"]:
             logging.warning(
                 "인식 모듈이 실행 중이 아닙니다. 종료 신호 전송을 건너뜁니다."
             )
@@ -143,12 +151,12 @@ def shutdown_module():
 @login_required
 def index():
     form = ShutdownForm()
-    
+
     return render_template(
         "cam/index.html",
-        recognition_running = check_status()['running'],
-        form = form,
-        cam_data = check_status()['cam_data']
+        recognition_running=check_status()["running"],
+        form=form,
+        cam_data=check_status()["cam_data"],
     )
 
 
@@ -364,71 +372,6 @@ def play_origin_video(video_id):
         return redirect(url_for("cam.list_videos"))
 
 
-# @cam.route("/videos", methods=["GET", "POST"])
-# @login_required
-# def list_videos():
-#     """저장된 비디오 목록을 보여주는 페이지 (날짜/녹화시간 순)"""
-#     form = VideoSearchForm(request.form)
-
-#     # 카메라 이름 목록을 가져와 choices 설정
-#     camera_names = sorted(list(set(video.camera_name for video in Videos.query.all())))
-#     form.camera_name.choices = [("", "전체")] + [(name, name) for name in camera_names]
-
-#     # 녹화 날짜 내에서 녹화 시간으로 정렬하여 비디오 목록 가져오기
-#     videos = Videos.query.order_by(
-#         Videos.recorded_date.desc(), Videos.recorded_time
-#     ).all()
-
-#     if form.validate_on_submit():
-#         search_camera_name = form.camera_name.data
-#         search_date = form.date.data
-
-#         filtered_videos = []
-#         for video in videos:
-#             match_camera = True
-#             if search_camera_name and search_camera_name != "전체":
-#                 if search_camera_name.lower() not in video.camera_name.lower():
-#                     match_camera = False
-
-#             match_date = True
-#             if search_date:
-#                 if isinstance(search_date, str):
-#                     try:
-#                         search_date_obj = datetime.strptime(
-#                             search_date, "%Y-%m-%d"
-#                         ).date()
-#                         if (
-#                             not video.recorded_date
-#                             or video.recorded_date.date() != search_date_obj
-#                         ):
-#                             match_date = False
-#                     except ValueError:
-#                         flash("잘못된 날짜 형식입니다. (YYYY-MM-DD)", "error")
-#                         match_date = False
-#                 elif isinstance(search_date, date):
-#                     if not video.recorded_date or video.recorded_date != search_date:
-#                         match_date = False
-
-#             if match_camera and match_date:
-#                 filtered_videos.append(video)
-
-#         videos = filtered_videos
-
-#     grouped_videos = defaultdict(list)  # 카메라 이름별 그룹화 제거
-#     for video in videos:
-#         if video.recorded_date:
-#             date_str = video.recorded_date.strftime("%Y-%m-%d")
-#             grouped_videos[date_str].append(video)
-
-#         else:
-#             grouped_videos["알 수 없는 날짜"].append(video)
-
-
-#     return render_template(
-#         "cam/videoList.html",
-#         grouped_videos=grouped_videos,
-#         form=form,
-#     )
 @cam.route("/videos", methods=["GET", "POST"])
 @login_required
 def list_videos():
@@ -472,7 +415,7 @@ def list_videos():
     form.end_date.data = end_date
     form.per_page.data = str(per_page)
 
-    # 기본 쿼리 구성   
+    # 기본 쿼리 구성
     query = Videos.query
     if camera_name and camera_name != "전체":
         query = query.filter(Videos.camera_name.ilike(f"%{camera_name}%"))
