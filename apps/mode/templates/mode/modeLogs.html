@@ -1,14 +1,14 @@
 {% extends "mode/base.html"%} {% block title %}모드 스케줄 상세 {% endblock %}
 {% block content %}
 
-<div class="cover-container p-3 mx-auto">
+<div class="cover-container mx-auto">
   {% include "cam/header.html" %}
 
   <main>
     <h2>모드 스케줄 상세</h2>
     <div class="table-responsive">
       <table
-        class="table table-bordered table-dark table-striped table-hover align-middle fw-bold"
+        class="table table-bordered table-striped table-hover align-middle fw-bold"
       >
         <tbody>
           <tr>
@@ -61,7 +61,7 @@
       <div class="collapse show" id="detectedLogsCollapse">
         <div class="table-responsive">
           <table
-            class="table table-bordered table-dark table-striped table-hover align-middle fw-bold"
+            class="table table-bordered table-striped table-hover align-middle fw-bold"
           >
             <thead>
               <tr>
@@ -101,7 +101,7 @@
                       <div class="modal-content">
                         <div class="modal-header">
                           <h5
-                            class="modal-title text-dark text-center"
+                            class="modal-title text-center"
                             id="detailedLogModalLabel{{ log.idx }}"
                           >
                             상세로그 ({{ log.detected_time }} ~ {{ log.dend_time
@@ -118,7 +118,7 @@
                           {% if detailed_logs_map[log.idx] %}
                           <div class="table-responsive">
                             <table
-                              class="table table-bordered table-dark table-striped table-hover align-middle fw-bold"
+                              class="table table-bordered table-striped table-hover align-middle fw-bold"
                             >
                               <thead>
                                 <tr>
@@ -145,7 +145,7 @@
                             </table>
                           </div>
                           {% else %}
-                          <p class="text-dark">
+                          <p>
                             표시할 로그가 존재하지 않습니다
                           </p>
                           {% endif %}
