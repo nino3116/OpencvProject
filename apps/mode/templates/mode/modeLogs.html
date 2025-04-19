@@ -1,0 +1,182 @@
+{% extends "mode/base.html"%} {% block title %}모드 스케줄 상세 {% endblock %}
+{% block content %}
+
+<div class="cover-container mx-auto">
+  {% include "cam/header.html" %}
+
+  <main>
+    <h2>모드 스케줄 상세</h2>
+    <div class="table-responsive">
+      <table
+        class="table table-bordered table-striped table-hover align-middle fw-bold"
+      >
+        <tbody>
+          <tr>
+            <th>모드</th>
+            <td>{{ schedule.mode_type }}</td>
+          </tr>
+          <tr>
+            <th>인원</th>
+            <td>{{ schedule.people_cnt }}</td>
+          </tr>
+          <tr>
+            <th>시작 시각</th>
+            <td>{{ schedule.start_time }}</td>
+          </tr>
+          <tr>
+            <th>종료 시각</th>
+            <td>{{ schedule.end_time }}</td>
+          </tr>
+          <tr>
+            <th>대표자</th>
+            <td>{{ schedule.rep_name }}</td>
+          </tr>
+          <tr>
+            <th>메모</th>
+            <td>{{ schedule.memo if schedule.memo else '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        <a href="{{ url_for('mode.index') }}" class="btn btn-secondary"
+          >목록으로 돌아가기</a
+        >
+      </p>
+    </div>
+
+    <div class="mt-4">
+      <h2>인원 초과로그</h2>
+      {% if detected_logs %}
+      <button
+        class="btn btn-info"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#detectedLogsCollapse"
+        aria-expanded="false"
+        aria-controls="detectedLogsCollapse"
+      >
+        로그 보기/숨기기
+      </button>
+      <p></p>
+      <div class="collapse show" id="detectedLogsCollapse">
+        <div class="table-responsive">
+          <table
+            class="table table-bordered table-striped table-hover align-middle fw-bold"
+          >
+            <thead>
+              <tr>
+                <th>감지시간</th>
+                <th>종료시간</th>
+                <th>감지인원</th>
+                <th>Info</th>
+                <th>상세보기</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in detected_logs %}
+              <tr>
+                <td>{{ log.detected_time }}</td>
+                <td>{{ log.dend_time }}</td>
+                <td>{{ log.max_person_detected }}</td>
+                <td>{{ log.info }}</td>
+                <td>
+                  <button
+                    class="btn btn-primary btn-sm"
+                    type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#detailedLogModal{{ log.idx }}"
+                  >
+                    상세보기
+                  </button>
+                  <div
+                    class="modal fade"
+                    id="detailedLogModal{{ log.idx }}"
+                    tabindex="-1"
+                    aria-labelledby="detailedLogModalLabel{{ log.idx }}"
+                    aria-hidden="true"
+                  >
+                    <div
+                      class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+                    >
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5
+                            class="modal-title text-center"
+                            id="detailedLogModalLabel{{ log.idx }}"
+                          >
+                            상세로그 ({{ log.detected_time }} ~ {{ log.dend_time
+                            }})
+                          </h5>
+                          <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                          ></button>
+                        </div>
+                        <div class="modal-body">
+                          {% if detailed_logs_map[log.idx] %}
+                          <div class="table-responsive">
+                            <table
+                              class="table table-bordered table-striped table-hover align-middle fw-bold"
+                            >
+                              <thead>
+                                <tr>
+                                  <th>감지시간</th>
+                                  <th>전체 감지인원</th>
+                                  <th>카메라 1 감지인원</th>
+                                  <th>카메라 2 감지인원</th>
+                                  <th>카메라 3 감지인원</th>
+                                  <th>카메라 4 감지인원</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for item in detailed_logs_map[log.idx] %}
+                                <tr>
+                                  <td>{{ item.place_log.dt_time }}</td>
+                                  <td>{{ item.place_log.tp_cnt }}</td>
+                                  <td>{{ item.camera_counts.camera1_cnt }}</td>
+                                  <td>{{ item.camera_counts.camera2_cnt }}</td>
+                                  <td>{{ item.camera_counts.camera3_cnt }}</td>
+                                  <td>{{ item.camera_counts.camera4_cnt }}</td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                          {% else %}
+                          <p>
+                            표시할 로그가 존재하지 않습니다
+                          </p>
+                          {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                          <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                          >
+                            닫기
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% else %}
+      <p>인원 초과 로그가 없습니다.</p>
+      {% endif %}
+    </div>
+  </main>
+  <div class="footer-blank"></div>
+
+  {% include "cam/footer.html" %}
+</div>
+
+{%endblock%}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      .container {
+        font-family: Arial, sans-serif;
+        border: 1px solid #ddd;
+        padding: 20px;
+        max-width: 500px;
+      }
+      .header {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #d9534f;
+      }
+      .details {
+        margin-bottom: 20px;
+      }
+      .footer {
+        font-size: 12px;
+        color: #888;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">🚨 사람 수 초과 이벤트 발생</div>
+      <div class="details">
+        <p><strong>이벤트:</strong> {{event}}</p>
+        <p><strong>시간:</strong> {{timestamp}}</p>
+      </div>
+
+      <div class="footer">이 메일은 감시 시스템에서 자동 발송되었습니다.</div>
+    </div>
+  </body>
+</html>

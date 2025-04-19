@@ -7,6 +7,16 @@ from flask_wtf.csrf import CSRFProtect
 import os
 from dotenv import load_dotenv
 
+
+# 소켓통신을 위해
+import socket
+import logging
+import json
+
+RECOGNITION_MODULE_HOST = "localhost"
+RECOGNITION_MODULE_PORT = 8001
+RECOGNITION_MODULE_STATUS_PORT = 8002  # 상태 확인용 새 포트
+
 db = SQLAlchemy()
 csrf = CSRFProtect()
 login_manager = LoginManager()
@@ -45,14 +55,37 @@ def create_app(config_key):
 
     @app.route("/")
     def to_index():
+
         return redirect(url_for("cam.index"))
 
-    # start_recording_all 함수를 create_app 내에서 호출
-    with app.app_context():
-        from apps.app import start_recording_all
+    @app.context_processor
+    def inject_camera_counts():
+        from apps.cam.models import Cams
 
-        # print("create_app 내부에서 start_recording_all 호출 시도")
-        # start_recording_all()
-        # print("create_app 내부에서 start_recording_all 호출 완료")
+        num_total_cams = Cams.query.count()
+        num_active_cams = Cams.query.filter_by(is_active=True).count()
+        num_recording_cams = Cams.query.filter_by(is_recording=True).count()
+        num_dt_cams = 0
+        try:
+            with socket.create_connection(
+                (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
+            ) as sock:
+                data = sock.recv(2048).decode('utf-8')
+                data = json.loads(data)
+                for v in data:
+                    if data[v]['dt_active'] == True:
+                        num_dt_cams += 1
+                
+        except (ConnectionRefusedError, TimeoutError):
+            logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
+        except:
+            pass
+
+        return dict(
+            num_total_cams=num_total_cams,
+            num_active_cams=num_active_cams,
+            num_recording_cams=num_recording_cams,
+            num_dt_cams=num_dt_cams
+        )
 
     return app

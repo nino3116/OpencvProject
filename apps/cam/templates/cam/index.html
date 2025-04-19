@@ -1,30 +1,97 @@
-<!DOCTYPE html>
-{% extends "cam/base.html" %}
-{% block title %}camera 관리{% endblock %}
+{% extends "cam/base.html" %} {% block title %} Home {% endblock %} {% block
+content %}
+<div class="cover-container w-100 h-100 p-3 mx-auto">
+  {% include "cam/header.html" %}
+  <main class="m-auto px-5">
+    <h1>스마트 CCTV 관리</h1>
+    <p class="lead">
+      이 페이지는 실시간 물체 감지 기능을 갖춘 CCTV 관리 시스템입니다. 간편한
+      설정으로 보안 환경을 강화하고, 감지된 영상을 효율적으로 관리하세요.
+    </p>
 
-<body class="d-flex text-center bg-dark bg-gradient text-white">
-  {% block content %}
-  <div class="cover-container d-flex w-100 h-100 p-1 mx-auto flex-column">
-    {% include "cam/header.html" %}
-        <main class="m-auto px-5" >
-          <h1>스마트 CCTV 관리</h1>
-          <p class="lead">
-            이 페이지는 실시간 물체 감지 기능을 갖춘 CCTV 관리 시스템입니다.
-            간편한 설정으로 보안 환경을 강화하고, 감지된 영상을 효율적으로
-            관리하세요.
-          </p>
-          <p class="lead">
-            <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white"
-              >Learn more</a
-            >
-          </p>
-        </main>
+    <h2>인식 모듈 상태</h2>
+    <p
+      id="status-text"
+      class="lead {% if recognition_running %}text-success{% else %}text-danger{% endif %}">
+      {% if recognition_running %} 실행 중 {% else %} 중지됨 {% endif %}
+    </p>
+    <div class="row row-cols-1 row-cols-md-4 g-4 mt-3">
+      {% if recognition_running %}
+        {% for key, cam in cam_data.items() %}
+          <div class="col">
+            <div class="card bg-dark" style="border: none;">
+              <div class="card-body">
+                <h5 class="card-title text-white">
+                  <i class="bi bi-camera-video-fill me-2"></i>{{ cam ['cam_name'] }}
+                  <span class="badge {% if cam['dt_active'] %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if cam['dt_active'] %}작동 중{% else %}작동 불가{% endif %}
+                  </span>
+                </h5>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
 
-        {% include "cam/footer.html" %}
-        {% endblock %}
-      </div>
-    </body>
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
-  <script src="{{url_for ('static', filename = 'js/bootstrap.bundle.min.js') }}"></script>
-</html>
+    <form
+      id="shutdown-form"
+      method="POST"
+      action="{{ url_for('cam.shutdown_module') }}">
+      {{ form.csrf_token }} {{ form.submit(class="btn btn-danger mt-3", disabled=not
+      recognition_running) }} {##}
+    </form>
+  </main>
+</div>
+{% endblock %} {% include "cam/footer.html" %}{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+
+<script>
+
+  function checkCurrentStatus() {
+    $.get("{{ url_for('cam.check_status') }}", function (data) {
+      const statusText = $("#status-text");
+      const submitBtn = $("#shutdown-form button[type='submit']");
+      if (data.running) {
+        statusText
+          .text("실행 중")
+          .removeClass("text-danger")
+          .addClass("text-success");
+        submitBtn.prop("disabled", false);
+      } else {
+        statusText
+          .text("중지됨")
+          .removeClass("text-success")
+          .addClass("text-danger");
+        submitBtn.prop("disabled", true);
+      }
+    });
+  }
+
+  // 5초마다 상태 체크
+  setInterval(checkCurrentStatus, 5000);
+
+  // 폼 제출 후 상태 자동 갱신
+  $("#shutdown-form").on("submit", function (e) {
+    e.preventDefault(); // 기본 제출 막기
+    const form = $(this);
+    $.post(form.attr("action"), form.serialize())
+      .done(function (response) {
+        console.log("Shutdown response:", response);
+        if (response.status === "success") {
+          alert(response.message); // 성공 메시지 표시
+        } else if (response.status === "info") {
+          alert(response.message); // 정보 메시지 표시
+        }
+        setTimeout(function () {
+          window.location.reload(); // 페이지 새로고침
+        }, 1000); // 1초 뒤 새로고침
+      })
+      .fail(function (err) {
+        alert("종료 실패: " + err.responseJSON.message); // 실패 메시지 표시
+      });
+  });
+</script>
+{% endblock %}

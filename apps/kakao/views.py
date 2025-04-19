@@ -85,7 +85,7 @@ def callback():
             db.session.commit()
             login_user(user)
             message = "카카오 계정으로 로그인에 성공하였습니다."
-            # 카카오톡 메시지 보내기 (기존 코드 유지)
+            # 카카오톡 메시지 보내기
             message_url = "https://kapi.kakao.com/v2/api/talk/memo/default/send"
             headers = {
                 "Authorization": f"Bearer {access_token}",
@@ -148,7 +148,7 @@ def register_submit():
         password = form.password.data
 
         if not kakao_email:
-            flash("카카오 계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "danger")
+            flash("카카오 계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "kakao_danger")
             return redirect(url_for("kakao.kakao_sign_in"))
 
         # 이메일로 이미 등록된 사용자가 있는지 확인 (카카오 로그인 외 일반 가입 고려)
@@ -163,7 +163,7 @@ def register_submit():
         # 사용자 ID로 이미 등록된 사용자가 있는지 확인
         existing_user_by_id = User.query.filter_by(user_id=user_id).first()
         if existing_user_by_id:
-            flash("이미 사용 중인 아이디입니다.", "warning")
+            flash("이미 사용 중인 아이디입니다.", "kakao_warning")
             return render_template(
                 "auth/register_kakao.html",
                 form=form,
@@ -183,7 +183,7 @@ def register_submit():
         login_user(new_user)
         session.pop("kakao_name", None)  # 세션에서 카카오 정보 제거
         session.pop("kakao_email", None)
-        flash("카카오 계정으로 사용자 등록이 완료되었습니다.", "success")
+        flash("카카오 계정으로 사용자 등록이 완료되었습니다.", "kakao_success")
         return redirect(url_for("cam.index"))
     else:
         kakao_name = session.get("kakao_name")
