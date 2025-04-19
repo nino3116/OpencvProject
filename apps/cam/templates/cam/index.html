@@ -15,11 +15,21 @@ content %}
       class="lead {% if recognition_running %}text-success{% else %}text-danger{% endif %}">
       {% if recognition_running %} 실행 중 {% else %} 중지됨 {% endif %}
     </p>
-    <div id="status-detail">
-      {% if recognition_running %} 
-        {% for key in cam_data %}
-        <div> {{ cam_data[key]['cam_name'] }} </div>
-        <div> {% if cam_data[key]['dt_active'] == True %} 작동 중 {% else %} 작동 불가 {% endif %} </div>
+    <div class="row row-cols-1 row-cols-md-4 g-4 mt-3">
+      {% if recognition_running %}
+        {% for key, cam in cam_data.items() %}
+          <div class="col">
+            <div class="card bg-dark" style="border: none;">
+              <div class="card-body">
+                <h5 class="card-title text-white">
+                  <i class="bi bi-camera-video-fill me-2"></i>{{ cam ['cam_name'] }}
+                  <span class="badge {% if cam['dt_active'] %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if cam['dt_active'] %}작동 중{% else %}작동 불가{% endif %}
+                  </span>
+                </h5>
+              </div>
+            </div>
+          </div>
         {% endfor %}
       {% endif %}
     </div>
@@ -28,7 +38,7 @@ content %}
       id="shutdown-form"
       method="POST"
       action="{{ url_for('cam.shutdown_module') }}">
-      {{ form.csrf_token }} {{ form.submit(class="btn btn-danger", disabled=not
+      {{ form.csrf_token }} {{ form.submit(class="btn btn-danger mt-3", disabled=not
       recognition_running) }} {##}
     </form>
   </main>
