@@ -15,24 +15,21 @@ content %}
       class="lead {% if recognition_running %}text-success{% else %}text-danger{% endif %}">
       {% if recognition_running %} 실행 중 {% else %} 중지됨 {% endif %}
     </p>
-    <div id="detail" class="row row-cols-1 row-cols-md-4 g-4">
-      {% for id,name in cam_list.items() %}
-      <div class="col">
-        <div class="card bg-dark" style="border: none">
-          <div class="card-body">
-            <h5 class="card-title text-white">
-              <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
-              <span
-                id="card-cam{{id}}"
-                class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
-                {% if recognition_running %} {% if cam_data[id|string] %} 작동
-                중 {% else %} 작동 불가 {% endif %} {% endif %}
-              </span>
-            </h5>
+    <div id="detail" class="row row-cols-1 row-cols-md-4 g-4" style="display:{% if recognition_running %}flex{% else %}none{% endif %}">
+        {% for id,name in cam_list.items() %}
+          <div class="col">
+            <div class="card bg-dark" style="border: none;">
+              <div class="card-body">
+                <h5 class="card-title text-white">
+                  <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
+                  <span id="card-cam{{id}}" class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
+                    {% if recognition_running %} {% if cam_data[id|string] %} 작동 중 {% else %} 작동 불가 {% endif %} {% endif %}
+                  </span>
+                </h5>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      {% endfor %}
+        {% endfor %}
     </div>
 
     <form
