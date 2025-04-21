@@ -23,7 +23,7 @@ content %}
                 <h5 class="card-title text-white">
                   <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
                   <span id="card-cam{{id}}" class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
-                    {% if recognition_running %} {% if cam_data[id|string] %} 작동 중 테스트용 {% else %} 작동 불가 테스트용 {% endif %} {% endif %}
+                    {% if recognition_running %} {% if cam_data[id|string] %} 작동 중 {% else %} 작동 불가 {% endif %} {% endif %}
                   </span>
                 </h5>
               </div>
@@ -47,6 +47,7 @@ content %}
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
 <script>
+  var current_data = {};
 
   function checkCurrentStatus() {
     $.get("{{ url_for('cam.check_status') }}", function (data) {
