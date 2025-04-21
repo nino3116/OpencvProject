@@ -29,7 +29,7 @@ class LocalConfig(BaseConfig):
 
 # Testing 상황
 class TestingConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = f"sqlite:///{baseDir / 'testing.sqlite'}"
+    SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://user:user@192.168.0.122/project"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = False
 

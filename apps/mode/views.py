@@ -38,7 +38,7 @@ def index():
     # schedules = cur.fetchall()#
     schedules = ModeSchedule.query.all()
     delete_form = DeleteScheduleForm()
-    print(f"가져온 스케줄 목록: {schedules}")  # 추가
+    # print(f"가져온 스케줄 목록: {schedules}")  # 추가
     return render_template("mode/index.html", schedules=schedules, form=delete_form)
 
 
