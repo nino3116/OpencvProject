@@ -74,7 +74,7 @@ def create_app(config_key):
                 data = sock.recv(2048).decode("utf-8")
                 data = json.loads(data)
                 for v in data:
-                    if data[v]["dt_active"] == True:
+                    if data[v] == True:
                         num_dt_cams += 1
 
         except (ConnectionRefusedError, TimeoutError):

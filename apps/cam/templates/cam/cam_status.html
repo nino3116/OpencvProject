@@ -24,7 +24,7 @@
             <tr>
               <td class="td">{{ cam.cam_name }}</td>
               <td class="td text-break">{{ cam.cam_url }}</td>
-              <td class="td">
+              <td class="td" id = "cams_status_{{ cam.id }}">
                 {% if cam.is_active %} 활성화 {% else %} 비활성화 {% endif %}
               </td>
               <td class="td">
@@ -65,4 +65,22 @@
     </div>
   </div>
 {% endblock %}
+{% block scripts %}
+<script>
+function checkActive() {
 
+  $.get("{{ url_for('cam.check_active')}}", function (data) {
+    for (var key in data.cams_status) {
+      if (data.cams_status[key]) {
+        $("#cams_status_" + key).text("작동 중");
+      }
+      else {
+          $("#cams_status_" + key).text("비활성화");
+       }
+    }
+  });
+}
+
+setInterval(checkActive, 5000);
+</script>
+{% endblock %}

@@ -91,15 +91,21 @@ def check_status():
         pass
 
     cam_list = {}
-    
+
     for i in Cams.query.all():
         cam_list[i.id] = i.cam_name
-    
-    return {"running": recognition_module_running , "cam_data": data, "cam_list": cam_list}
+
+    return {
+        "running": recognition_module_running,
+        "cam_data": data,
+        "cam_list": cam_list,
+    }
+
 
 @cam.route("/check_cam_status")
 def check_cam_status():
     num_total_cams = Cams.query.count()
+    check_active()
     num_active_cams = Cams.query.filter_by(is_active=True).count()
     num_recording_cams = Cams.query.filter_by(is_recording=True).count()
     num_dt_cams = 0
@@ -110,7 +116,7 @@ def check_cam_status():
             data = sock.recv(2048).decode("utf-8")
             data = json.loads(data)
             for v in data:
-                if data[v]== True:
+                if data[v] == True:
                     num_dt_cams += 1
 
     except (ConnectionRefusedError, TimeoutError):
@@ -129,26 +135,29 @@ def check_cam_status():
 @cam.route("/check_active")
 def check_active():
     cams = Cams.query.all()
-    num_active_cams = 0
+    cams_status = {}
     try:
         cap = None
-        with cam in cams:
+        for cam in cams:
             cap = cv.VideoCapture(cam.cam_url)
             if cap.isOpened():
                 cam.is_active = True
                 logging.info(f"카메라 {cam.cam_name}가 활성화되었습니다.")
-                db.session.commit()
+
             elif not cap.isOpened() and cam.is_active:
                 cam.is_active = False
-                db.session.commit()
                 logging.info(f"카메라 {cam.cam_name}가 비활성화되었습니다.")
+            cams_status[cam.id] = cam.is_active
+
     except Exception as e:
         logging.error(f"카메라 동작 확인 중 오류 발생: {e}")
         db.session.rollback()
     finally:
-        cap.release()
-        num_active_cams = Cams.query.filter_by(is_active=True).count()
-    return {"active_cams": num_active_cams}
+        if cap is not None:
+            cap.release()
+        db.session.commit()
+
+    return {"cams_status": cams_status}
 
 
 @cam.route("/shutdown", methods=["POST"])
@@ -184,10 +193,10 @@ def index():
     data = check_status()
     return render_template(
         "cam/index.html",
-        recognition_running = data['running'],
-        form = form,
-        cam_data = data['cam_data'],
-        cam_list = data['cam_list']
+        recognition_running=data["running"],
+        form=form,
+        cam_data=data["cam_data"],
+        cam_list=data["cam_list"],
     )
 
 
