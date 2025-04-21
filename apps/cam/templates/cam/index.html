@@ -47,11 +47,11 @@ content %}
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
 <script>
-  current_data = {};
 
   function checkCurrentStatus() {
     $.get("{{ url_for('cam.check_status') }}", function (data) {
       console.log(data);
+      
       const statusText = $("#status-text");
       const submitBtn = $("#shutdown-form button[type='submit']");
       if (data.running) {
