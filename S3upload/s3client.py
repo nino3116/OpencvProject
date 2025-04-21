@@ -14,21 +14,21 @@ s3client = boto3.client(
 def upload_file(file_name, key):
     try:
         s3client.upload_file(file_name, BUCKET, key)
-        print(f"S3 버킷 '{BUCKET}'에 {file_name}를 {key}로 업로드했습니다.")
+        logging.info(f"S3 버킷 '{BUCKET}'에 {file_name}를 {key}로 업로드했습니다.")
     except FileNotFoundError:
-        print(f"Error: 파일 '{file_name}'을 찾을 수 없습니다.")
+        logging.error(f"Error: 파일 '{file_name}'을 찾을 수 없습니다.")
     except Exception as e:
-        print(f"S3 업로드 오류: {e}")
+        logging.error(f"S3 업로드 오류: {e}")
 
 
 def delete_file(key):
     try:
         s3client.delete_object(Bucket=BUCKET, Key=key)
-        print(f"S3 버킷 '{BUCKET}' 에서 {key}를 삭제했습니다.")
+        logging.info(f"S3 버킷 '{BUCKET}' 에서 {key}를 삭제했습니다.")
     except FileNotFoundError:
-        print(f"Error: 파일 '{file_name}'을 찾을 수 없습니다.")
+        logging.error(f"Error: 파일 '{file_name}'을 찾을 수 없습니다.")
     except Exception as e:
-        print(f"S3 삭제 오류: {e}")
+        logging.error(f"S3 삭제 오류: {e}")
 
 
 def generate_presigned_url(key, operation="get_object", expiry=3600):

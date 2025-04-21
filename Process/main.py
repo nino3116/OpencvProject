@@ -50,6 +50,7 @@ def shutdown_listener():
     server_socket.close()
     logging.info("Shutdown listener stopped.")
 
+
 if __name__ == "__main__":
     import multiprocessing
     from queue import Full, Empty
@@ -94,10 +95,10 @@ if __name__ == "__main__":
                 f"Skipping camera entry due to missing 'id' or 'cam_url': {row}"
             )
             continue
-        
+
         camera_id = int(row["id"])
         camera_url = row["cam_url"]
-        
+
         # 부모-자식 파이프 생성
         parent_pipe, child_pipe = multiprocessing.Pipe() # 녹화 메세지 전송을 위한 파이프
 
@@ -107,7 +108,7 @@ if __name__ == "__main__":
             args=(camera_url, camera_id, q, child_pipe),
             daemon=True,  # 데몬 프로세스로 설정
         )
-        
+
         ProcessDic[camera_id] = process
         ppipes[camera_id] = parent_pipe  # 카메라 ID를 키로 부모 파이프 저장
         status[camera_id] = False
@@ -148,19 +149,21 @@ if __name__ == "__main__":
     while main_loop_active:
         try:
             # 스레드 상태 확인 (status)
-            if status_thread!= None and status_thread.is_alive():
+            if status_thread != None and status_thread.is_alive():
                 pass
             else:
                 logging.info("Status Listener Thread is not alive. try to restart...")
                 status_thread = threading.Thread(target=status_listener, daemon=True)
                 status_thread.start()
-            
+
             # 스레드 상태 확인 (shutdown)
-            if shutdown_thread!= None and shutdown_thread.is_alive():
+            if shutdown_thread != None and shutdown_thread.is_alive():
                 pass
             else:
                 logging.info("Shutdown Thread Listener is not alive. try to restart...")
-                shutdown_thread = threading.Thread(target=shutdown_listener, daemon=True)
+                shutdown_thread = threading.Thread(
+                    target=shutdown_listener, daemon=True
+                )
                 shutdown_thread.start()
         except Exception as e:
             traceback.print_exc(e)
@@ -289,7 +292,7 @@ if __name__ == "__main__":
                             active_modes = (
                                 cur.fetchall()
                             )  # 여러 모드가 겹칠 수 있으므로 fetchall 사용
-                            
+
                             record_flag_before = should_record
                             should_record = False  # 녹화 시작 플래그
                             
@@ -494,7 +497,7 @@ if __name__ == "__main__":
                 ProcessDic[cid].join()  # 강제 종료 후 대기
         except Exception as e:
             logging.error(f"Error joining process {ProcessDic[cid].pid}: {e}")
-    
+
     # 스레드가 종료될 때 까지 대기
     logging.info("Waiting for status thread to terminate...")
     status_thread.join()

@@ -1,0 +1,9 @@
+# Snapshots and videos
+*.jpg
+*.mp4
+
+# etc data
+*.zip
+*.bz2
+
+venv/

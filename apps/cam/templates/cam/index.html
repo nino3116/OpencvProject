@@ -36,8 +36,8 @@ content %}
       id="shutdown-form"
       method="POST"
       action="{{ url_for('cam.shutdown_module') }}">
-      {{ form.csrf_token }} {{ form.submit(class="btn btn-danger mt-3", disabled=not
-      recognition_running) }} {##}
+      {{ form.csrf_token }} {{ form.submit(class="btn btn-danger mt-3",
+      disabled=not recognition_running) }} {##}
     </form>
   </main>
 </div>
@@ -62,25 +62,24 @@ content %}
           .addClass("text-success");
         submitBtn.prop("disabled", false);
         document.getElementById("detail").style.display = "flex";
-        
-        for (var key in data.cam_data){
-          status = data.cam_data[key]
-          if (current_data[key] != status){
-            ccard = document.getElementById("card-cam"+key);
-            
-            if (status === 'true'){
+
+        for (var key in data.cam_data) {
+          status = data.cam_data[key];
+          if (current_data[key] != status) {
+            ccard = document.getElementById("card-cam" + key);
+
+            if (status === "true") {
               ccard.innerText = "작동 중";
-              ccard.classList.remove('bg-secondary');
-              ccard.classList.add('bg-success');
-            }else{
+              ccard.classList.remove("bg-secondary");
+              ccard.classList.add("bg-success");
+            } else {
               ccard.innerText = "작동 불가";
-              ccard.classList.remove('bg-success');
-              ccard.classList.add('bg-secondary');
+              ccard.classList.remove("bg-success");
+              ccard.classList.add("bg-secondary");
             }
             current_data[key] = status;
           }
         }
-
       } else {
         statusText
           .text("중지됨")
