@@ -273,41 +273,67 @@ def stop_recording_all():
                     logging.info(f"카메라 ID '{camera.id}' 녹화 스레드 제거됨.")
 
 
-def check_cam_periodically(app):  # Keep the 'app' argument
-    import logging
+# def check_cam_periodically(app):  # Keep the 'app' argument
+#     import logging
 
-    while True:
-        # Use the passed 'app' object to create the context
-        with app.app_context():  # <--- FIX HERE
-            try:  # Add try...except for robustness within the loop
-                cams = Cams.query.all()
-                for cam in cams:
-                    cap = None  # Ensure cap is defined before try block
-                    try:
-                        # Use cam.cam_url instead of cam.url (based on your Cams model)
-                        cap = cv.VideoCapture(cam.cam_url)
-                        if not cap.isOpened():
-                            logging.warning(
-                                f"Camera {cam.id} ({cam.cam_url}) cannot be opened."
-                            )
-                            cam.is_active = False
-                        else:
-                            cam.is_active = True
-                            # logging.debug(f"Camera {cam.id} ({cam.cam_url}) is active.") # Optional debug log
-                    except Exception as e:
-                        logging.error(
-                            f"Error checking camera {cam.id} ({cam.cam_url}): {e}"
-                        )
-                        cam.is_active = False  # Mark as inactive on error
-                    finally:
-                        if cap is not None:
-                            cap.release()  # Ensure release even if opened successfully
+#     logging.info("카메라 상태 확인 백그라운드 스레드 시작")
 
-                db.session.commit()
-                logging.info("Camera status check complete (thread)")
-            except Exception as e:
-                logging.error(f"Error during periodic camera check loop: {e}")
-                # Optional: Rollback session if an error occurs during the DB operations
-                db.session.rollback()
+#     while True:
+#         # 각 루프마다 새로운 애플리케이션 컨텍스트를 생성
+#         with app.app_context():
+#             try:
+#                 # 데이터베이스에서 모든 카메라 정보 조회
+#                 cams = Cams.query.all()
+#                 logging.debug(f"DB에서 {len(cams)}개 카메라 정보 조회")
 
-        time.sleep(60)  # 60초마다 실행
+#                 for cam in cams:
+#                     cap = None  # cap 변수 초기화
+#                     try:
+#                         # cv2.VideoCapture를 사용하여 카메라 연결 시도
+#                         logging.debug(f"카메라 연결 시도: {cam.cam_url}")
+#                         cap = cv.VideoCapture(cam.cam_url)
+
+#                         if not cap.isOpened():
+#                             logging.warning(
+#                                 f"카메라 {cam.id} ({cam.cam_url}) 연결 실패 또는 열 수 없음."
+#                             )
+#                             # 데이터베이스 상태 업데이트
+#                             if cam.is_active:  # 상태 변경이 있을 때만 업데이트
+#                                 cam.is_active = False
+#                                 logging.info(f"카메라 {cam.id} 상태 비활성으로 변경.")
+#                         else:
+#                             logging.debug(f"카메라 {cam.id} ({cam.cam_url}) 연결 성공.")
+#                             # 데이터베이스 상태 업데이트
+#                             if not cam.is_active:  # 상태 변경이 있을 때만 업데이트
+#                                 cam.is_active = True
+#                                 logging.info(f"카메라 {cam.id} 상태 활성으로 변경.")
+
+#                     except Exception as e:
+#                         logging.error(
+#                             f"카메라 {cam.id} ({cam.cam_url}) 확인 중 예외 발생: {e}"
+#                         )
+#                         # 오류 발생 시 비활성으로 표시
+#                         if cam.is_active:  # 상태 변경이 있을 때만 업데이트
+#                             cam.is_active = False
+#                             logging.info(
+#                                 f"카메라 {cam.id} 상태 비활성으로 변경 (오류 발생)."
+#                             )
+#                     finally:
+#                         # VideoCapture 객체가 생성되었다면 반드시 해제
+#                         if cap is not None and cap.isOpened():  # isOpened() 확인 추가
+#                             cap.release()
+#                             logging.debug(f"카메라 {cam.id} ({cam.cam_url}) 해제 완료.")
+
+#                 # 모든 카메라 상태 업데이트 후 데이터베이스에 변경 사항 커밋
+#                 db.session.commit()
+#                 logging.info("카메라 상태 확인 및 DB 업데이트 완료 (백그라운드 스레드)")
+
+#             except Exception as e:
+#                 # 데이터베이스 조회/커밋 등 컨텍스트 내에서 발생한 다른 예외 처리
+#                 logging.error(f"주기적 카메라 확인 루프 중 예외 발생: {e}")
+#                 # 예외 발생 시 세션을 롤백하여 불안정한 상태 방지
+#                 db.session.rollback()
+#                 logging.info("DB 세션 롤백 완료.")
+
+#         # 다음 확인까지 대기
+#         time.sleep(60)  # 60초 대기

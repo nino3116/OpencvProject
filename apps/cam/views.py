@@ -51,6 +51,7 @@ from flask_paginate import Pagination, get_page_parameter
 import socket
 import logging
 import json
+import cv2 as cv
 
 
 # Blueprint로 crud 앱을 생성한다.
@@ -88,8 +89,9 @@ def check_status():
     except:
         recognition_module_running = False
         pass
-    
-    return {"running": recognition_module_running , "cam_data": data}
+
+    return {"running": recognition_module_running, "cam_data": data}
+
 
 @cam.route("/check_cam_status")
 def check_cam_status():
@@ -101,18 +103,49 @@ def check_cam_status():
         with socket.create_connection(
             (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
         ) as sock:
-            data = sock.recv(2048).decode('utf-8')
+            data = sock.recv(2048).decode("utf-8")
             data = json.loads(data)
             for v in data:
-                if data[v]['dt_active'] == True:
+                if data[v]["dt_active"] == True:
                     num_dt_cams += 1
-            
+
     except (ConnectionRefusedError, TimeoutError):
         logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
     except:
         pass
-    
-    return {"total_cams": num_total_cams, "active_cams":num_active_cams, "rec_cams":num_recording_cams, "dt_cams": num_dt_cams}
+
+    return {
+        "total_cams": num_total_cams,
+        "active_cams": num_active_cams,
+        "rec_cams": num_recording_cams,
+        "dt_cams": num_dt_cams,
+    }
+
+
+@cam.route("/check_active")
+def check_active():
+    cams = Cams.query.all()
+    num_active_cams = 0
+    try:
+        cap = None
+        with cam in cams:
+            cap = cv.VideoCapture(cam.cam_url)
+            if cap.isOpened():
+                cam.is_active = True
+                logging.info(f"카메라 {cam.cam_name}가 활성화되었습니다.")
+                db.session.commit()
+            elif not cap.isOpened() and cam.is_active:
+                cam.is_active = False
+                db.session.commit()
+                logging.info(f"카메라 {cam.cam_name}가 비활성화되었습니다.")
+    except Exception as e:
+        logging.error(f"카메라 동작 확인 중 오류 발생: {e}")
+        db.session.rollback()
+    finally:
+        cap.release()
+        num_active_cams = Cams.query.filter_by(is_active=True).count()
+    return {"active_cams": num_active_cams}
+
 
 @cam.route("/shutdown", methods=["POST"])
 def shutdown_module():
