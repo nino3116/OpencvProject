@@ -27,7 +27,6 @@ VIDEO_FOLDER = baseDir / "dt_videos"  # 추가
 
 
 def ProcessVideo(camera_url, camera_idx, q, pipe):
-
     # YOLO 모델 불러오기
     try:
         model = YOLO("yolo11n.pt")  # 모델 파일 경로 확인
@@ -95,6 +94,8 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
     # 프로세스 관련 변수
     msg = None
+    
+    status = False
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -103,6 +104,10 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 f"[Cam {camera_idx}] Failed to read frame from camera or stream ended."
             )
             break
+        
+        if not status:
+            status = True
+            q.put([camera_idx, "Status", True], block=False)
 
         # 객체 추적 수행
         try:
@@ -432,6 +437,8 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 f"[Cam {camera_idx}] Error releasing video writer during cleanup: {e}"
             )
 
+    q.put([camera_idx, "Status", False], block=False)
+    
     if cap is not None and cap.isOpened():
         cap.release()
     cv.destroyAllWindows()

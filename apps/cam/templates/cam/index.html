@@ -15,23 +15,21 @@ content %}
       class="lead {% if recognition_running %}text-success{% else %}text-danger{% endif %}">
       {% if recognition_running %} 실행 중 {% else %} 중지됨 {% endif %}
     </p>
-    <div class="row row-cols-1 row-cols-md-4 g-4 mt-3">
-      {% if recognition_running %}
-        {% for key, cam in cam_data.items() %}
+    <div id="detail" class="row row-cols-1 row-cols-md-4 g-4">
+        {% for id,name in cam_list.items() %}
           <div class="col">
             <div class="card bg-dark" style="border: none;">
               <div class="card-body">
                 <h5 class="card-title text-white">
-                  <i class="bi bi-camera-video-fill me-2"></i>{{ cam ['cam_name'] }}
-                  <span class="badge {% if cam['dt_active'] %}bg-success{% else %}bg-secondary{% endif %}">
-                    {% if cam['dt_active'] %}작동 중{% else %}작동 불가{% endif %}
+                  <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
+                  <span id="card-cam{{id}}" class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
+                    {% if recognition_running %} {% if cam_data[id|string] %} 작동 중 {% else %} 작동 불가 {% endif %} {% endif %}
                   </span>
                 </h5>
               </div>
             </div>
           </div>
         {% endfor %}
-      {% endif %}
     </div>
 
     <form
@@ -49,9 +47,12 @@ content %}
 <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 
 <script>
+  var current_data = {};
 
   function checkCurrentStatus() {
     $.get("{{ url_for('cam.check_status') }}", function (data) {
+      console.log(data);
+      
       const statusText = $("#status-text");
       const submitBtn = $("#shutdown-form button[type='submit']");
       if (data.running) {
@@ -60,12 +61,33 @@ content %}
           .removeClass("text-danger")
           .addClass("text-success");
         submitBtn.prop("disabled", false);
+        document.getElementById("detail").style.display = "flex";
+        
+        for (var key in data.cam_data){
+          status = data.cam_data[key]
+          if (current_data[key] != status){
+            ccard = document.getElementById("card-cam"+key);
+            
+            if (status === 'true'){
+              ccard.innerText = "작동 중";
+              ccard.classList.remove('bg-secondary');
+              ccard.classList.add('bg-success');
+            }else{
+              ccard.innerText = "작동 불가";
+              ccard.classList.remove('bg-success');
+              ccard.classList.add('bg-secondary');
+            }
+            current_data[key] = status;
+          }
+        }
+
       } else {
         statusText
           .text("중지됨")
           .removeClass("text-success")
           .addClass("text-danger");
         submitBtn.prop("disabled", true);
+        document.getElementById("detail").style.display = "none";
       }
     });
   }

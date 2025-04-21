@@ -8,17 +8,17 @@
         <span class="fw-bold fs-6 mx-1">Camera</span>  
       </div>
       <div class = "col-md-12 hstack gap-1">
-        <div><strong>전체 카메라 {{ num_total_cams }}</strong></div>
+        <div><strong class ="text-white" id="total_cam_cnt">전체 카메라 {{ num_total_cams }}</strong></div>
         <div class = "vr mx-1"></div>
-        <div><strong class ="text-info">동작 중 {{ num_active_cams }}</strong></div>
+        <div><strong class ="text-info" id="act_cam_cnt">동작 중 {{ num_active_cams }}</strong></div>
 
         <div class = "vr mx-1"></div>
-        <div><strong class ="text-success"> 녹화 중 {{ num_recording_cams }}</strong></div>
+        <div><strong class ="text-success" id="rec_cam_cnt"> 녹화 중 {{ num_recording_cams }}</strong></div>
 
         <div class = "vr mx-1"></div>
-        <div><strong class ="text-info"> 인식 모듈 {{ num_dt_cams }}</strong></div>
+        <div><strong class ="text-info" id="dt_cam_cnt"> 인식 모듈 {{ num_dt_cams }}</strong></div>
 
-        <a class = "ms-auto mb-2 px-2 link-offset-2 link-underline link-underline-opacity-0 fw-bold" href ="#">Top</a>
+        <a class = "ms-auto mb-2 px-2 link-light link-offset-2 link-underline-opacity-0 fw-bold" href ="#">Top</a>
 
       </div>
     </div>
@@ -30,6 +30,10 @@
   function checkCamStatus() {
     $.get("{{ url_for('cam.check_cam_status') }}", function (data) {
       console.log(data)
+      document.getElementById('total_cam_cnt').innerHTML = "전체 카메라 " + data['total_cams'];
+      document.getElementById('act_cam_cnt').innerHTML = "동작 중 " + data['active_cams'];
+      document.getElementById('rec_cam_cnt').innerHTML = "녹화 중 " + data['rec_cams'];
+      document.getElementById('dt_cam_cnt').innerHTML = "인식 모듈 " + data['dt_cams'];
     });
   }
 

@@ -90,8 +90,12 @@ def check_status():
         recognition_module_running = False
         pass
 
-    return {"running": recognition_module_running, "cam_data": data}
-
+    cam_list = {}
+    
+    for i in Cams.query.all():
+        cam_list[i.id] = i.cam_name
+    
+    return {"running": recognition_module_running , "cam_data": data, "cam_list": cam_list}
 
 @cam.route("/check_cam_status")
 def check_cam_status():
@@ -106,7 +110,7 @@ def check_cam_status():
             data = sock.recv(2048).decode("utf-8")
             data = json.loads(data)
             for v in data:
-                if data[v]["dt_active"] == True:
+                if data[v]== True:
                     num_dt_cams += 1
 
     except (ConnectionRefusedError, TimeoutError):
@@ -177,12 +181,13 @@ def shutdown_module():
 @login_required
 def index():
     form = ShutdownForm()
-
+    data = check_status()
     return render_template(
         "cam/index.html",
-        recognition_running=check_status()["running"],
-        form=form,
-        cam_data=check_status()["cam_data"],
+        recognition_running = data['running'],
+        form = form,
+        cam_data = data['cam_data'],
+        cam_list = data['cam_list']
     )
 
 
