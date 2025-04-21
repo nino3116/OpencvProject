@@ -20,30 +20,13 @@ def status_listener():
     server_socket.listen(1)
     logging.info("Status listener started on port 8002.")
     global main_loop_active
-    global ppipes
+    global status
     
-    data = {}
-    for row in camera_list:
-        cid = int(row["id"])
-        data[cid] = {}
-        data[cid]["cam_name"] = row["cam_name"]
-        data[cid]["dt_active"] = False
-        
     while main_loop_active:
         try:
             conn, addr = server_socket.accept()
             with conn:
-                for cid in data:
-                    try:
-                        if cid in ppipes:
-                            data[cid]["dt_active"] = True
-                        else:
-                            data[cid]["dt_active"] = False
-                    except Exception as e:
-                        traceback.print_exc(e)
-                        pass
-                print(data)
-                encoded_data = json.dumps(data).encode('utf-8')
+                encoded_data = json.dumps(status).encode('utf-8')
                 conn.sendall(encoded_data)
                 logging.info("Status listener loop send msg")
         except socket.timeout:
@@ -101,8 +84,9 @@ if __name__ == "__main__":
     # Multiprocessing 설정
     q = multiprocessing.Queue()
     ProcessDic = {}
-    global ppipes
     ppipes = {}
+    global status
+    status = {}
 
     for row in camera_list:
         if "id" not in row or "cam_url" not in row:
@@ -115,7 +99,7 @@ if __name__ == "__main__":
         camera_url = row["cam_url"]
         
         # 부모-자식 파이프 생성
-        parent_pipe, child_pipe = multiprocessing.Pipe()
+        parent_pipe, child_pipe = multiprocessing.Pipe() # 녹화 메세지 전송을 위한 파이프
 
         # 프로세스 생성
         process = multiprocessing.Process(
@@ -126,6 +110,7 @@ if __name__ == "__main__":
         
         ProcessDic[camera_id] = process
         ppipes[camera_id] = parent_pipe  # 카메라 ID를 키로 부모 파이프 저장
+        status[camera_id] = False
 
     logging.info(f"Created {len(ProcessDic)} processes.")
 
@@ -188,7 +173,7 @@ if __name__ == "__main__":
                         if ProcessDic[cid].is_alive():
                             continue
                         else:
-                            logging.info(f"Delete Pipe for Process {cid}")
+                            logging.info(f"Delete Pipes for Process {cid}")
                             del ppipes[cid]
         except Exception as e:
             traceback.print_exc(e)
@@ -206,7 +191,6 @@ if __name__ == "__main__":
                         if ProcessDic[cid].is_alive():
                             continue
                         else:
-
                             logging.info(
                                 f"camera {cid} process have terminated. try to reload."
                             )
@@ -215,7 +199,7 @@ if __name__ == "__main__":
                             camera_url = camera[0]["cam_url"]
 
                             # 부모-자식 파이프 생성
-                            parent_pipe, child_pipe = multiprocessing.Pipe()
+                            parent_pipe, child_pipe = multiprocessing.Pipe() # 녹화 메세지 전송을 위한 파이프
 
                             # 프로세스 생성
                             process = multiprocessing.Process(
@@ -235,6 +219,9 @@ if __name__ == "__main__":
             # 큐에서 데이터 가져오기 (Non-blocking)
             try:
                 pd = q.get(block=False)
+                if pd[1] == "Status":
+                    status[pd[0]] = pd[2]
+                    continue
                 # logging.debug(f"Received data from queue: {pd}") # 디버깅 시 주석 해제
             except Empty:  # 큐가 비어있으면 잠시 대기 후 다시 시도
                 time.sleep(0.1)  # CPU 사용률 감소
