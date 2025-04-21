@@ -22,8 +22,8 @@ content %}
               <div class="card-body">
                 <h5 class="card-title text-white">
                   <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
-                  <span id="card-cam{{id}}" class="badge {% if recognition_running %} {% if cam_data[id|string]['dt_active'] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
-                    {% if recognition_running %} {% if cam_data[id|string]['dt_active'] %} 작동 중 테스트용 {% else %} 작동 불가 테스트용 {% endif %} {% endif %}
+                  <span id="card-cam{{id}}" class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
+                    {% if recognition_running %} {% if cam_data[id|string] %} 작동 중 테스트용 {% else %} 작동 불가 테스트용 {% endif %} {% endif %}
                   </span>
                 </h5>
               </div>
@@ -63,7 +63,7 @@ content %}
         document.getElementById("detail").style.display = "flex";
         
         for (var key in data.cam_data){
-          status = data.cam_data[key]['dt_active']
+          status = data.cam_data[key]
           if (current_data[key] != status){
             ccard = document.getElementById("card-cam"+key);
             
