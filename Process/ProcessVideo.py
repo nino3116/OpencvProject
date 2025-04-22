@@ -94,7 +94,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
 
     # 프로세스 관련 변수
     msg = None
-    
+
     status = False
 
     while cap.isOpened():
@@ -104,14 +104,14 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                 f"[Cam {camera_idx}] Failed to read frame from camera or stream ended."
             )
             break
-        
+
         if not status:
             status = True
             q.put([camera_idx, "Status", True], block=False)
 
         # 객체 추적 수행
         try:
-            results = model.track(frame, persist=True, verbose=False, conf=0.2)
+            results = model.track(frame, persist=True, verbose=False, conf=0.3)
         except Exception as e:
             logging.error(f"[Cam {camera_idx}] Error during YOLO tracking: {e}")
             continue  # 현재 프레임 건너뛰기
@@ -167,7 +167,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
                         cv.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
                         # 레이블(ID) 및 신뢰도 표시
-                        label = f"ID: {track_id}"  # Conf: {confidence:.2f} # 필요시 신뢰도 추가
+                        label = f"ID: {track_id} {confidence:.2f}"  # Conf: {confidence:.2f} # 필요시 신뢰도 추가
                         cv.putText(
                             frame,
                             label,
@@ -438,7 +438,7 @@ def ProcessVideo(camera_url, camera_idx, q, pipe):
             )
 
     q.put([camera_idx, "Status", False], block=False)
-    
+
     if cap is not None and cap.isOpened():
         cap.release()
     cv.destroyAllWindows()

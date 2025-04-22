@@ -36,6 +36,5 @@ class Oauth:
                 **self.default_header,
                 **{"Authorization": bearer_token},
             },
-            # "property_keys": '["kakao_account.profile_image_url"]
             data={},
         ).json()
