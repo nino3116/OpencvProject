@@ -66,35 +66,27 @@ def create_app(config_key):
         num_total_cams = Cams.query.count()
         num_active_cams = Cams.query.filter_by(is_active=True).count()
         num_recording_cams = Cams.query.filter_by(is_recording=True).count()
-        num_dt_cams = 0
-        try:
-            with socket.create_connection(
-                (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
-            ) as sock:
-                data = sock.recv(2048).decode("utf-8")
-                data = json.loads(data)
-                for v in data:
-                    if data[v] == True:
-                        num_dt_cams += 1
+        # num_dt_cams = 0
+        # try:
+        #     with socket.create_connection(
+        #         (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
+        #     ) as sock:
+        #         data = sock.recv(2048).decode("utf-8")
+        #         data = json.loads(data)
+        #         for v in data:
+        #             if data[v] == True:
+        #                 num_dt_cams += 1
 
-        except (ConnectionRefusedError, TimeoutError):
-            logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
-        except:
-            pass
+        # except (ConnectionRefusedError, TimeoutError):
+        #     logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
+        # except:
+        #     pass
 
         return dict(
             num_total_cams=num_total_cams,
             num_active_cams=num_active_cams,
             num_recording_cams=num_recording_cams,
-            num_dt_cams=num_dt_cams,
+            # num_dt_cams=num_dt_cams,
         )
-
-    # from apps.app import check_cam_periodically
-
-    # # check_cam_periodically 함수를 별도의 스레드에서 실행
-    # # daemon=True 로 설정하여 메인 스레드 종료 시 함께 종료되도록 함
-    # camera_check_thread = threading.Thread(target=check_cam_periodically, args=(app,))
-    # camera_check_thread.daemon = True  # main thread dies, this thread dies too
-    # camera_check_thread.start()  # 스레드 시작
 
     return app

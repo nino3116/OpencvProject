@@ -15,7 +15,6 @@ from S3upload.s3client import upload_file
 from S3upload.s3_config import BUCKET
 
 camera_streams: dict[int, Thread] = {}
-# recording_status: dict[str, bool] = {}
 
 
 def record_original_video(camera_url, camera_id):
@@ -44,7 +43,6 @@ def record_original_video(camera_url, camera_id):
     db.session.commit()
 
     video_base_dir = Path(current_app.config["VIDEO_FOLDER"])
-    # camera_name_safe = camera.cam_name.replace(" ", "_").lower()
 
     if not video_base_dir.exists():
         os.makedirs(video_base_dir)
@@ -111,7 +109,7 @@ def record_original_video(camera_url, camera_id):
             elapsed_time = (
                 current_time_sec - record_start_time.timestamp()
             )  # datetime 객체로 비교
-            if elapsed_time >= 30:
+            if elapsed_time >= 600:
                 # 10분이 경과하면 현재 파일을 저장하고 새로운 파일로 전환
                 if out is not None:
                     out.release()
@@ -152,7 +150,7 @@ def record_original_video(camera_url, camera_id):
                         frame_rate,
                         (frame_width, frame_height),
                     )
-                    record_start_time = now  # 새로운 1분 세그먼트 시작 시간 업데이트
+                    record_start_time = now  # 새로운 세그먼트 시작 시간 업데이트
                     s3_file_path = f"videos/{now_day_local}/{camera_id}/{camera_id}_{timestamp}.mp4"
 
             time.sleep(0.01)
@@ -271,69 +269,3 @@ def stop_recording_all():
                 if camera.id in camera_streams:
                     del camera_streams[camera.id]
                     logging.info(f"카메라 ID '{camera.id}' 녹화 스레드 제거됨.")
-
-
-# def check_cam_periodically(app):  # Keep the 'app' argument
-#     import logging
-
-#     logging.info("카메라 상태 확인 백그라운드 스레드 시작")
-
-#     while True:
-#         # 각 루프마다 새로운 애플리케이션 컨텍스트를 생성
-#         with app.app_context():
-#             try:
-#                 # 데이터베이스에서 모든 카메라 정보 조회
-#                 cams = Cams.query.all()
-#                 logging.debug(f"DB에서 {len(cams)}개 카메라 정보 조회")
-
-#                 for cam in cams:
-#                     cap = None  # cap 변수 초기화
-#                     try:
-#                         # cv2.VideoCapture를 사용하여 카메라 연결 시도
-#                         logging.debug(f"카메라 연결 시도: {cam.cam_url}")
-#                         cap = cv.VideoCapture(cam.cam_url)
-
-#                         if not cap.isOpened():
-#                             logging.warning(
-#                                 f"카메라 {cam.id} ({cam.cam_url}) 연결 실패 또는 열 수 없음."
-#                             )
-#                             # 데이터베이스 상태 업데이트
-#                             if cam.is_active:  # 상태 변경이 있을 때만 업데이트
-#                                 cam.is_active = False
-#                                 logging.info(f"카메라 {cam.id} 상태 비활성으로 변경.")
-#                         else:
-#                             logging.debug(f"카메라 {cam.id} ({cam.cam_url}) 연결 성공.")
-#                             # 데이터베이스 상태 업데이트
-#                             if not cam.is_active:  # 상태 변경이 있을 때만 업데이트
-#                                 cam.is_active = True
-#                                 logging.info(f"카메라 {cam.id} 상태 활성으로 변경.")
-
-#                     except Exception as e:
-#                         logging.error(
-#                             f"카메라 {cam.id} ({cam.cam_url}) 확인 중 예외 발생: {e}"
-#                         )
-#                         # 오류 발생 시 비활성으로 표시
-#                         if cam.is_active:  # 상태 변경이 있을 때만 업데이트
-#                             cam.is_active = False
-#                             logging.info(
-#                                 f"카메라 {cam.id} 상태 비활성으로 변경 (오류 발생)."
-#                             )
-#                     finally:
-#                         # VideoCapture 객체가 생성되었다면 반드시 해제
-#                         if cap is not None and cap.isOpened():  # isOpened() 확인 추가
-#                             cap.release()
-#                             logging.debug(f"카메라 {cam.id} ({cam.cam_url}) 해제 완료.")
-
-#                 # 모든 카메라 상태 업데이트 후 데이터베이스에 변경 사항 커밋
-#                 db.session.commit()
-#                 logging.info("카메라 상태 확인 및 DB 업데이트 완료 (백그라운드 스레드)")
-
-#             except Exception as e:
-#                 # 데이터베이스 조회/커밋 등 컨텍스트 내에서 발생한 다른 예외 처리
-#                 logging.error(f"주기적 카메라 확인 루프 중 예외 발생: {e}")
-#                 # 예외 발생 시 세션을 롤백하여 불안정한 상태 방지
-#                 db.session.rollback()
-#                 logging.info("DB 세션 롤백 완료.")
-
-#         # 다음 확인까지 대기
-#         time.sleep(60)  # 60초 대기
