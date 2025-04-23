@@ -19,11 +19,6 @@ from apps.auth.forms import RegistrationForm
 kakao = Blueprint(
     "kakao", __name__, static_folder="static", template_folder="templates"
 )
-# 불필요
-# @kakao.route("/login")
-# def kakao_login_page():
-#     """카카오톡 로그인 페이지를 보여주는 라우트"""
-#     return render_template("kakao/login.html")
 
 
 @kakao.route("/")
@@ -148,7 +143,10 @@ def register_submit():
         password = form.password.data
 
         if not kakao_email:
-            flash("카카오 계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "kakao_danger")
+            flash(
+                "카카오 계정 정보를 찾을 수 없습니다. 다시 로그인해주세요.",
+                "kakao_danger",
+            )
             return redirect(url_for("kakao.kakao_sign_in"))
 
         # 이메일로 이미 등록된 사용자가 있는지 확인 (카카오 로그인 외 일반 가입 고려)

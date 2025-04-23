@@ -15,21 +15,27 @@ content %}
       class="lead {% if recognition_running %}text-success{% else %}text-danger{% endif %}">
       {% if recognition_running %} 실행 중 {% else %} 중지됨 {% endif %}
     </p>
-    <div id="detail" class="row row-cols-1 row-cols-md-4 g-4" style="display:{% if recognition_running %}flex{% else %}none{% endif %}">
-        {% for id,name in cam_list.items() %}
-          <div class="col">
-            <div class="card bg-dark" style="border: none;">
-              <div class="card-body">
-                <h5 class="card-title text-white">
-                  <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
-                  <span id="card-cam{{id}}" class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
-                    {% if recognition_running %} {% if cam_data[id|string] %} 작동 중 {% else %} 작동 불가 {% endif %} {% endif %}
-                  </span>
-                </h5>
-              </div>
-            </div>
+    <div
+      id="detail"
+      class="row row-cols-1 row-cols-md-4 g-4"
+      style="display:{% if recognition_running %}flex{% else %}none{% endif %}">
+      {% for id,name in cam_list.items() %}
+      <div class="col">
+        <div class="card bg-dark" style="border: none">
+          <div class="card-body">
+            <h5 class="card-title text-white">
+              <i class="bi bi-camera-video-fill me-2"></i>{{ name }}
+              <span
+                id="card-cam{{id}}"
+                class="badge {% if recognition_running %} {% if cam_data[id|string] %}bg-success{% else %}bg-secondary{% endif %} {% endif %}">
+                {% if recognition_running %} {% if cam_data[id|string] %} 작동
+                중 {% else %} 작동 불가 {% endif %} {% endif %}
+              </span>
+            </h5>
           </div>
-        {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
 
     <form
@@ -37,7 +43,7 @@ content %}
       method="POST"
       action="{{ url_for('cam.shutdown_module') }}">
       {{ form.csrf_token }} {{ form.submit(class="btn btn-danger mt-3",
-      disabled=not recognition_running) }} {##}
+      disabled=not recognition_running, id="shutdown-submit") }}
     </form>
   </main>
 </div>
@@ -54,7 +60,8 @@ content %}
       console.log(data);
 
       const statusText = $("#status-text");
-      const submitBtn = $("#shutdown-form button[type='submit']");
+      //const submitBtn = $("#shutdown-form button[type='submit']");
+      const submitBtn = $("#shutdown-submit");
       if (data.running) {
         statusText
           .text("실행 중")

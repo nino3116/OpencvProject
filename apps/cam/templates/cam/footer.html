@@ -16,7 +16,7 @@
         <div><strong class ="text-success" id="rec_cam_cnt"> 녹화 중 {{ num_recording_cams }}</strong></div>
 
         <div class = "vr mx-1"></div>
-        <div><strong class ="text-info" id="dt_cam_cnt"> 인식 모듈 {{ num_dt_cams }}</strong></div>
+        <div><strong class ="text-info" id="dt_cam_cnt"> 인식 모듈 확인중...</strong></div>
 
         <a class = "ms-auto mb-2 px-2 link-offset-2 link-underline link-underline-opacity-0 fw-bold" href ="#">Top</a>
 
@@ -26,6 +26,7 @@
 </footer>
 
 {% block scripts %}
+
 <script>
   function checkCamStatus() {
     $.get("{{ url_for('cam.check_cam_status') }}", function (data) {

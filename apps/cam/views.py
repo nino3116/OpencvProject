@@ -49,7 +49,6 @@ from flask_paginate import Pagination, get_page_parameter
 
 # 소켓통신을 위해
 import socket
-import logging
 import json
 import cv2 as cv
 
@@ -79,13 +78,13 @@ def check_status():
             (RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_STATUS_PORT), timeout=1
         ) as sock:
             recognition_module_running = True
-            logging.info("인식 모듈 연결됨 (상태 확인)")
+            current_app.logger.info("인식 모듈 연결됨 (상태 확인)")
             data = sock.recv(2048).decode("utf-8")
             data = json.loads(data)
 
     except (ConnectionRefusedError, TimeoutError):
         recognition_module_running = False
-        logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
+        current_app.logger.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
     except:
         recognition_module_running = False
         pass
@@ -120,7 +119,7 @@ def check_cam_status():
                     num_dt_cams += 1
 
     except (ConnectionRefusedError, TimeoutError):
-        logging.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
+        current_app.logger.warning("인식 모듈 연결 끊김 또는 응답 없음 (상태 확인)")
     except:
         pass
 
@@ -142,15 +141,15 @@ def check_active():
             cap = cv.VideoCapture(cam.cam_url)
             if cap.isOpened():
                 cam.is_active = True
-                logging.info(f"카메라 {cam.cam_name}가 활성화되었습니다.")
+                # current_app.logger.info(f"카메라 {cam.cam_name}가 활성화되었습니다.")
 
             elif not cap.isOpened() and cam.is_active:
                 cam.is_active = False
-                logging.info(f"카메라 {cam.cam_name}가 비활성화되었습니다.")
+                # current_app.logger.info(f"카메라 {cam.cam_name}가 비활성화되었습니다.")
             cams_status[cam.id] = cam.is_active
 
     except Exception as e:
-        logging.error(f"카메라 동작 확인 중 오류 발생: {e}")
+        current_app.logger.error(f"카메라 동작 확인 중 오류 발생: {e}")
         db.session.rollback()
     finally:
         if cap is not None:
@@ -166,7 +165,7 @@ def shutdown_module():
     form = ShutdownForm()
     if form.validate_on_submit():
         if not check_status()["running"]:
-            logging.warning(
+            current_app.logger.warning(
                 "인식 모듈이 실행 중이 아닙니다. 종료 신호 전송을 건너뜁니다."
             )
             return "인식 모듈이 실행 중이 아닙니다.", 200
@@ -177,11 +176,11 @@ def shutdown_module():
             client_socket.connect((RECOGNITION_MODULE_HOST, RECOGNITION_MODULE_PORT))
             client_socket.sendall(b"shutdown")
             client_socket.close()
-            logging.info("인식 모듈 종료 신호 전송 성공")
+            current_app.logger.info("인식 모듈 종료 신호 전송 성공")
             recognition_module_running = False
             return "인식 모듈에 종료 신호를 보냈습니다.", 200
         except Exception as e:
-            logging.error(f"인식 모듈 종료 신호 전송 중 오류 발생: {e}")
+            current_app.logger.error(f"인식 모듈 종료 신호 전송 중 오류 발생: {e}")
             return f"오류: {e}", 500
     return redirect(url_for("cam.index"))
 
@@ -291,11 +290,13 @@ def start_record(camera_id):
             recording_thread.start()
             cam_info.is_recording = True
             camera_streams[cam_info.id] = recording_thread
-            print(f"camera_streams (start): {camera_streams}")
+            # print(f"camera_streams (start): {camera_streams}")
             db.session.commit()
-            print(f"카메라 '{cam_info.cam_name}' 녹화 시작 요청됨.")
+            current_app.logger.info(f"카메라 '{cam_info.cam_name}' 녹화 시작 요청됨.")
         else:
-            print(f"카메라 '{cam_info.cam_name}'은 이미 녹화 중입니다.")
+            current_app.logger.warning(
+                f"카메라 '{cam_info.cam_name}'은 이미 녹화 중입니다."
+            )
     return redirect(url_for("cam.cam_status"))
 
 
