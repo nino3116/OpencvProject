@@ -10,7 +10,7 @@ from flask import current_app
 import cv2 as cv
 import time
 import random
-import logging
+
 from S3upload.s3client import upload_file
 from S3upload.s3_config import BUCKET
 
@@ -27,12 +27,14 @@ def record_original_video(camera_url, camera_id):
     """
     camera = Cams.query.get(camera_id)
     if not camera:
-        logging.error(f"ID가 {camera_id}인 카메라를 찾을 수 없습니다.")
+        current_app.logger.error(f"ID가 {camera_id}인 카메라를 찾을 수 없습니다.")
         return
 
     cap = cv.VideoCapture(camera_url)
     if not cap.isOpened():
-        logging.error(f"카메라 ID {camera_id} ({camera_url})를 열 수 없습니다.")
+        current_app.logger.error(
+            f"카메라 ID {camera_id} ({camera_url})를 열 수 없습니다."
+        )
         camera.is_active = False
         camera.is_recording = False
         db.session.commit()
@@ -57,20 +59,20 @@ def record_original_video(camera_url, camera_id):
     file_path = None
 
     try:
-        logging.info(f"카메라 ID {camera_id}: 녹화 스레드 시작")  # 추가
+        current_app.logger.info(f"카메라 ID {camera_id}: 녹화 스레드 시작")  # 추가
         while Cams.query.get(camera_id).is_recording and cap.isOpened():
             if (
                 not Cams.query.get(camera_id).is_recording
                 or camera_id not in camera_streams
             ):
-                logging.warning(
+                current_app.logger.warning(
                     f"카메라 ID {camera_id}의 녹화 중단 요청 감지. 즉시 중단합니다."
                 )
                 break
 
             ret, frame = cap.read()
             if not ret:
-                logging.warning(
+                current_app.logger.warning(
                     f"카메라 ID {camera_id} ({camera_url})에서 프레임을 읽을 수 없습니다."
                 )
                 break
@@ -119,12 +121,14 @@ def record_original_video(camera_url, camera_id):
                         current_record_filename,
                         s3_file_path,
                     )
-                    logging.info(
+                    current_app.logger.info(
                         f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(10분경과)"
                     )
                     time.sleep(1)
                     os.remove(current_record_filename)
-                    logging.info(f"로컬 파일 {current_record_filename} 삭제완료")
+                    current_app.logger.info(
+                        f"로컬 파일 {current_record_filename} 삭제완료"
+                    )
                     new_video = Videos(
                         camera_id=camera_id,
                         camera_name=camera.cam_name,
@@ -158,13 +162,13 @@ def record_original_video(camera_url, camera_id):
                 out.write(frame)
 
     except Exception as e:
-        logging.error(f"카메라 ID {camera_id} 녹화 중 오류 발생: {e}")
+        current_app.logger.error(f"카메라 ID {camera_id} 녹화 중 오류 발생: {e}")
         camera = Cams.query.get(camera_id)
         if camera:
             camera.is_recording = False
             db.session.commit()
     finally:
-        logging.info(f"카메라 ID {camera_id}: 녹화 스레드 종료")  # 추가
+        current_app.logger.info(f"카메라 ID {camera_id}: 녹화 스레드 종료")  # 추가
         if out is not None:
             out.release()
             time.sleep(1)
@@ -172,12 +176,12 @@ def record_original_video(camera_url, camera_id):
                 current_record_filename,
                 s3_file_path,
             )
-            logging.info(
+            current_app.logger.info(
                 f"{current_record_filename} -> s3://{BUCKET}/{s3_file_path} 저장 완료(종료)"
             )
             time.sleep(1)
             os.remove(current_record_filename)
-            logging.info(f"로컬 파일 {current_record_filename} 삭제완료")
+            current_app.logger.info(f"로컬 파일 {current_record_filename} 삭제완료")
             time.sleep(1)
             end_video = Videos(
                 camera_id=camera_id,
@@ -191,7 +195,9 @@ def record_original_video(camera_url, camera_id):
 
         time.sleep(1)
         cap.release()
-        logging.info(f"카메라 ID {camera_id} ({camera_url}) 연결 종료 (녹화).")
+        current_app.logger.info(
+            f"카메라 ID {camera_id} ({camera_url}) 연결 종료 (녹화)."
+        )
 
 
 def start_recording_all():
@@ -200,9 +206,11 @@ def start_recording_all():
             from apps.cam.models import Cams  # 순환 참조 방지
 
             cameras = Cams.query.all()
-            logging.info(f"데이터베이스에서 가져온 카메라 수: {len(cameras)}")
+            current_app.logger.info(
+                f"데이터베이스에서 가져온 카메라 수: {len(cameras)}"
+            )
             for camera in cameras:
-                logging.info(
+                current_app.logger.info(
                     f"카메라 ID: {camera.id}, 이름: {camera.cam_name}, 활성 상태: {camera.is_active}, 녹화 상태: {camera.is_recording}"
                 )
                 if camera.is_active and not camera.is_recording:
@@ -214,18 +222,20 @@ def start_recording_all():
                     )
                     recording_thread.start()
                     camera_streams[camera.id] = recording_thread
-                    logging.info(
+                    current_app.logger.info(
                         f"카메라 ID '{camera.id}' 원본 영상 녹화 시작 시도 (URL: {camera.cam_url})"
                     )
                 elif camera.is_recording:
-                    logging.warning(
+                    current_app.logger.warning(
                         f"카메라 ID '{camera.id}' 원본 영상 녹화가 이미 진행 중입니다."
                     )
                 elif not camera.is_active:
-                    logging.warning(f"카메라 ID '{camera.id}'가 비활성 상태입니다.")
+                    current_app.logger.warning(
+                        f"카메라 ID '{camera.id}'가 비활성 상태입니다."
+                    )
 
         except Exception as e:
-            logging.error(f"start_recording_all() 함수 내부 오류: {e}")
+            current_app.logger.error(f"start_recording_all() 함수 내부 오류: {e}")
 
 
 def record_camera_with_context(app, camera_url, camera_id):
@@ -243,17 +253,21 @@ def stop_recording(camera_id):
             camera.is_recording = False
             db.session.commit()
             if camera_id in camera_streams:
-                logging.info(f"카메라 ID '{camera_id}' 원본 영상 녹화 중단 요청됨.")
+                current_app.logger.info(
+                    f"카메라 ID '{camera_id}' 원본 영상 녹화 중단 요청됨."
+                )
                 del camera_streams[camera_id]
-                logging.info(f"카메라 ID '{camera_id}' 녹화 스레드 제거됨.")
+                current_app.logger.info(f"카메라 ID '{camera_id}' 녹화 스레드 제거됨.")
             else:
-                logging.error(
+                current_app.logger.error(
                     f"카메라 ID '{camera_id}'에 대한 녹화 스레드를 찾을 수 없습니다."
                 )
         elif camera and not camera.is_recording:
-            logging.warning(f"카메라 ID '{camera_id}'는 현재 녹화 중이 아닙니다.")
+            current_app.logger.warning(
+                f"카메라 ID '{camera_id}'는 현재 녹화 중이 아닙니다."
+            )
         else:
-            logging.error(f"ID가 '{camera_id}'인 카메라를 찾을 수 없습니다.")
+            current_app.logger.error(f"ID가 '{camera_id}'인 카메라를 찾을 수 없습니다.")
 
 
 def stop_recording_all():
@@ -265,7 +279,11 @@ def stop_recording_all():
             if camera.is_recording:
                 camera.is_recording = False
                 db.session.commit()
-                logging.info(f"카메라 ID '{camera.id}' 원본 영상 녹화 중단 요청됨.")
+                current_app.logger.info(
+                    f"카메라 ID '{camera.id}' 원본 영상 녹화 중단 요청됨."
+                )
                 if camera.id in camera_streams:
                     del camera_streams[camera.id]
-                    logging.info(f"카메라 ID '{camera.id}' 녹화 스레드 제거됨.")
+                    current_app.logger.info(
+                        f"카메라 ID '{camera.id}' 녹화 스레드 제거됨."
+                    )
