@@ -19,9 +19,9 @@ content %}
       {% if recognition_running %}
         {% for key, cam in cam_data.items() %}
           <div class="col">
-            <div class="card bg-dark" style="border: none;">
+            <div class="card" style="border: none;">
               <div class="card-body">
-                <h5 class="card-title text-white">
+                <h5>
                   <i class="bi bi-camera-video-fill me-2"></i>{{ cam ['cam_name'] }}
                   <span class="badge {% if cam['dt_active'] %}bg-success{% else %}bg-secondary{% endif %}">
                     {% if cam['dt_active'] %}작동 중{% else %}작동 불가{% endif %}

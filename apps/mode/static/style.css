@@ -4,6 +4,11 @@ body {
   font-family: sans-serif;
 }
 
+[data-bs-theme="dark"] .body_text_color {
+  color:#fff;
+}
+
+
 .cover-container {
   max-width: 61em;
   min-height: 100%; /* 또는 min-height: 100%; */
